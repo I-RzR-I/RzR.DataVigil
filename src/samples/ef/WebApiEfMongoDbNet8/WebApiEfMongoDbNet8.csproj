@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MongoDB.EntityFrameworkCore" Version="8.1.1" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\code\provider\RzR.DataVigil.EFCore\RzR.DataVigil.EFCore.csproj" />
+    <ProjectReference Include="..\..\..\code\RzR.DataVigil.AspNetCore\RzR.DataVigil.AspNetCore.csproj" />
+    <ProjectReference Include="..\..\..\code\storage\ef\RzR.DataVigil.Storage.EfMongoDb\RzR.DataVigil.Storage.EfMongoDb.csproj" />
+  </ItemGroup>
+
+</Project>

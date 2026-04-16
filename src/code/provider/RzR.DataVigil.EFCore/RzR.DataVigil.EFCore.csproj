@@ -1,0 +1,69 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>netstandard2.1</TargetFramework>
+		<Nullable>disable</Nullable>
+		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+		<Authors>RzR</Authors>
+		<Copyright>RzR</Copyright>
+		<Owners>RzR</Owners>
+		<PackageLicenseFile>LICENSE</PackageLicenseFile>
+		<PackageIcon>PackageIcon.png</PackageIcon>
+		<NoWarn>$(NoWarn);CS8032</NoWarn>
+		<EnableNETAnalyzers>false</EnableNETAnalyzers>
+		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+		<PackageTags>
+			audit;audit-;audit-log;data-protection;gdpr;compliance;change-tracking;ef-core;entity-framework;interceptor;data-vigilance;masking;anonymization;retention;dotnet;csharp;netstandard
+		</PackageTags>
+		<RepositoryUrl>https://github.com/I-RzR-I/RzR.DataVigil</RepositoryUrl>
+		<PackageProjectUrl>https://github.com/I-RzR-I/RzR.DataVigil</PackageProjectUrl>
+		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+		<PackageDescription>A .NET audit trail framework that automatically captures, protects, and stores every data change with built-in GDPR compliance, EF Core integration, and pluggable storage backends.</PackageDescription>
+		<Summary>A .NET audit trail framework that automatically captures, protects, and stores every data change with built-in GDPR compliance, EF Core integration, and pluggable storage backends.</Summary>
+		<PackageTitle>RzR.DataVigil.EFCore</PackageTitle>
+		<Title>RzR.DataVigil.EFCore</Title>
+
+		<AssemblyName>RzR.DataVigil.EFCore</AssemblyName>
+		<RootNamespace>RzR.DataVigil.EFCore</RootNamespace>
+
+		<LangVersion>latest</LangVersion>
+		<!-- 9.0 -->
+		<Language>en-US</Language>
+		<RepositoryType>GIT</RepositoryType>
+		<PackageIconUrl />
+	</PropertyGroup>
+
+	<ItemGroup>
+		<Compile Include="..\..\..\shared\GeneralAssemblyInfo.cs" Link="Properties\GeneralAssemblyInfo.cs" />
+	</ItemGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+		<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+		<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Include="..\..\..\..\LICENSE">
+			<Pack>True</Pack>
+			<PackagePath></PackagePath>
+		</None>
+		<None Include="..\..\..\..\assets\PackageIcon.png">
+			<Pack>True</Pack>
+			<PackagePath></PackagePath>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\RzR.DataVigil.Core\RzR.DataVigil.Core.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="5.0.0" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="5.0.0" />
+		<PackageReference Include="System.Text.Json" Version="8.0.5" />
+	</ItemGroup>
+
+</Project>
