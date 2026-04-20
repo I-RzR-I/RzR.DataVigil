@@ -115,6 +115,11 @@ First, mark which entities should be audited:
 ```csharp
 using RzR.DataVigil.Abstractions.Contracts;
 
+public class AbbDbContext : DbContext, IAuditableContext
+{
+	
+}
+
 public class Order : IAuditable
 {
     public Guid Id { get; set; }
