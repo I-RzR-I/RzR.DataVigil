@@ -2,8 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using AggregatedGenericResultMessage;
-using AggregatedGenericResultMessage.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -15,6 +13,8 @@ using RzR.DataVigil.Core.Extensions;
 using RzR.DataVigil.Core.Hosting;
 using RzR.DataVigil.Core.Options;
 using RzR.DataVigil.Core.Tests.Stubs;
+using RzR.ResultMessage;
+using RzR.ResultMessage.Abstractions;
 
 namespace RzR.DataVigil.Core.Tests
 {

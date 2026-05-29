@@ -21,12 +21,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using AggregatedGenericResultMessage;
-using AggregatedGenericResultMessage.Abstractions;
-using AggregatedGenericResultMessage.Extensions.Result;
-using DomainCommonExtensions.ArraysExtensions;
-using DomainCommonExtensions.CommonExtensions;
-using DomainCommonExtensions.CommonExtensions.TypeParam;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using RzR.DataVigil.Abstractions.Enums;
@@ -36,6 +30,12 @@ using RzR.DataVigil.Abstractions.Models.Query;
 using RzR.DataVigil.Abstractions.Services;
 using RzR.DataVigil.Core.Extensions;
 using RzR.DataVigil.Core.Gdpr;
+using RzR.Extensions.Domain.Collections;
+using RzR.Extensions.Domain.Primitives;
+using RzR.Extensions.Domain.Reflection.TypeParam;
+using RzR.ResultMessage;
+using RzR.ResultMessage.Abstractions;
+using RzR.ResultMessage.Extensions.Result;
 
 #endregion
 

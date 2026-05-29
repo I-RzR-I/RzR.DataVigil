@@ -19,11 +19,11 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using DomainCommonExtensions.CommonExtensions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using RzR.DataVigil.Abstractions.Services;
 using RzR.DataVigil.Core.Options;
+using RzR.Extensions.Domain.Primitives;
 
 #endregion
 

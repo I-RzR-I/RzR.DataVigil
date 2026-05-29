@@ -20,11 +20,11 @@ using System;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Text.RegularExpressions;
-using DomainCommonExtensions.ArraysExtensions;
-using DomainCommonExtensions.DataTypeExtensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using RzR.DataVigil.Abstractions.Models.Entries;
+using RzR.Extensions.Domain.Collections;
+using RzR.Extensions.Domain.Text;
 
 #endregion
 

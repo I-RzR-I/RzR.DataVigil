@@ -16,11 +16,6 @@
 
 #region U S A G E S
 
-using AggregatedGenericResultMessage;
-using AggregatedGenericResultMessage.Abstractions;
-using AggregatedGenericResultMessage.Extensions.Result;
-using DomainCommonExtensions.ArraysExtensions;
-using DomainCommonExtensions.CommonExtensions.TypeParam;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using RzR.DataVigil.Abstractions.Enums;
@@ -35,7 +30,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using DomainCommonExtensions.CommonExtensions;
+using RzR.Extensions.Domain.Collections;
+using RzR.Extensions.Domain.Primitives;
+using RzR.Extensions.Domain.Reflection.TypeParam;
+using RzR.ResultMessage;
+using RzR.ResultMessage.Abstractions;
+using RzR.ResultMessage.Extensions.Result;
 
 #endregion
 

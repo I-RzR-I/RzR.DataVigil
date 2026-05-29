@@ -19,16 +19,15 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using AggregatedGenericResultMessage;
-using AggregatedGenericResultMessage.Abstractions;
-using AggregatedGenericResultMessage.Extensions.Result;
-using DomainCommonExtensions.ArraysExtensions;
-using DomainCommonExtensions.CommonExtensions;
-using DomainCommonExtensions.DataTypeExtensions;
 using RzR.DataVigil.Abstractions.Enums;
 using RzR.DataVigil.Abstractions.Models.Entries;
 using RzR.DataVigil.Abstractions.Services;
 using RzR.DataVigil.Core.Gdpr;
+using RzR.Extensions.Domain.Collections;
+using RzR.Extensions.Domain.Primitives;
+using RzR.ResultMessage;
+using RzR.ResultMessage.Abstractions;
+using RzR.ResultMessage.Extensions.Result;
 
 #endregion
 

@@ -17,8 +17,8 @@
 #region U S A G E S
 
 using System;
-using AggregatedGenericResultMessage.Abstractions;
 using RzR.DataVigil.Abstractions.Models.Identity;
+using RzR.ResultMessage.Abstractions;
 
 #endregion
 

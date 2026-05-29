@@ -20,9 +20,9 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using DomainCommonExtensions.CommonExtensions;
 using Microsoft.Extensions.Logging;
 using RzR.DataVigil.Abstractions.Models.Entries;
+using RzR.Extensions.Domain.Primitives;
 
 #endregion
 

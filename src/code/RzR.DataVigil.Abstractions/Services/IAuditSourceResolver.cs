@@ -16,7 +16,7 @@
 
 #region U S A G E S
 
-using AggregatedGenericResultMessage.Abstractions;
+using RzR.ResultMessage.Abstractions;
 
 #endregion
 
