@@ -1,7 +1,7 @@
 using System;
-using AggregatedGenericResultMessage.Abstractions;
 using RzR.DataVigil.Abstractions.Models.Identity;
 using RzR.DataVigil.Abstractions.Services;
+using RzR.ResultMessage.Abstractions;
 
 namespace RzR.DataVigil.Core.Tests.Resolvers
 {

@@ -20,9 +20,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using DomainCommonExtensions.ArraysExtensions;
-using DomainCommonExtensions.CommonExtensions;
-using DomainCommonExtensions.DataTypeExtensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Logging;
@@ -32,6 +29,8 @@ using RzR.DataVigil.Abstractions.Models.Entries;
 using RzR.DataVigil.Core.Options;
 using RzR.DataVigil.Core.Pipeline;
 using RzR.DataVigil.EFCore.Helpers;
+using RzR.Extensions.Domain.Collections;
+using RzR.Extensions.Domain.Primitives;
 
 #endregion
 

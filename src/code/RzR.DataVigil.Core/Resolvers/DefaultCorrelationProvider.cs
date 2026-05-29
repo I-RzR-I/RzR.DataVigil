@@ -17,9 +17,9 @@
 #region U S A G E S
 
 using System.Diagnostics;
-using AggregatedGenericResultMessage;
-using AggregatedGenericResultMessage.Abstractions;
 using RzR.DataVigil.Abstractions.Services;
+using RzR.ResultMessage;
+using RzR.ResultMessage.Abstractions;
 
 #endregion
 

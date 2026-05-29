@@ -17,11 +17,11 @@
 #region U S A G E S
 
 using System.Threading;
-using AggregatedGenericResultMessage;
-using AggregatedGenericResultMessage.Abstractions;
-using DomainCommonExtensions.CommonExtensions;
 using RzR.DataVigil.Abstractions.Models.Identity;
 using RzR.DataVigil.Abstractions.Services;
+using RzR.Extensions.Domain.Primitives;
+using RzR.ResultMessage;
+using RzR.ResultMessage.Abstractions;
 
 #endregion
 

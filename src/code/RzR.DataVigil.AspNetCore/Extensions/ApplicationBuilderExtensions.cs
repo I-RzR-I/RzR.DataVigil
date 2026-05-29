@@ -16,11 +16,10 @@
 
 #region U S A G E S
 
-using DomainCommonExtensions.CommonExtensions;
-using DomainCommonExtensions.DataTypeExtensions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using RzR.DataVigil.Core.Pipeline;
+using RzR.Extensions.Domain.Primitives;
 
 #endregion
 

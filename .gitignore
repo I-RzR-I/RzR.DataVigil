@@ -279,3 +279,5 @@ _ReSharper.Caches-
 
 # Certificates
 *.pfx
+
+*.lscache

@@ -18,12 +18,12 @@
 
 using System;
 using System.Diagnostics;
-using AggregatedGenericResultMessage;
-using AggregatedGenericResultMessage.Abstractions;
-using AggregatedGenericResultMessage.Extensions.Result;
-using DomainCommonExtensions.CommonExtensions;
 using Microsoft.AspNetCore.Http;
 using RzR.DataVigil.Abstractions.Services;
+using RzR.Extensions.Domain.Primitives;
+using RzR.ResultMessage;
+using RzR.ResultMessage.Abstractions;
+using RzR.ResultMessage.Extensions.Result;
 
 #endregion
 

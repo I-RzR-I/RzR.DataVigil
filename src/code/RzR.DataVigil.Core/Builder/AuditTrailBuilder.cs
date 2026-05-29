@@ -16,13 +16,13 @@
 
 #region U S A G E S
 
-using DomainCommonExtensions.CommonExtensions;
 using Microsoft.Extensions.DependencyInjection;
 using RzR.DataVigil.Abstractions.Services;
 using RzR.DataVigil.Core.Gdpr;
 using RzR.DataVigil.Core.Options;
 using RzR.DataVigil.Core.Pipeline;
 using RzR.DataVigil.Core.Resolvers;
+using RzR.Extensions.Domain.Primitives;
 
 #endregion
 

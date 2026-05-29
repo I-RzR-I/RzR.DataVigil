@@ -18,7 +18,6 @@
 
 using System;
 using System.Reflection;
-using DomainCommonExtensions.CommonExtensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -27,6 +26,7 @@ using RzR.DataVigil.Abstractions.Enums;
 using RzR.DataVigil.Abstractions.Models.Entries;
 using RzR.DataVigil.Core.Options;
 using RzR.DataVigil.Core.Pipeline;
+using RzR.Extensions.Domain.Primitives;
 
 #endregion
 

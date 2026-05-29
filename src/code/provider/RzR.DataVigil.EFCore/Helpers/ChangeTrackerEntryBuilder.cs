@@ -18,13 +18,12 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using DomainCommonExtensions.ArraysExtensions;
-using DomainCommonExtensions.DataTypeExtensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using RzR.DataVigil.Abstractions.Enums;
 using RzR.DataVigil.Abstractions.Models.Entries;
+using RzR.Extensions.Domain.Collections;
+using RzR.Extensions.Domain.Primitives;
 
 #endregion
 

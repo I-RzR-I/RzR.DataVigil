@@ -1,3 +1,4 @@
+﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
@@ -66,6 +67,10 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "worker", "worker", "{98350D6B-57EC-436A-C1AF-9735D5EDC2E2}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SampleWorkerService", "samples\worker\SampleWorkerService\SampleWorkerService.csproj", "{E27B6E64-2432-47B5-AC79-856B2B631EB2}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "benchmarks", "benchmarks", "{66320409-64EC-F7C5-3DEF-65E7510DAAD1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RzR.DataVigil.Benchmarks", "benchmarks\RzR.DataVigil.Benchmarks\RzR.DataVigil.Benchmarks.csproj", "{D6B328AD-6945-42FB-8EFB-87025D6268A9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -341,6 +346,18 @@ Global
 		{E27B6E64-2432-47B5-AC79-856B2B631EB2}.Release|x64.Build.0 = Release|Any CPU
 		{E27B6E64-2432-47B5-AC79-856B2B631EB2}.Release|x86.ActiveCfg = Release|Any CPU
 		{E27B6E64-2432-47B5-AC79-856B2B631EB2}.Release|x86.Build.0 = Release|Any CPU
+		{D6B328AD-6945-42FB-8EFB-87025D6268A9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D6B328AD-6945-42FB-8EFB-87025D6268A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D6B328AD-6945-42FB-8EFB-87025D6268A9}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{D6B328AD-6945-42FB-8EFB-87025D6268A9}.Debug|x64.Build.0 = Debug|Any CPU
+		{D6B328AD-6945-42FB-8EFB-87025D6268A9}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{D6B328AD-6945-42FB-8EFB-87025D6268A9}.Debug|x86.Build.0 = Debug|Any CPU
+		{D6B328AD-6945-42FB-8EFB-87025D6268A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D6B328AD-6945-42FB-8EFB-87025D6268A9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D6B328AD-6945-42FB-8EFB-87025D6268A9}.Release|x64.ActiveCfg = Release|Any CPU
+		{D6B328AD-6945-42FB-8EFB-87025D6268A9}.Release|x64.Build.0 = Release|Any CPU
+		{D6B328AD-6945-42FB-8EFB-87025D6268A9}.Release|x86.ActiveCfg = Release|Any CPU
+		{D6B328AD-6945-42FB-8EFB-87025D6268A9}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -373,6 +390,7 @@ Global
 		{B1C2D3E4-F5A6-4B78-9012-3C4D5E6F7A8B} = {8BF6DB35-C5C9-42AD-AC20-8C5E77762767}
 		{98350D6B-57EC-436A-C1AF-9735D5EDC2E2} = {98C36B3F-0AC7-454A-B769-840B580BCBB6}
 		{E27B6E64-2432-47B5-AC79-856B2B631EB2} = {98350D6B-57EC-436A-C1AF-9735D5EDC2E2}
+		{D6B328AD-6945-42FB-8EFB-87025D6268A9} = {66320409-64EC-F7C5-3DEF-65E7510DAAD1}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {263442EA-0786-424E-A083-A7BBA310CF93}

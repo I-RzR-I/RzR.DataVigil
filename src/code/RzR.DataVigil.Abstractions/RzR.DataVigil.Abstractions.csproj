@@ -57,7 +57,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="AggregatedGenericResultMessage" Version="1.4.1.8497" />
+		<PackageReference Include="RzR.ResultMessage" Version="3.0.0.6928" />
 	</ItemGroup>
 
 </Project>
