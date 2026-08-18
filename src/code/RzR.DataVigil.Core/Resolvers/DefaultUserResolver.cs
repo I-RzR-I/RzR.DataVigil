@@ -4,7 +4,7 @@
 //  Created On       : 2026-04-10 23:04
 // 
 //  Last Modified By : RzR
-//  Last Modified On : 2026-04-14 20:12
+//  Last Modified On : 2026-08-18 21:12
 // ***********************************************************************
 //  <copyright file="DefaultUserResolver.cs" company="RzR SOFT & TECH">
 //   Copyright © RzR. All rights reserved.
@@ -17,6 +17,7 @@
 #region U S A G E S
 
 using System.Threading;
+using RzR.DataVigil.Abstractions.Enums;
 using RzR.DataVigil.Abstractions.Models.Identity;
 using RzR.DataVigil.Abstractions.Services;
 using RzR.Extensions.Domain.Primitives;
@@ -59,25 +60,30 @@ namespace RzR.DataVigil.Core.Resolvers
         /// <inheritdoc/>
         public IResult<AuditUserInfo> Resolve()
         {
-            // 1. Check scope context (manually set)
+            // Check scope context (manually set)
             var scopeUser = _scopeContext.GetCurrentUser();
-            if (scopeUser.IsNotNull())
-                return scopeUser;
+            if (scopeUser.IsNotNull() && scopeUser.IsSuccess && scopeUser.Response.IsNotNull())
+            {
+                scopeUser.Response.Source = AuditUserSource.ScopeContext;
 
-            // 2. Check Thread.CurrentPrincipal
+                return scopeUser;
+            }
+
+            // Check Thread.CurrentPrincipal
             var principal = Thread.CurrentPrincipal;
             if (principal?.Identity?.IsAuthenticated == true)
             {
                 var result = new AuditUserInfo
                 {
                     UserId = principal.Identity.Name,
-                    UserName = principal.Identity.Name
+                    UserName = principal.Identity.Name,
+                    Source = AuditUserSource.ThreadPrincipal
                 };
 
                 return Result<AuditUserInfo>.Success(result);
             }
 
-            // 3. Anonymous
+            // Anonymous
             return Result<AuditUserInfo>.Success();
         }
     }

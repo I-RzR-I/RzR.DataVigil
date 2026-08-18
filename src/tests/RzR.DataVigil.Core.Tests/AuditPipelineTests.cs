@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using RzR.DataVigil.Abstractions.Constants;
 using RzR.DataVigil.Abstractions.Enums;
 using RzR.DataVigil.Abstractions.Models.Entries;
 using RzR.DataVigil.Abstractions.Models.Gdpr;
@@ -277,6 +278,82 @@ namespace RzR.DataVigil.Core.Tests
             var result = await _pipeline.ProcessAsync(tx);
 
             Assert.IsFalse(result.IsSuccess);
+        }
+
+        [TestMethod]
+        public async Task ProcessAsync_UserResolverFails_RecordsUnresolvedSource()
+        {
+            _userResolver.ShouldFail = true;
+            var tx = BuildTransaction(BuildEntry());
+
+            await _pipeline.ProcessAsync(tx);
+
+            Assert.AreEqual(AuditUserSource.Unresolved.ToString(), tx.Metadata[AuditMetadataKeys.UserSource]);
+        }
+
+        [TestMethod]
+        public async Task ProcessAsync_ResolverSucceedsWithNullResponse_RecordsAnonymousSource()
+        {
+            _userResolver.UserToReturn = null;
+            var tx = BuildTransaction(BuildEntry());
+
+            await _pipeline.ProcessAsync(tx);
+
+            Assert.AreEqual(AuditUserSource.Anonymous.ToString(), tx.Metadata[AuditMetadataKeys.UserSource]);
+        }
+
+        [TestMethod]
+        public async Task ProcessAsync_UnresolvedVsAnonymous_AreDistinguishable()
+        {
+            var unresolvedTx = BuildTransaction(BuildEntry());
+            _userResolver.ShouldFail = true;
+            await _pipeline.ProcessAsync(unresolvedTx);
+
+            var anonymousTx = BuildTransaction(BuildEntry());
+            _userResolver.ShouldFail = false;
+            _userResolver.UserToReturn = null;
+            await _pipeline.ProcessAsync(anonymousTx);
+
+            Assert.AreNotEqual(
+                unresolvedTx.Metadata[AuditMetadataKeys.UserSource],
+                anonymousTx.Metadata[AuditMetadataKeys.UserSource]);
+            Assert.AreEqual(AuditUserSource.Unresolved.ToString(), unresolvedTx.Metadata[AuditMetadataKeys.UserSource]);
+            Assert.AreEqual(AuditUserSource.Anonymous.ToString(), anonymousTx.Metadata[AuditMetadataKeys.UserSource]);
+        }
+
+        [TestMethod]
+        public async Task ProcessAsync_ResolverSucceedsWithResponse_RecordsResponseSource()
+        {
+            _userResolver.UserToReturn = new AuditUserInfo
+            {
+                UserId = "user-1",
+                UserName = "Alice",
+                Source = AuditUserSource.ScopeContext
+            };
+            var tx = BuildTransaction(BuildEntry());
+
+            await _pipeline.ProcessAsync(tx);
+
+            Assert.AreEqual(AuditUserSource.ScopeContext.ToString(), tx.Metadata[AuditMetadataKeys.UserSource]);
+        }
+
+        [TestMethod]
+        public async Task ProcessAsync_NullMetadataDictionary_DoesNotThrow_AndSetsProvenance()
+        {
+            _userResolver.UserToReturn = new AuditUserInfo
+            {
+                UserId = "user-1",
+                UserName = "Alice",
+                Source = AuditUserSource.ScopeContext
+            };
+            var tx = BuildTransaction(BuildEntry());
+            tx.Metadata = null;
+
+            var result = await _pipeline.ProcessAsync(tx);
+
+            Assert.IsTrue(result.IsSuccess);
+            Assert.IsNotNull(tx.Metadata);
+            Assert.AreEqual(AuditUserSource.ScopeContext.ToString(), tx.Metadata[AuditMetadataKeys.UserSource]);
         }
     }
 }
