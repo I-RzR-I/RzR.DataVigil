@@ -20,6 +20,7 @@ Below you'll find setup instructions for a bunch of different scenarios. Web API
 12. [Read (SELECT) Auditing](#12-read-select-auditing)
 13. [Manual Audit Entries (No EF Core)](#13-manual-audit-entries-no-ef-core)
 14. [Package Reference Summary](#14-package-reference-summary)
+15. [Known Limitations](#15-known-limitations)
 
 ---
 
@@ -87,6 +88,11 @@ public class Order : IAuditable          // Marker interface, all CUD actions au
 ```
 
 If an entity doesn't have `IAuditable` on it, nothing happens. The interceptor won't even look at it.
+
+> **The `DbContext` must also implement `IAuditableContext`.** Both interceptors check for it and return
+> immediately when it's missing, so without it *nothing is audited at all* — regardless of how the entities
+> are marked. See [10.3](#103-context-level-exclusions-iauditablecontext) for the interface itself; the
+> `GetExcludedEntityTypes()` member can simply return an empty sequence if you have no exclusions.
 
 ### 2.3 Register services in `Program.cs` (Minimal API)
 
@@ -277,6 +283,11 @@ builder.Services.AddDbContext<BlogDbContext>((sp, opts) =>
         builder.Configuration["DatabaseNames:BlogDb"]);
 
     opts.AddAuditInterceptors(sp);
+
+    // MongoDB only: read auditing runs through AuditMaterializationInterceptor.
+    // AddAuditInterceptors() wires the SQL command interceptor, which MongoDB never
+    // triggers - without this call IncludeReads() has no effect on Mongo.
+    opts.AddAuditReadInterceptor(sp);
 });
 
 var app = builder.Build();
@@ -362,8 +373,8 @@ Host.CreateDefaultBuilder(args)
 ### 5.3 Create a source resolver
 
 ```csharp
-using AggregatedGenericResultMessage;
-using AggregatedGenericResultMessage.Abstractions;
+using RzR.ResultMessage;
+using RzR.ResultMessage.Abstractions;
 using RzR.DataVigil.Abstractions.Services;
 
 public class WorkerSourceResolver : IAuditSourceResolver
@@ -465,7 +476,7 @@ services.AddAuditTrail(options =>
     options.Gdpr.ForEntity<Customer>(e =>
     {
         e.ExcludeOnStorage(c => c.CreditCard); // Property removed entirely
-        e.MaskOnStorage(c => c.Email); // "alice@mail.com" > "a**********m"
+        e.MaskOnStorage(c => c.Email); // "alice@mail.com" > "a************m"
         e.AnonymizeOnStorage(c => c.FullName); // "Alice Smith"    →> "[ANONYMIZED]"
         e.HashOnStorage(c => c.Ssn); // "123-45-6789"  >   "a1b2c3...f6" (SHA-256)
         e.TransformOnStorage(c => c.Phone, val => // Custom logic
@@ -502,6 +513,10 @@ options.Gdpr.ForEntity<Order>(e =>
 ```
 
 Worth knowing: the access check uses OR logic. Having any one of the allowed roles is enough. Same with claims — one match and you're in. Only when nothing matches does the field stay hidden.
+
+> **WARNING:** omit the `access` lambda and the field is hidden from *everyone*, administrators included.
+> `CanAccess` returns true only on a role or claim match, so a rule with no allowed roles and no allowed
+> claims never matches. Always state who is allowed to see the real value.
 
 ### 6.3 Combining storage + retrieval
 
@@ -561,7 +576,7 @@ services.AddAuditTrail(options =>
 services.AddAuditRetentionService();
 ```
 
-This registers a background service called `AuditRetentionService`. It wakes up once a day, checks the retention setting, and deletes anything that's too old. If you didn't configure a retention period it just does nothing. And it swallows any exceptions so it won't take down your app if something goes wrong with the cleanup.
+This registers a background service called `AuditRetentionService`. It purges once at host startup and then every 24 hours, checking the retention setting and deleting anything that's too old. If you didn't configure a retention period it just does nothing. And it swallows any exceptions so it won't take down your app if something goes wrong with the cleanup.
 
 ### 7.3 Purging manually
 
@@ -691,8 +706,8 @@ The library comes with built-in logic for figuring out user identity, correlatio
 ### 11.1 Custom user resolver
 
 ```csharp
-using AggregatedGenericResultMessage;
-using AggregatedGenericResultMessage.Abstractions;
+using RzR.ResultMessage;
+using RzR.ResultMessage.Abstractions;
 using RzR.DataVigil.Abstractions.Models.Identity;
 using RzR.DataVigil.Abstractions.Services;
 
@@ -705,6 +720,9 @@ public class MyUserResolver : IAuditUserResolver
 
     public IResult<AuditUserInfo> Resolve()
     {
+            // Set Source when one of the AuditUserSource values describes where this identity
+            // came from (ScopeContext, HttpContext, ThreadPrincipal). Leaving it unset records
+            // AuditUserSource.Unspecified - a real actor whose provenance was not declared.
         return Result<AuditUserInfo>.Success(new AuditUserInfo
         {
             UserId = _currentUser.Id,
@@ -742,9 +760,103 @@ services.AddAuditTrail(options =>
 
 | Resolver      | Without AspNetCore                                      | With AspNetCore                                    |
 |---------------|----------------------------------------------------------|----------------------------------------------------|
-| User          | `IAuditScopeContext` > `Thread.CurrentPrincipal` > anonymous | `HttpContext.User` > falls back to scope context |
+| User          | `IAuditScopeContext` > `Thread.CurrentPrincipal` > anonymous | `IAuditScopeContext` > `HttpContext.User` > anonymous |
 | Correlation   | `System.Diagnostics.Activity.Current`                    | `X-Correlation-Id` header > `X-Request-Id` > Activity |
 | Source        | Returns `"Unknown"`                                      | Returns `"Unknown"` (override recommended)        |
+
+> NOTE: In both columns, a manually-set `IAuditScopeContext` user (`scopeContext.SetUser(...)`) always wins — it's checked first, so you can override the ambient/HTTP identity in tests or for background work running inside an otherwise HTTP-driven app.
+>
+> With `RzR.DataVigil.AspNetCore`, role claims are matched against each identity's configured `ClaimsIdentity.RoleClaimType`, including secondary identities on a multi-identity `ClaimsPrincipal`. If your host uses a non-default role claim type (for example a JWT using `"roles"`), those claims land in `AuditUserInfo.Roles`, not `Claims`.
+>
+> Whichever branch resolves the user, the resolver stamps `AuditUserInfo.Source` so the audit record says *how* the identity was determined — see [11.5](#115-recording-how-the-identity-was-resolved).
+>
+> If you're relying on the `Thread.CurrentPrincipal` fallback in the "Without AspNetCore" column, read [11.4](#114-the-threadcurrentprincipal-trust-model) first — it's ambient, process-wide state with a trust model you need to understand before you depend on it.
+
+### 11.4 The Thread.CurrentPrincipal Trust Model
+
+This section applies to `DefaultUserResolver` — the resolver used by every host that doesn't reference `RzR.DataVigil.AspNetCore`: worker services, console apps, background and hosted services. It resolves the audit actor in this order: `IAuditScopeContext` → `Thread.CurrentPrincipal` → anonymous.
+
+For a while, a null-check bug meant the `Thread.CurrentPrincipal` branch could never actually run — every non-HTTP deployment fell straight through to anonymous. That's fixed now, which means `Thread.CurrentPrincipal` is, for the first time, a live source of audit identity in these hosts. That's a strict improvement over silently losing attribution, but it's worth understanding what you're now trusting.
+
+**It's ambient, process-global, mutable state, and nothing checks who's allowed to set it.**
+
+`Thread.CurrentPrincipal` is a plain settable property:
+
+```csharp
+Thread.CurrentPrincipal = new GenericPrincipal(new GenericIdentity("anyone"), null);
+```
+
+Any code running in the process can assign it — your code, a library, a dependency. There's no authentication behind that assignment. Setting it doesn't mean someone was actually authenticated; it means something in your process decided this thread should look like that user right now. `DefaultUserResolver` trusts whatever it finds there, the same way it would trust a value you set explicitly through `IAuditScopeContext`.
+
+**On .NET Core, it flows across `await` — and nothing resets it for you.**
+
+Under .NET Framework, `Thread.CurrentPrincipal` was `[ThreadStatic]`: set it, and it stayed pinned to that OS thread. .NET Core changed this — the value now flows with `ExecutionContext`, so it rides along across `await` continuations. In practice, if something upstream in an async call chain sets `Thread.CurrentPrincipal` and never clears it, that value can leak into the *next* logical unit of work processed on the same continuation — a later queue message, a later loop iteration — even though that later work has nothing to do with the original identity.
+
+`DataVigil` never sets or clears `Thread.CurrentPrincipal` itself, before or after resolving it. Managing its lifetime is entirely the host's responsibility.
+
+> WARNING: If your worker sets `Thread.CurrentPrincipal` once — at startup, or the first time it handles a message — and never clears it, every later unit of work on that async chain can get audited under a stale identity. That isn't a bug in the resolver; it's how ambient state behaves by design.
+
+**What to do about it**
+
+- If you set `Thread.CurrentPrincipal` in a worker or console host, set it **and clear it** (back to `null`, or an explicit anonymous principal) around each logical unit of work — per queue message, per job run, per loop iteration. Don't assume it resets between iterations, because it doesn't.
+- Prefer `IAuditScopeContext.SetUser()` for worker and console hosts instead — see [Worker Service / Console App](#5-worker-service--console-app-no-httpcontext). It's scoped to a DI scope rather than ambient to the process, so there's no cross-message leakage to reason about, and `DefaultUserResolver` already checks it before `Thread.CurrentPrincipal`. It's also a more auditable choice: the assignment is explicit, in your code, at the point you know who the actor is.
+- If your host calls `AppDomain.SetPrincipalPolicy(PrincipalPolicy.WindowsPrincipal)` — seen in some legacy Windows-service or IIS-adjacent setups — every thread that hasn't had `Thread.CurrentPrincipal` explicitly set gets a non-null, *authenticated* `WindowsPrincipal` for the process or service account automatically. With the fix, `DefaultUserResolver` now picks that up and attributes audit entries to the machine/service account instead of leaving them anonymous. If your host uses this policy, decide deliberately whether that's the attribution you want; set an explicit user via `IAuditScopeContext.SetUser()` if it isn't.
+
+---
+
+### 11.5 Recording how the identity was resolved
+
+An audit record with no `UserId` is ambiguous on its own. It could mean the action was genuinely anonymous, or it could mean identity resolution broke down — and those are very different facts to an auditor. Every transaction therefore records *how* the actor was determined, in `AuditTransaction.Metadata` under the reserved key `__datavigil.user.source`.
+
+| `AuditUserSource` | Recorded when |
+|-------------------|---------------|
+| `ScopeContext`    | The user was set explicitly via `IAuditScopeContext.SetUser()` |
+| `HttpContext`     | The user came from an authenticated `HttpContext.User` |
+| `ThreadPrincipal` | The user came from `Thread.CurrentPrincipal` |
+| `Anonymous`       | Resolution succeeded and there genuinely was no user |
+| `Unresolved`      | Resolution failed — the absence of a user proves nothing about the action |
+| `Unspecified`     | A resolver returned a real user but did not declare where it came from |
+
+Reading it back:
+
+```csharp
+var source = transaction.Metadata.TryGetValue(AuditMetadataKeys.UserSource, out var value)
+    ? value
+    : null;
+```
+
+The value is stored as the enum member **name**, not its numeric value.
+
+#### Writing SOURCE from a custom resolver
+
+The built-in resolvers stamp `Source` themselves. If you write your own `IAuditUserResolver`, set it on the user you return:
+
+```csharp
+public IResult<AuditUserInfo> Resolve()
+{
+    var user = _currentUser.Get();
+    if (user is null)
+        return Result<AuditUserInfo>.Success();   // recorded as Anonymous
+
+    return Result<AuditUserInfo>.Success(new AuditUserInfo
+    {
+        UserId = user.Id,
+        UserName = user.Name,
+        Source = AuditUserSource.ScopeContext
+    });
+}
+```
+
+Two rules the pipeline enforces regardless of what you stamp:
+
+- Return a **success result with a null response** for a genuinely anonymous action. It is recorded as `Anonymous`.
+- Return a **failure result** only when resolution actually broke down. It is recorded as `Unresolved`.
+
+In both of those cases the pipeline overrides whatever `Source` you set, because the outcome of the call is more trustworthy than a field on a payload. Never return a bare `null` — the contract is `IResult<AuditUserInfo>`.
+
+If none of the values describes your source, leave `Source` unset. It records `Unspecified`, which honestly says "a real actor, provenance not declared" rather than falsely claiming resolution failed.
+
+> NOTE: `Metadata` is a public, consumer-writable dictionary, but the `__datavigil.user.source` key is reserved and the pipeline overwrites it on every transaction. Do not use that key for your own data.
 
 ---
 
@@ -874,9 +986,11 @@ var result = await pipeline.ProcessAsync(transaction, cancellationToken);
 <PackageReference Include="RzR.DataVigil.Storage.EfMongoDb" />
 ```
 
-### Registration order matters
+### Registration order matters (for one reason, not the one you might expect)
 
-The order you call these matters. `AddAuditTrail` has to come first because it creates the options object that all the other registrations rely on. After that, the order of the rest is less critical but sticking to this sequence avoids surprises.
+`AddAuditTrail` still has to run at some point before the host resolves services — it creates the options object (and the DI builder) that other registrations read from. But `AddAuditTrailEfCore()`, `AddAuditTrailAspNetCore()`, `AddAuditRetentionService()`, and the storage provider methods (`AddAuditTrailFileStorage()`, `AddAuditTrailSqlServer()`, `AddAuditTrailPostgreSqlServer()`, `AddAuditTrailMongoDb()`) do not touch the options object at the point they're called — each only registers concrete types, or a factory delegate that resolves `AuditTrailOptions`/`StorageOptions` from DI when the service is first constructed, not when the extension method runs. So calling any of them before `AddAuditTrail()` does not fail; it only matters that `AddAuditTrail()` has run by the time the host actually builds and resolves services, which is virtually always the case during startup configuration.
+
+Beyond that, resolver registration order no longer matters. `IAuditUserResolver` and `IAuditCorrelationProvider` now resolve by explicit precedence — an explicitly configured resolver (`options.UseUserResolver<T>()`) wins over the ASP.NET Core HTTP-based resolver, which wins over the built-in default — regardless of which order you call `AddAuditTrail()` and `AddAuditTrailAspNetCore()` in. Previously, calling `AddAuditTrailAspNetCore()` before `AddAuditTrail()` could silently leave a web app on the non-HTTP `DefaultUserResolver`, with no error. That's fixed. If an ASP.NET Core host still ends up on the non-HTTP resolver (for example, `AddAuditTrailAspNetCore()` was never called), a startup diagnostic now logs a warning so it doesn't go unnoticed.
 
 ```
 1. services.AddAuditTrail(options => { ... })     ← always first
@@ -888,3 +1002,7 @@ The order you call these matters. `AddAuditTrail` has to come first because it c
 4. services.AddAuditTrailAspNetCore()             ← if ASP.NET Core
 5. services.AddAuditRetentionService()            ← if retention enabled
 ```
+
+This sequence is still a reasonable default to follow — it's just no longer load-bearing for which resolver you end up with.
+
+---

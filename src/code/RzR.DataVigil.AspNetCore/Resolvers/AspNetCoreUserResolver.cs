@@ -79,6 +79,7 @@ namespace RzR.DataVigil.AspNetCore.Resolvers
             if (scopeUser.IsNotNull() && scopeUser.IsSuccess && scopeUser.Response.IsNotNull())
             {
                 scopeUser.Response.Source = AuditUserSource.ScopeContext;
+
                 return scopeUser;
             }
 
