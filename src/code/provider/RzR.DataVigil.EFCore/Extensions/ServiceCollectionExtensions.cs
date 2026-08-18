@@ -32,7 +32,8 @@ namespace RzR.DataVigil.EFCore.Extensions
     {
         /// -------------------------------------------------------------------------------------------------
         /// <summary>
-        ///     Registers EF Core audit interceptors in DI. Call after AddAuditTrail().
+        ///     Registers EF Core audit interceptors in DI. May be called before or after
+        ///     AddAuditTrail() — it registers only concrete types, so it is order-independent.
         /// </summary>
         /// <param name="services">The services to act on.</param>
         /// <returns>

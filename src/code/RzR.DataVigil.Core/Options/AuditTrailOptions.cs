@@ -1,4 +1,4 @@
-// ***********************************************************************
+﻿// ***********************************************************************
 //  Assembly         : RzR.DataVigil.Core
 //  Author           : RzR
 //  Created On       : 2026-04-14 19:04
@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using Microsoft.Extensions.DependencyInjection;
 using RzR.DataVigil.Abstractions.Services;
 
 #endregion
@@ -93,6 +94,21 @@ namespace RzR.DataVigil.Core.Options
 
         /// -------------------------------------------------------------------------------------------------
         /// <summary>
+        ///     Service lifetime used to register a source resolver supplied through
+        ///     <see cref="UseSourceResolver{TResolver}()"/>. Defaults to Scoped.
+        ///     <para>
+        ///     The built-in <c>DefaultSourceResolver</c> is registered as a Singleton, because the audit
+        ///     source is a stable, application-wide value. A configured resolver stays Scoped by default so
+        ///     that existing hosts are unaffected, including any whose resolver depends on scoped services.
+        ///     Pass <c>ServiceLifetime.Singleton</c> if the resolver is stateless and you need to inject
+        ///     <c>IAuditSourceResolver</c> into a singleton without tripping ValidateScopes.
+        ///     </para>
+        /// </summary>
+        /// =================================================================================================
+        internal ServiceLifetime SourceResolverLifetime { get; private set; } = ServiceLifetime.Scoped;
+
+        /// -------------------------------------------------------------------------------------------------
+        /// <summary>
         ///     Exclude an entity type globally from audit.
         /// </summary>
         /// <typeparam name="TEntity">Type of the entity.</typeparam>
@@ -135,8 +151,26 @@ namespace RzR.DataVigil.Core.Options
         /// =================================================================================================
         public AuditTrailOptions UseSourceResolver<TResolver>()
             where TResolver : class, IAuditSourceResolver
+            => UseSourceResolver<TResolver>(ServiceLifetime.Scoped);
+
+        /// -------------------------------------------------------------------------------------------------
+        /// <summary>
+        ///     Register a custom source resolver with an explicit service lifetime.
+        /// </summary>
+        /// <typeparam name="TResolver">Type of the resolver.</typeparam>
+        /// <param name="lifetime">
+        ///     Lifetime to register the resolver with. Use Singleton for a stateless resolver that must be
+        ///     injectable into a singleton; keep Scoped when the resolver depends on scoped services.
+        /// </param>
+        /// <returns>
+        ///     The AuditTrailOptions.
+        /// </returns>
+        /// =================================================================================================
+        public AuditTrailOptions UseSourceResolver<TResolver>(ServiceLifetime lifetime)
+            where TResolver : class, IAuditSourceResolver
         {
             SourceResolverType = typeof(TResolver);
+            SourceResolverLifetime = lifetime;
 
             return this;
         }
