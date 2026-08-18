@@ -4,7 +4,7 @@
 //  Created On       : 2026-04-10 23:04
 // 
 //  Last Modified By : RzR
-//  Last Modified On : 2026-04-14 20:26
+//  Last Modified On : 2026-08-18 21:54
 // ***********************************************************************
 //  <copyright file="FileAuditStore.cs" company="RzR SOFT & TECH">
 //   Copyright © RzR. All rights reserved.
@@ -109,28 +109,6 @@ namespace RzR.DataVigil.Storage.File
             {
                 var basePath = GetBasePath();
                 var dateKey = transaction.Timestamp.UtcDateTime.ToString("yyyy-MM-dd");
-
-                // Apply GDPR storage policies before persisting
-                if (_gdprProcessor.IsNotNull())
-                {
-                    var anyGdprApplied = false;
-                    var allFullyAnonymized = true;
-                    foreach (var entry in transaction.Entries.NotNull())
-                    {
-                        var (_, applied, fullyAnonymized) = _gdprProcessor.ApplyStoragePolicies(entry);
-                        if (applied.IsTrue())
-                        {
-                            anyGdprApplied = true;
-                            if (!fullyAnonymized)
-                                allFullyAnonymized = false;
-                        }
-                    }
-
-                    if (anyGdprApplied.IsTrue())
-                        transaction.GdprState = allFullyAnonymized
-                            ? GdprStorageState.FullyAnonymized
-                            : GdprStorageState.PartiallyProcessed;
-                }
 
                 lock (_writeLock)
                 {

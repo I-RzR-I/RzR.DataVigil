@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -11,6 +13,8 @@ using RzR.DataVigil.Abstractions.Models.Gdpr;
 using RzR.DataVigil.Abstractions.Models.Query;
 using RzR.DataVigil.Core.Gdpr;
 using RzR.DataVigil.Core.Options;
+using RzR.DataVigil.Core.Pipeline;
+using RzR.DataVigil.Storage.File.Tests.Helpers;
 using static RzR.DataVigil.Storage.File.Tests.Helpers.AuditTestDataBuilder;
 
 namespace RzR.DataVigil.Storage.File.Tests
@@ -792,6 +796,68 @@ namespace RzR.DataVigil.Storage.File.Tests
             var json = await System.IO.File.ReadAllTextAsync(filePath);
             var stored = JsonSerializer.Deserialize<List<AuditTransaction>>(json);
             Assert.AreEqual("original@test.com", stored[0].Entries.First().Properties.First().OldValue);
+        }
+
+        [TestMethod]
+        public async Task ProcessAsync_ThroughPipeline_WithHashStorageRule_DoesNotDoubleHashValue()
+        {
+            var registry = CreateRegistryWithPolicy("Order", new EntityGdprPolicy
+            {
+                StorageRules = new[]
+                {
+                    new FieldGdprRule { FieldName = "Email", Action = GdprFieldAction.Hash }
+                }
+            });
+            var gdprProcessor = new GdprProcessor(registry);
+            var store = CreateStore(gdprProcessor: gdprProcessor);
+            var pipeline = new AuditPipeline(
+                new AnonymousUserResolver(),
+                new FixedSourceResolver(),
+                new FixedCorrelationProvider(),
+                gdprProcessor,
+                store);
+
+            const string originalEmail = "user@example.com";
+            var entry = BuildEntry(entityName: "Order");
+            entry.Properties = new List<AuditEntryProperty>
+            {
+                new AuditEntryProperty
+                {
+                    PropertyName = "Email", PropertyType = "System.String",
+                    OldValue = originalEmail, NewValue = originalEmail
+                }
+            };
+            var timestamp = new DateTimeOffset(2026, 6, 1, 0, 0, 0, TimeSpan.Zero);
+            var txn = BuildTransaction(timestamp: timestamp, entries: new List<AuditEntry> { entry });
+
+            var result = await pipeline.ProcessAsync(txn);
+            Assert.IsTrue(result.IsSuccess);
+
+            var filePath = Path.Combine(_testDirectory, "audit-2026-06-01.json");
+            var savedJson = await System.IO.File.ReadAllTextAsync(filePath);
+            var saved = JsonSerializer.Deserialize<List<AuditTransaction>>(savedJson);
+            var storedValue = saved[0].Entries.First().Properties.First().OldValue;
+
+            var expectedSingleHash = ComputeSha256Hex(originalEmail);
+            var doubleHashed = ComputeSha256Hex(expectedSingleHash);
+
+            Assert.AreEqual(expectedSingleHash, storedValue,
+                "FileAuditStore must not re-apply GDPR storage policies already applied by AuditPipeline.");
+            Assert.AreNotEqual(doubleHashed, storedValue,
+                "Value must not be hashed twice (SHA256(SHA256(x))).");
+        }
+
+        private static string ComputeSha256Hex(string value)
+        {
+            using (var sha256 = SHA256.Create())
+            {
+                var bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(value));
+                var sb = new StringBuilder(bytes.Length * 2);
+                for (var i = 0; i < bytes.Length; i++)
+                    sb.Append(bytes[i].ToString("x2"));
+
+                return sb.ToString();
+            }
         }
     }
 }
