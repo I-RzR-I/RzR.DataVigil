@@ -1,4 +1,4 @@
-// ***********************************************************************
+﻿// ***********************************************************************
 //  Assembly         : RzR.DataVigil.Core
 //  Author           : RzR
 //  Created On       : 2026-04-10 23:04
@@ -38,7 +38,7 @@ namespace RzR.DataVigil.Core.Pipeline
     /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     Core pipeline: enriches the audit transaction with user/correlation/source info, records
-    ///     how the actor was determined (see <see cref="T:RzR.DataVigil.Abstractions.Models.Identity.AuditUserSource"/>)
+    ///     how the actor was determined (see <see cref="T:RzR.DataVigil.Abstractions.Enums.AuditUserSource"/>)
     ///     in Metadata, applies GDPR storage policies to each entry, then persists via IAuditStore.
     /// </summary>
     /// =================================================================================================

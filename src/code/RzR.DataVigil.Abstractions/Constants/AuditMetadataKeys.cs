@@ -1,4 +1,4 @@
-// ***********************************************************************
+﻿// ***********************************************************************
 //  Assembly         : RzR.DataVigil.Abstractions
 //  Author           : RzR
 //  Created On       : 2026-08-18 22:40
@@ -29,7 +29,7 @@ namespace RzR.DataVigil.Abstractions.Constants
         /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Metadata key under which the pipeline records the
-        ///     <see cref="T:RzR.DataVigil.Abstractions.Models.Identity.AuditUserSource"/> (as its
+        ///     <see cref="T:RzR.DataVigil.Abstractions.Enums.AuditUserSource"/> (as its
         ///     <c>ToString()</c>) describing how the transaction's actor was determined.
         /// </summary>
         /// =================================================================================================
