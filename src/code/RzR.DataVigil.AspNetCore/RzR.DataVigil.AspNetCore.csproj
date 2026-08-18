@@ -62,6 +62,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.AspNetCore.Http" Version="2.2.0" />
+		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="3.1.32" />
 	</ItemGroup>
 
 </Project>

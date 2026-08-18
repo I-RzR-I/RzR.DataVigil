@@ -1,10 +1,10 @@
-// ***********************************************************************
+﻿// ***********************************************************************
 //  Assembly         : RzR.DataVigil.Core
 //  Author           : RzR
 //  Created On       : 2026-04-10 23:04
 // 
 //  Last Modified By : RzR
-//  Last Modified On : 2026-04-14 19:30
+//  Last Modified On : 2026-08-18 23:07
 // ***********************************************************************
 //  <copyright file="AuditPipeline.cs" company="RzR SOFT & TECH">
 //   Copyright © RzR. All rights reserved.
@@ -17,8 +17,10 @@
 #region U S A G E S
 
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using RzR.DataVigil.Abstractions.Constants;
 using RzR.DataVigil.Abstractions.Enums;
 using RzR.DataVigil.Abstractions.Models.Entries;
 using RzR.DataVigil.Abstractions.Services;
@@ -35,8 +37,9 @@ namespace RzR.DataVigil.Core.Pipeline
 {
     /// -------------------------------------------------------------------------------------------------
     /// <summary>
-    ///     Core pipeline: enriches the audit transaction with user/correlation/source info, applies
-    ///     GDPR storage policies to each entry, then persists via IAuditStore.
+    ///     Core pipeline: enriches the audit transaction with user/correlation/source info, records
+    ///     how the actor was determined (see <see cref="T:RzR.DataVigil.Abstractions.Enums.AuditUserSource"/>)
+    ///     in Metadata, applies GDPR storage policies to each entry, then persists via IAuditStore.
     /// </summary>
     /// =================================================================================================
     public sealed class AuditPipeline
@@ -125,12 +128,27 @@ namespace RzR.DataVigil.Core.Pipeline
                 var correlationId = _correlationProvider.GetCorrelationId();
                 var traceId = _correlationProvider.GetTraceId();
 
-                if (user.IsNotNull() && user.IsSuccess && user.Response.IsNotNull())
+                AuditUserSource userSource;
+                if (user.IsNull() || user.IsSuccess.IsFalse())
+                {
+                    userSource = AuditUserSource.Unresolved;
+                }
+                else if (user.Response.IsNull())
+                {
+                    userSource = AuditUserSource.Anonymous;
+                }
+                else
                 {
                     transaction.UserId = user.Response.UserId;
                     transaction.UserName = user.Response.UserName;
                     transaction.IpAddress = user.Response.IpAddress;
+                    userSource = user.Response.Source;
                 }
+
+                if (transaction.Metadata.IsNull())
+                    transaction.Metadata = new Dictionary<string, string>();
+
+                transaction.Metadata[AuditMetadataKeys.UserSource] = userSource.ToString();
 
                 transaction.Source = source.Response;
                 transaction.CorrelationId = correlationId.Response;
@@ -155,7 +173,8 @@ namespace RzR.DataVigil.Core.Pipeline
                         ? GdprStorageState.FullyAnonymized
                         : GdprStorageState.PartiallyProcessed;
 
-                return await _auditStore.SaveAsync(transaction, cancellationToken).ConfigureAwait(false);
+                return await _auditStore.SaveAsync(transaction, cancellationToken)
+                    .ConfigureAwait(false);
             }
             catch (Exception ex)
             {

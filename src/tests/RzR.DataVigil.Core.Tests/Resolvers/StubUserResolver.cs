@@ -8,10 +8,13 @@ namespace RzR.DataVigil.Core.Tests.Resolvers
     internal class StubUserResolver : IAuditUserResolver
     {
         public AuditUserInfo UserToReturn { get; set; }
+        public bool ShouldFail { get; set; }
 
         public IResult<AuditUserInfo> Resolve()
         {
-            return Result<AuditUserInfo>.Success(UserToReturn);
+            return ShouldFail
+                ? Result<AuditUserInfo>.Failure()
+                : Result<AuditUserInfo>.Success(UserToReturn);
         }
     }
 }

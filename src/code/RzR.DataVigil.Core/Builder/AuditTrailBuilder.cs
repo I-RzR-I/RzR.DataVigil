@@ -1,10 +1,10 @@
-// ***********************************************************************
+﻿// ***********************************************************************
 //  Assembly         : RzR.DataVigil.Core
 //  Author           : RzR
 //  Created On       : 2026-04-10 23:04
 // 
 //  Last Modified By : RzR
-//  Last Modified On : 2026-04-14 19:34
+//  Last Modified On : 2026-08-18 23:04
 // ***********************************************************************
 //  <copyright file="AuditTrailBuilder.cs" company="RzR SOFT & TECH">
 //   Copyright © RzR. All rights reserved.
@@ -17,6 +17,7 @@
 #region U S A G E S
 
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using RzR.DataVigil.Abstractions.Services;
 using RzR.DataVigil.Core.Gdpr;
 using RzR.DataVigil.Core.Options;
@@ -89,20 +90,24 @@ namespace RzR.DataVigil.Core.Builder
             // Register scope context
             Services.AddScoped<IAuditScopeContext, AuditScopeContext>();
 
-            // Register user resolver
+            // Register user resolver.
             if (Options.UserResolverType.IsNotNull())
-                Services.AddScoped(typeof(IAuditUserResolver), Options.UserResolverType);
+                Services.Replace(ServiceDescriptor.Scoped(typeof(IAuditUserResolver), Options.UserResolverType));
             else
-                Services.AddScoped<IAuditUserResolver, DefaultUserResolver>();
+                Services.TryAddScoped<IAuditUserResolver, DefaultUserResolver>();
 
-            // Register source resolver
+            // Register source resolver.
             if (Options.SourceResolverType.IsNotNull())
-                Services.AddScoped(typeof(IAuditSourceResolver), Options.SourceResolverType);
+                Services.Replace(
+                    ServiceDescriptor.Describe(
+                        typeof(IAuditSourceResolver),
+                        Options.SourceResolverType,
+                        Options.SourceResolverLifetime));
             else
-                Services.AddSingleton<IAuditSourceResolver, DefaultSourceResolver>();
+                Services.TryAddSingleton<IAuditSourceResolver, DefaultSourceResolver>();
 
-            // Register correlation provider
-            Services.AddScoped<IAuditCorrelationProvider, DefaultCorrelationProvider>();
+            // Register correlation provider.
+            Services.TryAddScoped<IAuditCorrelationProvider, DefaultCorrelationProvider>();
         }
     }
 }

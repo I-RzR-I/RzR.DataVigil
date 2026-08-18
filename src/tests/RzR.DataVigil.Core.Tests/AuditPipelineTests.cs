@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using RzR.DataVigil.Abstractions.Constants;
 using RzR.DataVigil.Abstractions.Enums;
 using RzR.DataVigil.Abstractions.Models.Entries;
 using RzR.DataVigil.Abstractions.Models.Gdpr;
@@ -277,6 +278,164 @@ namespace RzR.DataVigil.Core.Tests
             var result = await _pipeline.ProcessAsync(tx);
 
             Assert.IsFalse(result.IsSuccess);
+        }
+
+        [TestMethod]
+        public async Task ProcessAsync_UserResolverFails_RecordsUnresolvedSource()
+        {
+            _userResolver.ShouldFail = true;
+            var tx = BuildTransaction(BuildEntry());
+
+            await _pipeline.ProcessAsync(tx);
+
+            Assert.AreEqual(nameof(AuditUserSource.Unresolved), tx.Metadata[AuditMetadataKeys.UserSource]);
+        }
+
+        [TestMethod]
+        public async Task ProcessAsync_ResolverSucceedsWithNullResponse_RecordsAnonymousSource()
+        {
+            _userResolver.UserToReturn = null;
+            var tx = BuildTransaction(BuildEntry());
+
+            await _pipeline.ProcessAsync(tx);
+
+            Assert.AreEqual(nameof(AuditUserSource.Anonymous), tx.Metadata[AuditMetadataKeys.UserSource]);
+        }
+
+        [TestMethod]
+        public async Task ProcessAsync_UnresolvedVsAnonymous_AreDistinguishable()
+        {
+            var unresolvedTx = BuildTransaction(BuildEntry());
+            _userResolver.ShouldFail = true;
+            await _pipeline.ProcessAsync(unresolvedTx);
+
+            var anonymousTx = BuildTransaction(BuildEntry());
+            _userResolver.ShouldFail = false;
+            _userResolver.UserToReturn = null;
+            await _pipeline.ProcessAsync(anonymousTx);
+
+            Assert.AreNotEqual(
+                unresolvedTx.Metadata[AuditMetadataKeys.UserSource],
+                anonymousTx.Metadata[AuditMetadataKeys.UserSource]);
+            Assert.AreEqual(nameof(AuditUserSource.Unresolved), unresolvedTx.Metadata[AuditMetadataKeys.UserSource]);
+            Assert.AreEqual(nameof(AuditUserSource.Anonymous), anonymousTx.Metadata[AuditMetadataKeys.UserSource]);
+        }
+
+        [TestMethod]
+        public async Task ProcessAsync_ResolverSucceedsWithResponse_RecordsResponseSource()
+        {
+            _userResolver.UserToReturn = new AuditUserInfo
+            {
+                UserId = "user-1",
+                UserName = "Alice",
+                Source = AuditUserSource.ScopeContext
+            };
+            var tx = BuildTransaction(BuildEntry());
+
+            await _pipeline.ProcessAsync(tx);
+
+            Assert.AreEqual(nameof(AuditUserSource.ScopeContext), tx.Metadata[AuditMetadataKeys.UserSource]);
+        }
+
+        [TestMethod]
+        public async Task ProcessAsync_NullMetadataDictionary_DoesNotThrow_AndSetsProvenance()
+        {
+            _userResolver.UserToReturn = new AuditUserInfo
+            {
+                UserId = "user-1",
+                UserName = "Alice",
+                Source = AuditUserSource.ScopeContext
+            };
+            var tx = BuildTransaction(BuildEntry());
+            tx.Metadata = null;
+
+            var result = await _pipeline.ProcessAsync(tx);
+
+            Assert.IsTrue(result.IsSuccess);
+            Assert.IsNotNull(tx.Metadata);
+            Assert.AreEqual(nameof(AuditUserSource.ScopeContext), tx.Metadata[AuditMetadataKeys.UserSource]);
+        }
+
+        [TestMethod]
+        public async Task ProcessAsync_ResolverReturnsUserWithoutSource_RecordsUnspecifiedAndStillEnrichesUser()
+        {
+            _userResolver.ShouldFail = false;
+            _userResolver.UserToReturn = new AuditUserInfo
+            {
+                UserId = "legacy-user-7",
+                UserName = "Legacy Resolver User"
+            };
+            var tx = BuildTransaction(BuildEntry());
+
+            // Act
+            await _pipeline.ProcessAsync(tx);
+
+            // Assert: undeclared provenance, not failed attribution...
+            Assert.AreEqual(
+                nameof(AuditUserSource.Unspecified),
+                tx.Metadata[AuditMetadataKeys.UserSource],
+                "A resolver that returns a user without stamping Source must record Unspecified, not Unresolved.");
+
+            Assert.AreEqual("legacy-user-7", tx.UserId);
+            Assert.AreEqual("Legacy Resolver User", tx.UserName);
+        }
+
+        [TestMethod]
+        public async Task ProcessAsync_UnspecifiedUnresolvedAndAnonymous_AreThreeDistinctRecordedStrings()
+        {
+            // Arrange + Act: resolver failure -> Unresolved
+            var unresolvedTx = BuildTransaction(BuildEntry());
+            _userResolver.ShouldFail = true;
+            await _pipeline.ProcessAsync(unresolvedTx);
+
+            // Arrange + Act: success with a null response -> Anonymous
+            var anonymousTx = BuildTransaction(BuildEntry());
+            _userResolver.ShouldFail = false;
+            _userResolver.UserToReturn = null;
+            await _pipeline.ProcessAsync(anonymousTx);
+
+            // Arrange + Act: success with a response that never declared Source -> Unspecified
+            var unspecifiedTx = BuildTransaction(BuildEntry());
+            _userResolver.ShouldFail = false;
+            _userResolver.UserToReturn = new AuditUserInfo { UserId = "legacy-user-7", UserName = "Legacy Resolver User" };
+            await _pipeline.ProcessAsync(unspecifiedTx);
+
+            // Assert
+            var unresolvedValue = unresolvedTx.Metadata[AuditMetadataKeys.UserSource];
+            var anonymousValue = anonymousTx.Metadata[AuditMetadataKeys.UserSource];
+            var unspecifiedValue = unspecifiedTx.Metadata[AuditMetadataKeys.UserSource];
+
+            Assert.AreEqual(nameof(AuditUserSource.Unresolved), unresolvedValue);
+            Assert.AreEqual(nameof(AuditUserSource.Anonymous), anonymousValue);
+            Assert.AreEqual(nameof(AuditUserSource.Unspecified), unspecifiedValue);
+
+            Assert.AreNotEqual(unresolvedValue, anonymousValue,
+                "A failed resolution must not be persisted the same way as a genuinely anonymous action.");
+            Assert.AreNotEqual(unresolvedValue, unspecifiedValue,
+                "A failed resolution must not be persisted the same way as a resolved user with undeclared provenance.");
+            Assert.AreNotEqual(anonymousValue, unspecifiedValue,
+                "A genuinely anonymous action must not be persisted the same way as a resolved user with undeclared provenance.");
+        }
+
+        [TestMethod]
+        public async Task ProcessAsync_ResponseDeclaresHttpContextSource_RecordsHttpContextNotTheDefault()
+        {
+            _userResolver.ShouldFail = false;
+            _userResolver.UserToReturn = new AuditUserInfo
+            {
+                UserId = "user-2",
+                UserName = "Bob",
+                Source = AuditUserSource.HttpContext
+            };
+            var tx = BuildTransaction(BuildEntry());
+
+            await _pipeline.ProcessAsync(tx);
+
+            Assert.AreEqual(
+                nameof(AuditUserSource.HttpContext),
+                tx.Metadata[AuditMetadataKeys.UserSource],
+                "An explicitly stamped Source must be carried through untouched; the default only applies when nothing was declared.");
+            Assert.AreNotEqual(AuditUserSource.Unspecified.ToString(), tx.Metadata[AuditMetadataKeys.UserSource]);
         }
     }
 }

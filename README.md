@@ -295,7 +295,7 @@ options.Storage.WithRetention(90); // purge entries older than 90 days
 services.AddAuditRetentionService();
 ```
 
-The retention service kicks in every 24h and calls `IAuditStore.PurgeBeforeAsync()` to clean up.
+The retention service purges once at host startup and then every 24h, calling `IAuditStore.PurgeBeforeAsync()` to clean up.
 
 ---
 
@@ -303,7 +303,15 @@ The retention service kicks in every 24h and calls `IAuditStore.PurgeBeforeAsync
 
 ### CUD Auditing (Create/Update/Delete)
 
-The interceptor (`AuditSaveChangesInterceptor`) fires on `SavingChanges`/`SavingChangesAsync`. It goes through the `ChangeTracker`, picks up Added/Modified/Deleted entries that implement `IAuditable`, and builds an `AuditTransaction` out of them - one `AuditEntry` per changed entity, with property-level diffs inside. Then the pipeline tacks on user/source/correlation data, runs GDPR storage rules, and writes to `IAuditStore.SaveAsync()`.
+The interceptor (`AuditSaveChangesInterceptor`) works in two phases.
+
+On `SavingChanges`/`SavingChangesAsync` it walks the `ChangeTracker`, picks up Added/Modified/Deleted entries that implement `IAuditable`, and builds an `AuditTransaction` - one `AuditEntry` per changed entity, with property-level diffs inside. Collection has to happen here, because EF resets `EntityState` and refreshes original values once the write completes.
+
+The transaction is then held until `SavedChanges`/`SavedChangesAsync`, after the write has actually succeeded. Only then are database-generated keys (`int` IDENTITY, PostgreSQL `serial`) real rather than EF's temporary placeholders, so they are patched into the record before the pipeline attaches user/source/correlation data, runs GDPR storage rules, and writes to `IAuditStore.SaveAsync()`.
+
+A `SaveChanges` call that throws produces **no** audit record - the collected transaction is discarded. An audit trail should describe what happened, not what was attempted.
+
+> The `DbContext` must implement `IAuditableContext`. Without it the interceptor returns before collecting anything, no matter how the entities are marked.
 
 Here's what gets captured per property:
 
@@ -368,6 +376,25 @@ Each transaction gets context data attached. The source differs based on your ho
 | CorrelationId | `X-Correlation-Id` > `X-Request-Id` > `Activity.Current.Id` | `Activity.Current.Id` |
 | TraceId | `HttpContext.TraceIdentifier` | `Activity.Current.TraceId` |
 | Source | Custom `IAuditSourceResolver` (default: "Unknown") | Same |
+
+Every transaction also records **how** that actor was determined, in `AuditTransaction.Metadata` under the reserved key `__datavigil.user.source`:
+
+| Value | Meaning |
+|-------|---------|
+| `ScopeContext` | Set explicitly via `IAuditScopeContext.SetUser()` |
+| `HttpContext` | Taken from the authenticated `HttpContext.User` |
+| `ThreadPrincipal` | Taken from `Thread.CurrentPrincipal` |
+| `Anonymous` | Resolution succeeded and there genuinely was no user |
+| `Unresolved` | Resolution failed - the absence of a user is **not** evidence the action was anonymous |
+| `Unspecified` | A resolver returned a real user but did not declare where it came from |
+
+Without this, an audit record with no `UserId` is ambiguous: `Anonymous` and `Unresolved` look identical in the data and mean very different things to anyone reviewing the trail.
+
+Writing the key needs no schema change - `Metadata` is already persisted - but note it now carries at least one entry on every transaction, where it was often empty before.
+
+`AuditUserInfo.Claims` and `.Roles` are resolved for use at retrieval time and are **not** persisted; `AuditTransaction` has no such columns.
+
+See [Custom Resolvers](docs/using.md#11-custom-resolvers) for how to stamp `Source` from your own `IAuditUserResolver`.
 
 ---
 
@@ -525,6 +552,9 @@ public class MyUserResolver : IAuditUserResolver
 {
     public IResult<AuditUserInfo> Resolve()
     {
+            // Set Source when one of the AuditUserSource values describes where this identity
+            // came from (ScopeContext, HttpContext, ThreadPrincipal). Leaving it unset records
+            // AuditUserSource.Unspecified - a real actor whose provenance was not declared.
         return Result<AuditUserInfo>.Success(new AuditUserInfo
         {
             UserId = "system",
@@ -609,20 +639,21 @@ They all implement `IAuditStore`:
 
 ## Samples
 
-Check the `samples/` folder for working examples:
+Check the `src/samples/` folder for working examples:
 
 | Sample | Runtime | Storage | Path |
 |--------|---------|---------|------|
-| WebApiEfSqlServerNet5 | .NET 5 | SQL Server | `samples/ef/WebApiEfSqlServerNet5` |
-| WebApiEfSqlServerNet6 | .NET 6 | SQL Server | `samples/ef/WebApiEfSqlServerNet6` |
-| WebApiEfPostgreSqlNet5 | .NET 5 | PostgreSQL | `samples/ef/WebApiEfPostgreSqlNet5` |
-| WebApiEfPostgreSqlNet6 | .NET 6 | PostgreSQL | `samples/ef/WebApiEfPostgreSqlNet6` |
-| WebApiEfPostgreSqlNet7 | .NET 7 | PostgreSQL | `samples/ef/WebApiEfPostgreSqlNet7` |
-| WebApiEfPostgreSqlNet8 | .NET 8 | PostgreSQL | `samples/ef/WebApiEfPostgreSqlNet8` |
-| WebApiEfPostgreSqlNet9 | .NET 9 | PostgreSQL | `samples/ef/WebApiEfPostgreSqlNet9` |
-| WebApiEfMongoDbNet8 | .NET 8 | MongoDB | `samples/ef/WebApiEfMongoDbNet8` |
+| WebApiEfSqlServerNet5 | .NET 5 | SQL Server | `src/samples/ef/WebApiEfSqlServerNet5` |
+| WebApiEfSqlServerNet6 | .NET 6 | SQL Server | `src/samples/ef/WebApiEfSqlServerNet6` |
+| WebApiEfPostgreSqlNet5 | .NET 5 | PostgreSQL | `src/samples/ef/WebApiEfPostgreSqlNet5` |
+| WebApiEfPostgreSqlNet6 | .NET 6 | PostgreSQL | `src/samples/ef/WebApiEfPostgreSqlNet6` |
+| WebApiEfPostgreSqlNet7 | .NET 7 | PostgreSQL | `src/samples/ef/WebApiEfPostgreSqlNet7` |
+| WebApiEfPostgreSqlNet8 | .NET 8 | PostgreSQL | `src/samples/ef/WebApiEfPostgreSqlNet8` |
+| WebApiEfPostgreSqlNet9 | .NET 9 | PostgreSQL | `src/samples/ef/WebApiEfPostgreSqlNet9` |
+| WebApiEfMongoDbNet8 | .NET 8 | MongoDB | `src/samples/ef/WebApiEfMongoDbNet8` |
+| SampleWorkerService | Worker | File (JSON) | `src/samples/worker/SampleWorkerService` |
 
-All of them are a simple Blog API (Posts + Comments). They include GDPR policies, Swagger, and an `AuditController` for browsing the audit trail.
+The Web API samples are a simple Blog API (Posts + Comments) with GDPR policies, Swagger, and an `AuditController` for browsing the audit trail. `SampleWorkerService` shows the non-HTTP path: setting the actor through `IAuditScopeContext` instead of `HttpContext`.
 
 ---
 

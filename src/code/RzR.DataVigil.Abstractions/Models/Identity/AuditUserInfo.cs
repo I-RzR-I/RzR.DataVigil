@@ -16,6 +16,7 @@
 
 #region U S A G E S
 
+using RzR.DataVigil.Abstractions.Enums;
 using System.Collections.Generic;
 
 #endregion
@@ -79,5 +80,17 @@ namespace RzR.DataVigil.Abstractions.Models.Identity
         /// =================================================================================================
         public IDictionary<string, string> Claims { get; set; }
             = new Dictionary<string, string>();
+
+        /// -------------------------------------------------------------------------------------------------
+        /// <summary>
+        ///     How this user was determined (scope override, HttpContext, thread principal, etc.).
+        ///     Stamped by the resolver that produced this instance. The pipeline copies this value into
+        ///     <see cref="T:RzR.DataVigil.Abstractions.Models.Entries.AuditTransaction"/>'s Metadata.
+        /// </summary>
+        /// <value>
+        ///     The source of the resolved user.
+        /// </value>
+        /// =================================================================================================
+        public AuditUserSource Source { get; set; }
     }
 }

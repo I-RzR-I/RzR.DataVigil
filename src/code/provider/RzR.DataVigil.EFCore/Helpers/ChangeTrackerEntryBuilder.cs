@@ -165,14 +165,15 @@ namespace RzR.DataVigil.EFCore.Helpers
 
         /// -------------------------------------------------------------------------------------------------
         /// <summary>
-        ///     Gets primary key value.
+        ///     Gets primary key value. Exposed to the interceptor so the key can be re-read after
+        ///     write action/operation completes, when a store-generated key is no longer temporary.
         /// </summary>
         /// <param name="entry">The entry.</param>
         /// <returns>
         ///     The primary key value.
         /// </returns>
         /// =================================================================================================
-        private static string GetPrimaryKeyValue(EntityEntry entry)
+        internal static string GetPrimaryKeyValue(EntityEntry entry)
         {
             var keyProperties = entry.Metadata.FindPrimaryKey()?.Properties;
             if (keyProperties.IsNullOrEmptyEnumerable())
@@ -194,6 +195,36 @@ namespace RzR.DataVigil.EFCore.Helpers
             }
 
             return parts.ListToString(",");
+        }
+
+        /// -------------------------------------------------------------------------------------------------
+        /// <summary>
+        ///     Gets the names of the properties that currently hold an EF Core temporary value.
+        ///     <para>
+        ///     Must be called during the collect phase: EF clears the temporary flag once the
+        ///     store-generated value is propagated back from the database, so the same probe run
+        ///     after the write returns nothing.
+        ///     </para>
+        /// </summary>
+        /// <param name="entry">The entry.</param>
+        /// <returns>
+        ///     The temporary property names, or <c>null</c> when the entry has none.
+        /// </returns>
+        /// =================================================================================================
+        internal static IList<string> GetTemporaryPropertyNames(EntityEntry entry)
+        {
+            List<string> names = null;
+
+            foreach (var property in entry.Properties.NotNull())
+            {
+                if (property.IsTemporary.IsFalse())
+                    continue;
+
+                names = names ?? new List<string>(1);
+                names.Add(PropertyMetadataHelper.GetName(property.Metadata));
+            }
+
+            return names;
         }
 
         /// -------------------------------------------------------------------------------------------------

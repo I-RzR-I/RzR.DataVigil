@@ -1,4 +1,5 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Linq;
 using Microsoft.AspNetCore.Http;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using RzR.DataVigil.Abstractions.Models.Identity;
@@ -48,7 +49,8 @@ namespace RzR.DataVigil.AspNetCore.Tests
 
             var result = resolver.Resolve();
 
-            // Scope context returns a non-null Result with null Response
+            // No scope user set (anonymous), no HttpContext available — resolver falls through
+            // to the anonymous Success() result rather than returning a bare null
             Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccess);
             Assert.IsNull(result.Response);
@@ -62,21 +64,28 @@ namespace RzR.DataVigil.AspNetCore.Tests
 
             var result = resolver.Resolve();
 
+            // Asserts the never-return-bare-null contract: an unauthenticated HttpContext
+            // still yields an anonymous, successful Result rather than null
             Assert.IsNotNull(result);
+            Assert.IsTrue(result.IsSuccess);
             Assert.IsNull(result.Response);
         }
 
         [TestMethod]
-        public void Resolve_NoScopeUser_AuthenticatedHttpContext_ReturnsResultWithNullResponse()
+        public void Resolve_NoScopeUser_AuthenticatedHttpContext_ReturnsHttpContextUser()
         {
-            // Even with an authenticated HttpContext, scope context check returns first
+            // With no scope user set, the resolver falls through to HttpContext and
+            // returns the authenticated user found there
             var httpContext = CreateAuthenticatedContext(userId: "user-42", userName: "Bob");
             var resolver = new AspNetCoreUserResolver(CreateAccessor(httpContext), new AuditScopeContext());
 
             var result = resolver.Resolve();
 
             Assert.IsNotNull(result);
-            Assert.IsNull(result.Response);
+            Assert.IsTrue(result.IsSuccess);
+            Assert.IsNotNull(result.Response);
+            Assert.AreEqual("user-42", result.Response.UserId);
+            Assert.AreEqual("Bob", result.Response.UserName);
         }
 
         [TestMethod]
@@ -100,6 +109,9 @@ namespace RzR.DataVigil.AspNetCore.Tests
             Assert.AreEqual("u-99", result.Response.UserId);
             Assert.AreEqual("FullUser", result.Response.UserName);
             Assert.AreEqual("192.168.1.1", result.Response.IpAddress);
+            CollectionAssert.AreEqual(
+                new[] { "Admin", "Manager" }, result.Response.Roles.ToList());
+            Assert.AreEqual("IT", result.Response.Claims["dept"]);
         }
     }
 }
