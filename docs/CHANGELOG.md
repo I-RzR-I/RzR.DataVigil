@@ -1,3 +1,6 @@
+### **v1.2.1.4420** [[RzR](mailto:108324929+I-RzR-I@users.noreply.github.com)] 19-08-2026
+* [55076dc] (RzR) -> Flush audit store writes made through the audited context.
+
 ### **v1.2.0.809** [[RzR](mailto:108324929+I-RzR-I@users.noreply.github.com)] 19-08-2026
 * [55076dc] (RzR) -> Auto commit uncommited files
 * [ae58611] (RzR) -> Document the audit identity fixes and their known limitations.
