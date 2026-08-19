@@ -20,7 +20,6 @@ Below you'll find setup instructions for a bunch of different scenarios. Web API
 12. [Read (SELECT) Auditing](#12-read-select-auditing)
 13. [Manual Audit Entries (No EF Core)](#13-manual-audit-entries-no-ef-core)
 14. [Package Reference Summary](#14-package-reference-summary)
-15. [Known Limitations](#15-known-limitations)
 
 ---
 
@@ -1004,5 +1003,3 @@ Beyond that, resolver registration order no longer matters. `IAuditUserResolver`
 ```
 
 This sequence is still a reasonable default to follow — it's just no longer load-bearing for which resolver you end up with.
-
----

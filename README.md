@@ -311,6 +311,10 @@ The transaction is then held until `SavedChanges`/`SavedChangesAsync`, after the
 
 A `SaveChanges` call that throws produces **no** audit record - the collected transaction is discarded. An audit trail should describe what happened, not what was attempted.
 
+Most stores write to independent storage and leave the audited context alone. A store that instead persists through that same context - a transactional outbox - appends its row there and relies on the context being saved. Since it runs after the business write, the interceptor flushes those writes for it. That flush is covered by your transaction when you opened one, and is a separate transaction when you did not, so own the transaction if the audit row must commit atomically with the change it describes.
+
+> **Read auditing is not covered by that flush.** `IncludeReads()` records through `AuditCommandInterceptor`, which fires mid-query with the connection still busy and has no save of its own, so a store persisting through the audited context receives Read transactions but never gets them committed. Create, Update and Delete are unaffected. If you enable `IncludeReads()`, use a store that writes to independent storage.
+
 > The `DbContext` must implement `IAuditableContext`. Without it the interceptor returns before collecting anything, no matter how the entities are marked.
 
 Here's what gets captured per property:

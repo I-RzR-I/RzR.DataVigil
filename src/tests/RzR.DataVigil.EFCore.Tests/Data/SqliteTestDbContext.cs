@@ -17,6 +17,8 @@ namespace RzR.DataVigil.EFCore.Tests.Data
 
         public DbSet<OrderLine> OrderLines { get; set; }
 
+        public DbSet<AuditOutboxRecord> AuditOutbox { get; set; }
+
         public IEnumerable<Type> GetExcludedEntityTypes() => Enumerable.Empty<Type>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -41,6 +43,13 @@ namespace RzR.DataVigil.EFCore.Tests.Data
                     .WithMany()
                     .HasForeignKey(e => e.OrderId)
                     .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<AuditOutboxRecord>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).ValueGeneratedOnAdd();
+                entity.Property(e => e.Topic).HasMaxLength(256);
             });
         }
     }

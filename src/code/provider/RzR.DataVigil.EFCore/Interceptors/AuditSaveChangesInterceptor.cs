@@ -30,6 +30,7 @@ using RzR.DataVigil.Abstractions.Enums;
 using RzR.DataVigil.Abstractions.Models.Entries;
 using RzR.DataVigil.Core.Options;
 using RzR.DataVigil.Core.Pipeline;
+using RzR.DataVigil.EFCore.Extensions;
 using RzR.DataVigil.EFCore.Helpers;
 using RzR.DataVigil.EFCore.Models;
 using RzR.Extensions.Domain.Collections;
@@ -264,7 +265,8 @@ namespace RzR.DataVigil.EFCore.Interceptors
 
         /// -------------------------------------------------------------------------------------------------
         /// <summary>
-        ///     Patches store-generated values into the collected entries and runs the audit pipeline.
+        ///     Patches store-generated values into the collected entries, runs the audit pipeline, and
+        ///     flushes anything the store wrote through the audited context.
         /// </summary>
         /// <param name="context">The context.</param>
         /// <param name="pending">The pending transaction.</param>
@@ -275,6 +277,9 @@ namespace RzR.DataVigil.EFCore.Interceptors
         {
             PatchStoreGeneratedValues(pending, context);
 
+            var trackedBeforeStore = SnapshotTrackedEntities(context);
+            var callerWorkStillPending = context.HasPendingWork();
+
             var auditResult = await _pipeline.ProcessAsync(pending.Transaction, cancellationToken)
                 .ConfigureAwait(false);
 
@@ -282,8 +287,67 @@ namespace RzR.DataVigil.EFCore.Interceptors
                 _logger.LogWarning(
                     "Audit pipeline failed for context {Context}. Check AuditStore logs for details.",
                     context.GetType().Name);
+
+            await FlushAmbientContextWritesAsync(context, trackedBeforeStore, callerWorkStillPending,
+                cancellationToken).ConfigureAwait(false);
         }
 
+        /// -------------------------------------------------------------------------------------------------
+        /// <summary>
+        ///     Saves anything the audit store added to the audited context while the pipeline ran.
+        /// </summary>
+        /// <param name="context">The audited context.</param>
+        /// <param name="trackedBeforeStore">The entities the context tracked before the store ran.</param>
+        /// <param name="callerWorkStillPending">
+        ///     True when the caller's own entities were still pending before the store ran, which is what
+        ///     <c>SaveChanges(acceptAllChangesOnSuccess: false)</c> leaves behind. Saving again in that
+        ///     state would re-send the caller's writes, so the flush stands down instead.
+        /// </param>
+        /// <param name="cancellationToken">A token that allows processing to be cancelled.</param>
+        /// =================================================================================================
+        private async Task FlushAmbientContextWritesAsync(DbContext context, HashSet<object> trackedBeforeStore, 
+            bool callerWorkStillPending, CancellationToken cancellationToken)
+        {
+            var storeWroteSomething = context.ChangeTracker.Entries()
+                .Any(entry => entry.State.IsPending()
+                              && trackedBeforeStore.Contains(entry.Entity).IsFalse());
+
+            if (storeWroteSomething.IsFalse())
+                return;
+
+            if (callerWorkStillPending)
+            {
+                _logger.LogWarning(
+                    "The audit store wrote through context {Context}, but the caller saved with "
+                    + "acceptAllChangesOnSuccess: false, so those writes cannot be flushed without "
+                    + "re-sending the caller's own changes. Call SaveChanges() again after "
+                    + "AcceptAllChanges() to persist the audit record.",
+                    context.GetType().Name);
+
+                return;
+            }
+
+            await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        /// -------------------------------------------------------------------------------------------------
+        /// <summary>
+        ///     Captures which entities the context tracks, by reference, so writes the store adds
+        ///     afterward can be told apart from what was already there.
+        /// </summary>
+        /// <param name="context">The audited context.</param>
+        /// <returns>The tracked entities, compared by reference.</returns>
+        /// =================================================================================================
+        private static HashSet<object> SnapshotTrackedEntities(DbContext context)
+        {
+            var tracked = new HashSet<object>(AuditReferenceComparer.Instance);
+
+            foreach (var entry in context.ChangeTracker.Entries())
+                tracked.Add(entry.Entity);
+
+            return tracked;
+        }
+        
         /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Re-reads the values that were temporary at collect time, now that the write has
