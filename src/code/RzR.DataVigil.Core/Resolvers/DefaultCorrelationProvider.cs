@@ -1,4 +1,4 @@
-// ***********************************************************************
+﻿// ***********************************************************************
 //  Assembly         : RzR.DataVigil.Core
 //  Author           : RzR
 //  Created On       : 2026-04-10 23:04
@@ -18,6 +18,9 @@
 
 using System.Diagnostics;
 using RzR.DataVigil.Abstractions.Services;
+using RzR.DataVigil.Core.Helpers;
+using RzR.Extensions.Domain.Primitives;
+using RzR.Extensions.Domain.Text;
 using RzR.ResultMessage;
 using RzR.ResultMessage.Abstractions;
 
@@ -33,16 +36,51 @@ namespace RzR.DataVigil.Core.Resolvers
     /// =================================================================================================
     public class DefaultCorrelationProvider : IAuditCorrelationProvider
     {
-        /// <inheritdoc/>
-        public IResult<string> GetCorrelationId()
+        /// <summary>
+        ///     Optional scope override. Null when the provider is constructed directly.
+        /// </summary>
+        private readonly IAuditScopeContext _scopeContext;
+
+        /// -------------------------------------------------------------------------------------------------
+        /// <summary>
+        ///     Initializes a new instance with no scope override.
+        /// </summary>
+        /// =================================================================================================
+        public DefaultCorrelationProvider() : this(null)
         {
-            return Result<string>.Success(Activity.Current?.Id);
+        }
+
+        /// -------------------------------------------------------------------------------------------------
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="DefaultCorrelationProvider"/> class.
+        /// </summary>
+        /// <param name="scopeContext">The scope context supplying a manual correlation id override.</param>
+        /// =================================================================================================
+        public DefaultCorrelationProvider(IAuditScopeContext scopeContext)
+        {
+            _scopeContext = scopeContext;
         }
 
         /// <inheritdoc/>
+        public IResult<string> GetCorrelationId()
+        {
+            var scoped = _scopeContext?.GetCurrentCorrelationId();
+            if (scoped.IsNotNull() && scoped!.IsSuccess && scoped.Response.IsPresent())
+                return scoped;
+
+            return Result<string>.Success(ActivityTraceHelper.GetW3CTraceId());
+        }
+
+        /// <inheritdoc/>
+        /// <remarks>
+        ///     Only returns the trace id when <see cref="Activity.Current"/> uses the W3C id format and
+        ///     carries a real (non-default) <see cref="ActivityTraceId"/>. 
+        ///     When Activity.Current is null, or does not carry a
+        ///     usable W3C trace id, this correctly returns null.
+        /// </remarks>
         public IResult<string> GetTraceId()
         {
-            return Result<string>.Success(Activity.Current?.TraceId.ToString());
+            return Result<string>.Success(ActivityTraceHelper.GetW3CTraceId());
         }
     }
 }

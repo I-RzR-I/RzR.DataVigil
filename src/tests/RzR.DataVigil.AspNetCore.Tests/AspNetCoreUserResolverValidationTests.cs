@@ -471,7 +471,11 @@ namespace RzR.DataVigil.AspNetCore.Tests
             public void Dispose()
             {
             }
-        }
+        
+            public IResult SetCorrelationId(string correlationId) => Result.Success();
+
+            public IResult<string> GetCurrentCorrelationId() => Result<string>.Success(null);
+}
 
         private sealed class NullReturningScopeContext : IAuditScopeContext
         {
@@ -482,7 +486,11 @@ namespace RzR.DataVigil.AspNetCore.Tests
             public void Dispose()
             {
             }
-        }
+        
+            public IResult SetCorrelationId(string correlationId) => Result.Success();
+
+            public IResult<string> GetCurrentCorrelationId() => Result<string>.Success(null);
+}
 
         #endregion
     }

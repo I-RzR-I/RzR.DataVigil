@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using System.Security.Principal;
 using System.Threading;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -217,7 +217,11 @@ namespace RzR.DataVigil.Core.Tests
             public void Dispose()
             {
             }
-        }
+        
+            public IResult SetCorrelationId(string correlationId) => Result.Success();
+
+            public IResult<string> GetCurrentCorrelationId() => Result<string>.Success(null);
+}
 
         private class FailingScopeContextWithResponse : IAuditScopeContext
         {
@@ -236,6 +240,10 @@ namespace RzR.DataVigil.Core.Tests
             public void Dispose()
             {
             }
-        }
+        
+            public IResult SetCorrelationId(string correlationId) => Result.Success();
+
+            public IResult<string> GetCurrentCorrelationId() => Result<string>.Success(null);
+}
     }
 }

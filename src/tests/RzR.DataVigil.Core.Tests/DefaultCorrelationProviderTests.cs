@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using RzR.DataVigil.Core.Resolvers;
 
@@ -31,7 +31,7 @@ namespace RzR.DataVigil.Core.Tests
         }
 
         [TestMethod]
-        public void GetCorrelationId_WithActivity_ReturnsActivityId()
+        public void GetCorrelationId_WithActivity_ReturnsStableTraceId()
         {
             var source = new ActivitySource("TestSource");
             using var listener = new ActivityListener
@@ -49,7 +49,9 @@ namespace RzR.DataVigil.Core.Tests
 
             Assert.IsTrue(result.IsSuccess);
             Assert.IsNotNull(result.Response);
-            Assert.AreEqual(Activity.Current.Id, result.Response);
+
+            Assert.AreEqual(Activity.Current.TraceId.ToHexString(), result.Response);
+            Assert.AreNotEqual(Activity.Current.Id, result.Response);
         }
 
         [TestMethod]

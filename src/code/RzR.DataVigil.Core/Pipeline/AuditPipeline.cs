@@ -150,9 +150,9 @@ namespace RzR.DataVigil.Core.Pipeline
 
                 transaction.Metadata[AuditMetadataKeys.UserSource] = userSource.ToString();
 
-                transaction.Source = source.Response;
-                transaction.CorrelationId = correlationId.Response;
-                transaction.TraceId = traceId.Response;
+                transaction.Source = ValueOrNull(source);
+                transaction.CorrelationId = ValueOrNull(correlationId);
+                transaction.TraceId = ValueOrNull(traceId);
 
                 // Apply GDPR storage policies to each entry
                 var anyGdprApplied = false;
@@ -183,5 +183,19 @@ namespace RzR.DataVigil.Core.Pipeline
                     .WithError(ex);
             }
         }
+        /// -------------------------------------------------------------------------------------------------
+        /// <summary>
+        ///     Returns the payload of a resolver result, or null when the result is missing or failed.
+        ///     Reading Response directly would silently store the payload of a failed lookup, and would
+        ///     throw for a third-party provider that returns a null result.
+        /// </summary>
+        /// <param name="result">The resolver result.</param>
+        /// <returns>
+        ///     The resolved value, or null.
+        /// </returns>
+        /// =================================================================================================
+        private static string ValueOrNull(IResult<string> result)
+            => result.IsNull() || result.IsSuccess.IsFalse() ? null : result.Response;
+
     }
 }

@@ -115,7 +115,12 @@ namespace RzR.DataVigil.Storage.EfSqlServer
             }
             catch (Exception ex)
             {
-                return Result.Failure(ex.Message);
+                _logger.LogError(ex, "An error occurred while trying to save an audit transaction!");
+
+                _dbContext.Entry(transaction).State = EntityState.Detached;
+
+                return Result.Failure(ex.Message)
+                    .WithError(ex);
             }
         }
 
@@ -202,7 +207,10 @@ namespace RzR.DataVigil.Storage.EfSqlServer
             }
             catch (Exception ex)
             {
-                return Result.Failure(ex.Message);
+                _logger.LogError(ex, "An error occurred while trying to anonymize audit transactions for a user!");
+
+                return Result.Failure(ex.Message)
+                    .WithError(ex);
             }
         }
 
@@ -235,7 +243,10 @@ namespace RzR.DataVigil.Storage.EfSqlServer
             }
             catch (Exception ex)
             {
-                return Result.Failure(ex.Message);
+                _logger.LogError(ex, "An error occurred while trying to purge audit transactions!");
+
+                return Result.Failure(ex.Message)
+                    .WithError(ex);
             }
         }
     }
