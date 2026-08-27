@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RzR.DataVigil.Storage.EfSqlServer;
 
 namespace RzR.DataVigil.Storage.EfSqlServer.Migrations
 {
     [DbContext(typeof(AuditSqlServerDbContext))]
-    partial class AuditSqlServerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260827084547_AddAuditReferenceTables")]
+    partial class AddAuditReferenceTables
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -45,11 +47,9 @@ namespace RzR.DataVigil.Storage.EfSqlServer.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("EntityName", "Action")
-                        .HasDatabaseName("IX_AuditEntries_EntityName");
+                    b.HasIndex("EntityName");
 
-                    b.HasIndex("TransactionId", "Action")
-                        .HasDatabaseName("IX_AuditEntries_TransactionId");
+                    b.HasIndex("TransactionId");
 
                     b.ToTable("AuditEntries", "audit");
                 });
@@ -130,12 +130,10 @@ namespace RzR.DataVigil.Storage.EfSqlServer.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.HasIndex("GdprState", "Timestamp");
-
                     b.ToTable("AuditTransactions", "audit");
                 });
 
-            modelBuilder.Entity("RzR.DataVigil.Abstractions.Models.Entries.Referees.RefAuditAction", b =>
+            modelBuilder.Entity("RzR.DataVigil.Abstractions.Models.Referees.RefAuditAction", b =>
                 {
                     b.Property<int>("Id")
                         .HasColumnType("int");
@@ -183,7 +181,7 @@ namespace RzR.DataVigil.Storage.EfSqlServer.Migrations
                         });
                 });
 
-            modelBuilder.Entity("RzR.DataVigil.Abstractions.Models.Entries.Referees.RefAuditUserSource", b =>
+            modelBuilder.Entity("RzR.DataVigil.Abstractions.Models.Referees.RefAuditUserSource", b =>
                 {
                     b.Property<int>("Id")
                         .HasColumnType("int");
@@ -243,7 +241,7 @@ namespace RzR.DataVigil.Storage.EfSqlServer.Migrations
                         });
                 });
 
-            modelBuilder.Entity("RzR.DataVigil.Abstractions.Models.Entries.Referees.RefGdprFieldAction", b =>
+            modelBuilder.Entity("RzR.DataVigil.Abstractions.Models.Referees.RefGdprFieldAction", b =>
                 {
                     b.Property<int>("Id")
                         .HasColumnType("int");
@@ -297,7 +295,7 @@ namespace RzR.DataVigil.Storage.EfSqlServer.Migrations
                         });
                 });
 
-            modelBuilder.Entity("RzR.DataVigil.Abstractions.Models.Entries.Referees.RefGdprStorageState", b =>
+            modelBuilder.Entity("RzR.DataVigil.Abstractions.Models.Referees.RefGdprStorageState", b =>
                 {
                     b.Property<int>("Id")
                         .HasColumnType("int");

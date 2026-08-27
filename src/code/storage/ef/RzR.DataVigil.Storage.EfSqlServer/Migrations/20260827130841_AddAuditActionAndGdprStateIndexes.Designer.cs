@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RzR.DataVigil.Storage.EfSqlServer;
 
 namespace RzR.DataVigil.Storage.EfSqlServer.Migrations
 {
     [DbContext(typeof(AuditSqlServerDbContext))]
-    partial class AuditSqlServerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260827130841_AddAuditActionAndGdprStateIndexes")]
+    partial class AddAuditActionAndGdprStateIndexes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

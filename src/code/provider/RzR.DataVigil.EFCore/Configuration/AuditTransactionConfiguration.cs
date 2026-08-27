@@ -1,10 +1,10 @@
-// ***********************************************************************
+﻿// ***********************************************************************
 //  Assembly         : RzR.DataVigil.EFCore
 //  Author           : RzR
 //  Created On       : 2026-04-14 13:04
 // 
 //  Last Modified By : RzR
-//  Last Modified On : 2026-04-14 18:08
+//  Last Modified On : 2026-08-27 16:13
 // ***********************************************************************
 //  <copyright file="AuditTransactionConfiguration.cs" company="RzR SOFT & TECH">
 //   Copyright © RzR. All rights reserved.
@@ -97,6 +97,7 @@ namespace RzR.DataVigil.EFCore.Configuration
             builder.HasIndex(t => t.Timestamp);
             builder.HasIndex(t => t.UserId);
             builder.HasIndex(t => t.CorrelationId);
+            builder.HasIndex(t => new { t.GdprState, t.Timestamp });
         }
 
         /// -------------------------------------------------------------------------------------------------

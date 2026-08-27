@@ -2,54 +2,54 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using RzR.DataVigil.Storage.EfSqlServer;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+using RzR.DataVigil.Storage.EfPostgreSql;
 
-namespace RzR.DataVigil.Storage.EfSqlServer.Migrations
+namespace RzR.DataVigil.Storage.EfPostgreSql.Migrations
 {
-    [DbContext(typeof(AuditSqlServerDbContext))]
-    partial class AuditSqlServerDbContextModelSnapshot : ModelSnapshot
+    [DbContext(typeof(AuditPostgreSqlDbContext))]
+    [Migration("20260827084611_AddAuditReferenceTables")]
+    partial class AddAuditReferenceTables
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
                 .HasDefaultSchema("audit")
-                .HasAnnotation("Relational:MaxIdentifierLength", 128)
+                .HasAnnotation("Relational:MaxIdentifierLength", 63)
                 .HasAnnotation("ProductVersion", "5.0.17")
-                .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+                .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
 
             modelBuilder.Entity("RzR.DataVigil.Abstractions.Models.Entries.AuditEntry", b =>
                 {
                     b.Property<Guid>("Id")
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uuid");
 
                     b.Property<int>("Action")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("EntityId")
                         .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
+                        .HasColumnType("character varying(256)");
 
                     b.Property<string>("EntityName")
                         .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
+                        .HasColumnType("character varying(256)");
 
                     b.Property<string>("EntityTypeName")
                         .HasMaxLength(512)
-                        .HasColumnType("nvarchar(512)");
+                        .HasColumnType("character varying(512)");
 
                     b.Property<Guid>("TransactionId")
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("EntityName", "Action")
-                        .HasDatabaseName("IX_AuditEntries_EntityName");
+                    b.HasIndex("EntityName");
 
-                    b.HasIndex("TransactionId", "Action")
-                        .HasDatabaseName("IX_AuditEntries_TransactionId");
+                    b.HasIndex("TransactionId");
 
                     b.ToTable("AuditEntries", "audit");
                 });
@@ -58,24 +58,24 @@ namespace RzR.DataVigil.Storage.EfSqlServer.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uuid");
 
                     b.Property<Guid>("AuditEntryId")
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uuid");
 
                     b.Property<string>("NewValue")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("OldValue")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("PropertyName")
                         .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
+                        .HasColumnType("character varying(256)");
 
                     b.Property<string>("PropertyType")
                         .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
+                        .HasColumnType("character varying(256)");
 
                     b.HasKey("Id");
 
@@ -87,40 +87,40 @@ namespace RzR.DataVigil.Storage.EfSqlServer.Migrations
             modelBuilder.Entity("RzR.DataVigil.Abstractions.Models.Entries.AuditTransaction", b =>
                 {
                     b.Property<Guid>("Id")
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uuid");
 
                     b.Property<string>("CorrelationId")
                         .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
+                        .HasColumnType("character varying(256)");
 
                     b.Property<int>("GdprState")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("IpAddress")
                         .HasMaxLength(64)
-                        .HasColumnType("nvarchar(64)");
+                        .HasColumnType("character varying(64)");
 
                     b.Property<string>("Metadata")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Source")
                         .HasMaxLength(512)
-                        .HasColumnType("nvarchar(512)");
+                        .HasColumnType("character varying(512)");
 
                     b.Property<DateTimeOffset>("Timestamp")
-                        .HasColumnType("datetimeoffset");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("TraceId")
                         .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
+                        .HasColumnType("character varying(256)");
 
                     b.Property<string>("UserId")
                         .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
+                        .HasColumnType("character varying(256)");
 
                     b.Property<string>("UserName")
                         .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
+                        .HasColumnType("character varying(256)");
 
                     b.HasKey("Id");
 
@@ -130,24 +130,22 @@ namespace RzR.DataVigil.Storage.EfSqlServer.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.HasIndex("GdprState", "Timestamp");
-
                     b.ToTable("AuditTransactions", "audit");
                 });
 
-            modelBuilder.Entity("RzR.DataVigil.Abstractions.Models.Entries.Referees.RefAuditAction", b =>
+            modelBuilder.Entity("RzR.DataVigil.Abstractions.Models.Referees.RefAuditAction", b =>
                 {
                     b.Property<int>("Id")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Description")
                         .HasMaxLength(512)
-                        .HasColumnType("nvarchar(512)");
+                        .HasColumnType("character varying(512)");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(64)
-                        .HasColumnType("nvarchar(64)");
+                        .HasColumnType("character varying(64)");
 
                     b.HasKey("Id");
 
@@ -183,19 +181,19 @@ namespace RzR.DataVigil.Storage.EfSqlServer.Migrations
                         });
                 });
 
-            modelBuilder.Entity("RzR.DataVigil.Abstractions.Models.Entries.Referees.RefAuditUserSource", b =>
+            modelBuilder.Entity("RzR.DataVigil.Abstractions.Models.Referees.RefAuditUserSource", b =>
                 {
                     b.Property<int>("Id")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Description")
                         .HasMaxLength(512)
-                        .HasColumnType("nvarchar(512)");
+                        .HasColumnType("character varying(512)");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(64)
-                        .HasColumnType("nvarchar(64)");
+                        .HasColumnType("character varying(64)");
 
                     b.HasKey("Id");
 
@@ -243,19 +241,19 @@ namespace RzR.DataVigil.Storage.EfSqlServer.Migrations
                         });
                 });
 
-            modelBuilder.Entity("RzR.DataVigil.Abstractions.Models.Entries.Referees.RefGdprFieldAction", b =>
+            modelBuilder.Entity("RzR.DataVigil.Abstractions.Models.Referees.RefGdprFieldAction", b =>
                 {
                     b.Property<int>("Id")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Description")
                         .HasMaxLength(512)
-                        .HasColumnType("nvarchar(512)");
+                        .HasColumnType("character varying(512)");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(64)
-                        .HasColumnType("nvarchar(64)");
+                        .HasColumnType("character varying(64)");
 
                     b.HasKey("Id");
 
@@ -297,19 +295,19 @@ namespace RzR.DataVigil.Storage.EfSqlServer.Migrations
                         });
                 });
 
-            modelBuilder.Entity("RzR.DataVigil.Abstractions.Models.Entries.Referees.RefGdprStorageState", b =>
+            modelBuilder.Entity("RzR.DataVigil.Abstractions.Models.Referees.RefGdprStorageState", b =>
                 {
                     b.Property<int>("Id")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Description")
                         .HasMaxLength(512)
-                        .HasColumnType("nvarchar(512)");
+                        .HasColumnType("character varying(512)");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(64)
-                        .HasColumnType("nvarchar(64)");
+                        .HasColumnType("character varying(64)");
 
                     b.HasKey("Id");
 
