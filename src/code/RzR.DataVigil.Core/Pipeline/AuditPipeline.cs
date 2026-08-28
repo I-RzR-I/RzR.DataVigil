@@ -4,7 +4,7 @@
 //  Created On       : 2026-04-10 23:04
 // 
 //  Last Modified By : RzR
-//  Last Modified On : 2026-08-18 23:07
+//  Last Modified On : 2026-08-28 20:40
 // ***********************************************************************
 //  <copyright file="AuditPipeline.cs" company="RzR SOFT & TECH">
 //   Copyright © RzR. All rights reserved.
@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using RzR.DataVigil.Abstractions.Constants;
@@ -27,6 +28,7 @@ using RzR.DataVigil.Abstractions.Services;
 using RzR.DataVigil.Core.Gdpr;
 using RzR.Extensions.Domain.Collections;
 using RzR.Extensions.Domain.Primitives;
+using RzR.Extensions.Domain.Text;
 using RzR.ResultMessage;
 using RzR.ResultMessage.Abstractions;
 using RzR.ResultMessage.Extensions.Result;
@@ -81,7 +83,15 @@ namespace RzR.DataVigil.Core.Pipeline
 
         /// -------------------------------------------------------------------------------------------------
         /// <summary>
-        ///     Initializes a new instance of the <see cref="AuditPipeline"/> class.
+        ///     (Immutable) the metadata enrichers, never null.
+        /// </summary>
+        /// =================================================================================================
+        private readonly IAuditMetadataEnricher[] _metadataEnrichers;
+
+        /// -------------------------------------------------------------------------------------------------
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="AuditPipeline"/> class without metadata
+        ///     enrichers.
         /// </summary>
         /// <param name="userResolver">The user resolver.</param>
         /// <param name="sourceResolver">Source resolver.</param>
@@ -95,12 +105,41 @@ namespace RzR.DataVigil.Core.Pipeline
             IAuditCorrelationProvider correlationProvider,
             GdprProcessor gdprProcessor,
             IAuditStore auditStore)
+            : this(userResolver, sourceResolver, correlationProvider, gdprProcessor, auditStore, metadataEnrichers: null)
+        {
+        }
+
+        /// -------------------------------------------------------------------------------------------------
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="AuditPipeline"/> class.
+        ///     <para>
+        ///     Container activation selects this overload, because it is the greediest constructor whose
+        ///     arguments can all be satisfied and an <c>IEnumerable&lt;T&gt;</c> always resolves, empty
+        ///     when nothing is registered. The shorter overload exists so that code constructing the
+        ///     pipeline by hand keeps compiling.
+        ///     </para>
+        /// </summary>
+        /// <param name="userResolver">The user resolver.</param>
+        /// <param name="sourceResolver">Source resolver.</param>
+        /// <param name="correlationProvider">The correlation provider.</param>
+        /// <param name="gdprProcessor">The gdpr processor.</param>
+        /// <param name="auditStore">The audit store.</param>
+        /// <param name="metadataEnrichers">The metadata enrichers, may be null or empty.</param>
+        /// =================================================================================================
+        public AuditPipeline(
+            IAuditUserResolver userResolver,
+            IAuditSourceResolver sourceResolver,
+            IAuditCorrelationProvider correlationProvider,
+            GdprProcessor gdprProcessor,
+            IAuditStore auditStore,
+            IEnumerable<IAuditMetadataEnricher> metadataEnrichers)
         {
             _userResolver = userResolver;
             _sourceResolver = sourceResolver;
             _correlationProvider = correlationProvider;
             _gdprProcessor = gdprProcessor;
             _auditStore = auditStore;
+            _metadataEnrichers = metadataEnrichers.NotNull().ToArray();
         }
 
         /// -------------------------------------------------------------------------------------------------
@@ -113,8 +152,7 @@ namespace RzR.DataVigil.Core.Pipeline
         ///     The process.
         /// </returns>
         /// =================================================================================================
-        public async Task<IResult> ProcessAsync(
-            AuditTransaction transaction,
+        public async Task<IResult> ProcessAsync(AuditTransaction transaction,
             CancellationToken cancellationToken = default)
         {
             if (transaction.IsNull() || transaction.Entries.IsNullOrEmptyEnumerable())
@@ -122,7 +160,6 @@ namespace RzR.DataVigil.Core.Pipeline
 
             try
             {
-                // Enrich the transaction with actor/tracing info
                 var user = _userResolver.Resolve();
                 var source = _sourceResolver.Resolve();
                 var correlationId = _correlationProvider.GetCorrelationId();
@@ -147,6 +184,8 @@ namespace RzR.DataVigil.Core.Pipeline
 
                 if (transaction.Metadata.IsNull())
                     transaction.Metadata = new Dictionary<string, string>();
+
+                ApplyMetadataEnrichers(transaction.Metadata);
 
                 transaction.Metadata[AuditMetadataKeys.UserSource] = userSource.ToString();
 
@@ -183,6 +222,37 @@ namespace RzR.DataVigil.Core.Pipeline
                     .WithError(ex);
             }
         }
+
+        /// -------------------------------------------------------------------------------------------------
+        /// <summary>
+        ///     Runs every registered enricher and copies the pairs it returns into the metadata
+        ///     dictionary.
+        /// </summary>
+        /// <param name="metadata">The metadata dictionary to write into.</param>
+        /// =================================================================================================
+        private void ApplyMetadataEnrichers(IDictionary<string, string> metadata)
+        {
+            foreach (var enricher in _metadataEnrichers)
+            {
+                try
+                {
+                    var enriched = enricher.Enrich();
+                    if (enriched.IsNull() || enriched.IsSuccess.IsFalse() || enriched.Response.IsNull())
+                        continue;
+
+                    foreach (var pair in enriched.Response)
+                    {
+                        if (pair.Key.IsPresent())
+                            metadata[pair.Key] = pair.Value;
+                    }
+                }
+                catch
+                {
+                    /* ignored */
+                }
+            }
+        }
+
         /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Returns the payload of a resolver result, or null when the result is missing or failed.
