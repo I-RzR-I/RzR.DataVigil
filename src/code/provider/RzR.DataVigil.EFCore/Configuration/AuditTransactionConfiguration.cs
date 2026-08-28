@@ -23,6 +23,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using RzR.DataVigil.Abstractions.Constants;
 using RzR.DataVigil.Abstractions.Models.Entries;
 
 #endregion
@@ -67,7 +68,7 @@ namespace RzR.DataVigil.EFCore.Configuration
             builder.Property(t => t.UserId).HasMaxLength(256);
             builder.Property(t => t.UserName).HasMaxLength(256);
             builder.Property(t => t.IpAddress).HasMaxLength(64);
-            builder.Property(t => t.CorrelationId).HasMaxLength(256);
+            builder.Property(t => t.CorrelationId).HasMaxLength(AuditColumnLengths.CorrelationId);
             builder.Property(t => t.TraceId).HasMaxLength(256);
             builder.Property(t => t.Source).HasMaxLength(512);
             builder.Property(t => t.GdprState).IsRequired();

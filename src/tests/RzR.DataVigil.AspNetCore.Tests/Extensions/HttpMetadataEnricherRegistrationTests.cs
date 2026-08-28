@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -56,23 +55,15 @@ namespace RzR.DataVigil.AspNetCore.Tests.Extensions
         }
 
         [TestMethod]
-        public void AuditPipeline_StillExposesBothTheFiveAndSixArgumentConstructors()
+        public void AuditPipeline_ConstructorsFormAStrictPrefixExtensionChain()
         {
-            var constructors = typeof(AuditPipeline)
-                .GetConstructors(BindingFlags.Public | BindingFlags.Instance);
+            var arities = typeof(AuditPipeline)
+                .GetConstructors(BindingFlags.Public | BindingFlags.Instance)
+                .Select(c => c.GetParameters().Length)
+                .OrderBy(n => n)
+                .ToArray();
 
-            var withEnrichers = constructors
-                .SingleOrDefault(c => c.GetParameters()
-                    .Any(p => p.ParameterType == typeof(IEnumerable<IAuditMetadataEnricher>)));
-
-            var withoutEnrichers = constructors
-                .SingleOrDefault(c => c.GetParameters()
-                    .All(p => p.ParameterType != typeof(IEnumerable<IAuditMetadataEnricher>)));
-
-            Assert.IsNotNull(withEnrichers);
-            Assert.IsNotNull(withoutEnrichers);
-            Assert.IsTrue(
-                withEnrichers.GetParameters().Length > withoutEnrichers.GetParameters().Length);
+            CollectionAssert.AreEqual(new[] { 5, 6, 7 }, arities);
         }
 
         [TestMethod]
@@ -246,7 +237,7 @@ namespace RzR.DataVigil.AspNetCore.Tests.Extensions
         }
 
         [TestMethod]
-        public async Task ParameterlessCalledBeforeRouteOverload_LeavesTheRouteUnstamped()
+        public async Task ParameterlessCalledBeforeRouteOverload_StillStampsTheRoute()
         {
             var transaction = await RunPipelineAsync(
                 services =>
@@ -256,7 +247,56 @@ namespace RzR.DataVigil.AspNetCore.Tests.Extensions
                 });
 
             Assert.AreEqual("POST", transaction.Metadata[AuditMetadataKeys.HttpMethod]);
+            Assert.AreEqual("/orders/{id}", transaction.Metadata[AuditMetadataKeys.HttpRoute]);
+        }
+
+        [TestMethod]
+        public async Task BothOverloadsPassAccessors_LastNonNullWins()
+        {
+            var transaction = await RunPipelineAsync(
+                services =>
+                {
+                    services.AddAuditTrailAspNetCore(_ => "/a");
+                    services.AddAuditTrailAspNetCore(_ => "/b");
+                });
+
+            Assert.AreEqual("/b", transaction.Metadata[AuditMetadataKeys.HttpRoute]);
+        }
+
+        [TestMethod]
+        public async Task ParameterlessOnly_StampsMethodButNoRouteKey()
+        {
+            var transaction = await RunPipelineAsync(
+                services => services.AddAuditTrailAspNetCore());
+
+            Assert.AreEqual("POST", transaction.Metadata[AuditMetadataKeys.HttpMethod]);
             Assert.IsFalse(transaction.Metadata.ContainsKey(AuditMetadataKeys.HttpRoute));
+        }
+
+        [TestMethod]
+        public void AddAuditTrailAspNetCore_CalledThreeTimes_RegistersTheRouteHolderExactlyOnce()
+        {
+            var services = new ServiceCollection();
+            services.AddSingleton(typeof(ILogger<>), typeof(NullLogger<>));
+            services.AddSingleton<IHttpContextAccessor>(new StubHttpContextAccessor());
+            services.AddSingleton<IAuditStore>(new StubAuditStore());
+            services.AddAuditTrail(_ => { });
+            services.AddAuditTrailAspNetCore(_ => "/a");
+            services.AddAuditTrailAspNetCore();
+            services.AddAuditTrailAspNetCore(_ => "/b");
+
+            var holderRegistrations = services.Count(
+                d => d.ServiceType.Assembly == typeof(HttpOperationMetadataEnricher).Assembly
+                     && !d.ServiceType.IsPublic);
+
+            Assert.AreEqual(1, holderRegistrations);
+            Assert.AreEqual(
+                1, services.Count(d => d.ServiceType == typeof(IAuditMetadataEnricher)));
+
+            using var provider = services.BuildServiceProvider(
+                new ServiceProviderOptions { ValidateScopes = true, ValidateOnBuild = true });
+
+            Assert.IsNotNull(provider);
         }
 
         private static async Task<AuditTransaction> RunPipelineAsync(

@@ -176,59 +176,6 @@ namespace RzR.DataVigil.Storage.File.Tests
         }
 
         [TestMethod]
-        public async Task QueryAsync_WithEqualsFilter_ReturnsMatchingTransactions()
-        {
-            var store = CreateStore();
-            var timestamp = new DateTimeOffset(2025, 11, 1, 0, 0, 0, TimeSpan.Zero);
-            await store.SaveAsync(BuildTransaction(userId: "match", timestamp: timestamp,
-                entries: new List<AuditEntry> { BuildEntry() }));
-            await store.SaveAsync(BuildTransaction(userId: "other", timestamp: timestamp.AddMinutes(1),
-                entries: new List<AuditEntry> { BuildEntry() }));
-            await store.SaveAsync(BuildTransaction(userId: "match", timestamp: timestamp.AddMinutes(2),
-                entries: new List<AuditEntry> { BuildEntry() }));
-
-            var result = await store.QueryAsync(new AuditTransactionQuery());
-            Assert.IsTrue(result.IsSuccess);
-            Assert.IsTrue(result.Response.ToList().Count >= 2);
-            Assert.IsTrue(result.Response.Any(t => t.UserId == "match"));
-        }
-
-        [TestMethod]
-        public async Task QueryAsync_WithContainsFilter_ReturnsMatchingTransactions()
-        {
-            var store = CreateStore();
-            var timestamp = new DateTimeOffset(2025, 11, 5, 0, 0, 0, TimeSpan.Zero);
-            await store.SaveAsync(BuildTransaction(source: "WebApi", timestamp: timestamp,
-                entries: new List<AuditEntry> { BuildEntry() }));
-            await store.SaveAsync(BuildTransaction(source: "Console", timestamp: timestamp.AddMinutes(1),
-                entries: new List<AuditEntry> { BuildEntry() }));
-            await store.SaveAsync(BuildTransaction(source: "WebApp", timestamp: timestamp.AddMinutes(2),
-                entries: new List<AuditEntry> { BuildEntry() }));
-
-            var result = await store.QueryAsync(new AuditTransactionQuery());
-            Assert.IsTrue(result.IsSuccess);
-            Assert.IsTrue(result.Response.ToList().Count >= 2);
-        }
-
-        [TestMethod]
-        public async Task QueryAsync_WithIsNullFilter_ReturnsTransactionsWithNullProperty()
-        {
-            var store = CreateStore();
-            var timestamp = new DateTimeOffset(2025, 11, 10, 0, 0, 0, TimeSpan.Zero);
-            await store.SaveAsync(BuildTransaction(source: "WebApi", timestamp: timestamp,
-                entries: new List<AuditEntry> { BuildEntry() }));
-
-            var noSource = BuildTransaction(timestamp: timestamp.AddMinutes(1),
-                entries: new List<AuditEntry> { BuildEntry() });
-            noSource.Source = null;
-            await store.SaveAsync(noSource);
-
-            var result = await store.QueryAsync(new AuditTransactionQuery());
-            Assert.IsTrue(result.IsSuccess);
-            Assert.IsTrue(result.Response.Any(t => t.Source == null));
-        }
-
-        [TestMethod]
         public async Task QueryAsync_DefaultOrder_IsTimestampDescending()
         {
             var store = CreateStore();

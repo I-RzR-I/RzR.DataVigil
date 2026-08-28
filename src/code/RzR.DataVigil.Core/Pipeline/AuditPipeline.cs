@@ -21,6 +21,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using RzR.DataVigil.Abstractions.Constants;
 using RzR.DataVigil.Abstractions.Enums;
 using RzR.DataVigil.Abstractions.Models.Entries;
@@ -90,6 +92,13 @@ namespace RzR.DataVigil.Core.Pipeline
 
         /// -------------------------------------------------------------------------------------------------
         /// <summary>
+        ///     (Immutable) the logger, never null.
+        /// </summary>
+        /// =================================================================================================
+        private readonly ILogger<AuditPipeline> _logger;
+
+        /// -------------------------------------------------------------------------------------------------
+        /// <summary>
         ///     Initializes a new instance of the <see cref="AuditPipeline"/> class without metadata
         ///     enrichers.
         /// </summary>
@@ -111,13 +120,7 @@ namespace RzR.DataVigil.Core.Pipeline
 
         /// -------------------------------------------------------------------------------------------------
         /// <summary>
-        ///     Initializes a new instance of the <see cref="AuditPipeline"/> class.
-        ///     <para>
-        ///     Container activation selects this overload, because it is the greediest constructor whose
-        ///     arguments can all be satisfied and an <c>IEnumerable&lt;T&gt;</c> always resolves, empty
-        ///     when nothing is registered. The shorter overload exists so that code constructing the
-        ///     pipeline by hand keeps compiling.
-        ///     </para>
+        ///     Initializes a new instance of the <see cref="AuditPipeline"/> class without a logger.
         /// </summary>
         /// <param name="userResolver">The user resolver.</param>
         /// <param name="sourceResolver">Source resolver.</param>
@@ -133,6 +136,31 @@ namespace RzR.DataVigil.Core.Pipeline
             GdprProcessor gdprProcessor,
             IAuditStore auditStore,
             IEnumerable<IAuditMetadataEnricher> metadataEnrichers)
+            : this(userResolver, sourceResolver, correlationProvider, gdprProcessor, auditStore,
+                metadataEnrichers, logger: null)
+        {
+        }
+
+        /// -------------------------------------------------------------------------------------------------
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="AuditPipeline"/> class.
+        /// </summary>
+        /// <param name="userResolver">The user resolver.</param>
+        /// <param name="sourceResolver">Source resolver.</param>
+        /// <param name="correlationProvider">The correlation provider.</param>
+        /// <param name="gdprProcessor">The gdpr processor.</param>
+        /// <param name="auditStore">The audit store.</param>
+        /// <param name="metadataEnrichers">The metadata enrichers, may be null or empty.</param>
+        /// <param name="logger">The logger, may be null.</param>
+        /// =================================================================================================
+        public AuditPipeline(
+            IAuditUserResolver userResolver,
+            IAuditSourceResolver sourceResolver,
+            IAuditCorrelationProvider correlationProvider,
+            GdprProcessor gdprProcessor,
+            IAuditStore auditStore,
+            IEnumerable<IAuditMetadataEnricher> metadataEnrichers,
+            ILogger<AuditPipeline> logger)
         {
             _userResolver = userResolver;
             _sourceResolver = sourceResolver;
@@ -140,6 +168,7 @@ namespace RzR.DataVigil.Core.Pipeline
             _gdprProcessor = gdprProcessor;
             _auditStore = auditStore;
             _metadataEnrichers = metadataEnrichers.NotNull().ToArray();
+            _logger = logger ?? NullLogger<AuditPipeline>.Instance;
         }
 
         /// -------------------------------------------------------------------------------------------------
@@ -215,8 +244,16 @@ namespace RzR.DataVigil.Core.Pipeline
                 return await _auditStore.SaveAsync(transaction, cancellationToken)
                     .ConfigureAwait(false);
             }
+            catch (OperationCanceledException ex)
+            {
+                return Result
+                    .Failure(ex.Message)
+                    .WithError(ex);
+            }
             catch (Exception ex)
             {
+                LogProcessFailure(ex);
+
                 return Result
                     .Failure(ex.Message)
                     .WithError(ex);
@@ -246,10 +283,56 @@ namespace RzR.DataVigil.Core.Pipeline
                             metadata[pair.Key] = pair.Value;
                     }
                 }
-                catch
+                catch (Exception ex)
                 {
-                    /* ignored */
+                    LogEnricherFailure(enricher, ex);
                 }
+            }
+        }
+
+        /// -------------------------------------------------------------------------------------------------
+        /// <summary>
+        ///     Reports that a single enricher threw and was skipped, without ever letting the report
+        ///     itself break the audit write.
+        /// </summary>
+        /// <param name="enricher">The enricher that threw, may be null.</param>
+        /// <param name="ex">The exception thrown by the enricher.</param>
+        /// =================================================================================================
+        private void LogEnricherFailure(IAuditMetadataEnricher enricher, Exception ex)
+        {
+            try
+            {
+                var enricherType = enricher?.GetType().FullName ?? "<null>";
+
+                _logger.LogWarning(ex,
+                    "DataVigil metadata enricher {EnricherType} threw and was skipped. " +
+                    "The audit record is still written, without that enricher's metadata.",
+                    enricherType);
+            }
+            catch
+            {
+                /* logging must never break the audit write */
+            }
+        }
+
+        /// -------------------------------------------------------------------------------------------------
+        /// <summary>
+        ///     Reports that the pipeline failed to process a transaction, without ever letting the report
+        ///     itself replace the failure that is being returned to the caller.
+        /// </summary>
+        /// <param name="ex">The exception that ended the processing.</param>
+        /// =================================================================================================
+        private void LogProcessFailure(Exception ex)
+        {
+            try
+            {
+                _logger.LogError(ex,
+                    "DataVigil audit pipeline failed to process the transaction and no audit record " +
+                    "was written. The transaction content is not logged.");
+            }
+            catch
+            {
+                /* logging must never break the audit write */
             }
         }
 
@@ -266,6 +349,5 @@ namespace RzR.DataVigil.Core.Pipeline
         /// =================================================================================================
         private static string ValueOrNull(IResult<string> result)
             => result.IsNull() || result.IsSuccess.IsFalse() ? null : result.Response;
-
     }
 }

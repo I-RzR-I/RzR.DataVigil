@@ -44,11 +44,6 @@ namespace RzR.DataVigil.AspNetCore.Extensions
         /// <summary>
         ///     Registers ASP.NET Core-specific audit resolvers: user resolver from HttpContext,
         ///     correlation from HTTP headers.
-        ///     <para>
-        ///     May be called before or after <c>AddAuditTrail()</c>. A resolver configured
-        ///     explicitly via <c>UseUserResolver&lt;T&gt;()</c> always takes precedence over the
-        ///     ASP.NET Core one.
-        ///     </para>
         /// </summary>
         /// <param name="services">The services to act on.</param>
         /// <returns>
@@ -66,7 +61,8 @@ namespace RzR.DataVigil.AspNetCore.Extensions
         /// </summary>
         /// <param name="services">The services to act on.</param>
         /// <param name="routeTemplateAccessor">
-        ///     Returns the matched route template for a context, or null when none matched.
+        ///     Returns the matched route template for a context, or null when none matched. When null,
+        ///     no accessor is installed and any accessor already installed is left in place.
         /// </param>
         /// <returns>
         ///     An IServiceCollection.
@@ -81,11 +77,14 @@ namespace RzR.DataVigil.AspNetCore.Extensions
             TakeOverFromDefault<IAuditUserResolver, DefaultUserResolver, AspNetCoreUserResolver>(services);
             TakeOverFromDefault<IAuditCorrelationProvider, DefaultCorrelationProvider, AspNetCoreCorrelationProvider>(services);
 
+            if (routeTemplateAccessor.IsNotNull())
+                services.Replace(ServiceDescriptor.Singleton(new HttpRouteTemplateAccessor(routeTemplateAccessor)));
+
             services.TryAddEnumerable(
                 ServiceDescriptor.Scoped<IAuditMetadataEnricher, HttpOperationMetadataEnricher>(
                     sp => new HttpOperationMetadataEnricher(
                         sp.GetRequiredService<IHttpContextAccessor>(),
-                        routeTemplateAccessor,
+                        sp.GetService<HttpRouteTemplateAccessor>()?.Accessor,
                         sp.GetService<IAuditScopeContext>())));
 
             services.TryAddEnumerable(

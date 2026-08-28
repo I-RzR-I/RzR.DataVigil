@@ -164,8 +164,9 @@ namespace RzR.DataVigil.Storage.File
                     }
                 }
 
-                var resultList = allTransactions
+                var resultList = ApplyFilters(allTransactions, filters)
                     .OrderByDescending(x => x.Timestamp)
+                    .ThenByDescending(x => x.Id)
                     .Skip(filters.Skip)
                     .Take(filters.Take)
                     .ToList();
@@ -291,6 +292,54 @@ namespace RzR.DataVigil.Storage.File
             return _options.FilePath.IsPresent()
                 ? _options.FilePath
                 : Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "audit-logs");
+        }
+
+        /// -------------------------------------------------------------------------------------------------
+        /// <summary>
+        ///     Composes the optional filter predicates onto the query, combined with AND. A filter left
+        ///     at its default contributes no predicate at all, so an unfiltered query object still
+        ///     produces the result set this store returned before filtering existed.
+        /// </summary>
+        /// <param name="source">The query to compose the predicates onto.</param>
+        /// <param name="filters">The filters supplied by the caller.</param>
+        /// <returns>
+        ///     The query with every supplied filter applied.
+        /// </returns>
+        /// =================================================================================================
+        private static IEnumerable<AuditTransaction> ApplyFilters(IEnumerable<AuditTransaction> source,
+            AuditTransactionQuery filters)
+        {
+            if (filters.FromUtc.HasValue)
+            {
+                var fromUtc = filters.FromUtc.Value;
+                source = source.Where(x => x.Timestamp >= fromUtc);
+            }
+
+            if (filters.ToUtc.HasValue)
+            {
+                var toUtc = filters.ToUtc.Value;
+                source = source.Where(x => x.Timestamp < toUtc);
+            }
+
+            if (filters.UserId.IsPresent())
+            {
+                var userId = filters.UserId;
+                source = source.Where(x => x.UserId == userId);
+            }
+
+            if (filters.CorrelationId.IsPresent())
+            {
+                var correlationId = filters.CorrelationId;
+                source = source.Where(x => x.CorrelationId == correlationId);
+            }
+
+            if (filters.GdprState.HasValue)
+            {
+                var gdprState = filters.GdprState.Value;
+                source = source.Where(x => x.GdprState == gdprState);
+            }
+
+            return source;
         }
     }
 }

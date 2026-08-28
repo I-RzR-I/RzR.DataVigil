@@ -14,16 +14,20 @@ namespace RzR.DataVigil.Storage.EfSqlServer.Tests.Helpers
             string ipAddress = "127.0.0.1",
             DateTimeOffset? timestamp = null,
             string source = "Tests",
-            List<AuditEntry> entries = null)
+            List<AuditEntry> entries = null,
+            Guid? id = null,
+            string correlationId = null,
+            GdprStorageState gdprState = GdprStorageState.Original)
         {
             var txn = new AuditTransaction
             {
-                Id = Guid.NewGuid(),
+                Id = id ?? Guid.NewGuid(),
                 Timestamp = timestamp ?? DateTimeOffset.UtcNow,
                 UserId = userId,
                 UserName = userName,
                 IpAddress = ipAddress,
-                GdprState = GdprStorageState.Original,
+                CorrelationId = correlationId,
+                GdprState = gdprState,
                 Source = source,
                 Entries = entries ?? new List<AuditEntry>()
             };

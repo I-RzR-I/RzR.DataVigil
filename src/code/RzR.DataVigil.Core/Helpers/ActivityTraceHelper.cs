@@ -1,4 +1,20 @@
-﻿#region U S A G E S
+﻿// ***********************************************************************
+//  Assembly         : RzR.DataVigil.Core
+//  Author           : RzR
+//  Created On       : 2026-08-28 20:40
+//
+//  Last Modified By : RzR
+//  Last Modified On : 2026-08-29 00:15
+// ***********************************************************************
+//  <copyright file="ActivityTraceHelper.cs" company="RzR SOFT & TECH">
+//   Copyright © RzR. All rights reserved.
+//  </copyright>
+//
+//  <summary>
+//  </summary>
+// ***********************************************************************
+
+#region U S A G E S
 
 using System.Diagnostics;
 using RzR.Extensions.Domain.Primitives;
