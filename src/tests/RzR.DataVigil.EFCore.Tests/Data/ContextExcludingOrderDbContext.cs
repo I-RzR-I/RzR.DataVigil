@@ -6,9 +6,6 @@ using RzR.DataVigil.EFCore.Tests.Entities;
 
 namespace RzR.DataVigil.EFCore.Tests.Data
 {
-    /// <summary>
-    ///     DbContext that excludes AuditableOrder via context-level GetExcludedEntityTypes().
-    /// </summary>
     public class ContextExcludingOrderDbContext : DbContext, IAuditableContext
     {
         public ContextExcludingOrderDbContext(DbContextOptions<ContextExcludingOrderDbContext> options)

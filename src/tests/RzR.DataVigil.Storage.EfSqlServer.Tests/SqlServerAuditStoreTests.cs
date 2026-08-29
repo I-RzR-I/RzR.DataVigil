@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 using RzR.DataVigil.Abstractions.Models.Gdpr;
 using RzR.DataVigil.Abstractions.Models.Query;
 using RzR.DataVigil.Core.Gdpr;
-using static RzR.DataVigil.Storage.EfSqlServer.Tests.Helpers.AuditTestDataBuilder;
+using static RzR.DataVigil.TestSupport.AuditTestDataBuilder;
 
 namespace RzR.DataVigil.Storage.EfSqlServer.Tests
 {
@@ -309,7 +309,6 @@ namespace RzR.DataVigil.Storage.EfSqlServer.Tests
             await _store.SaveAsync(txn);
             await _store.AnonymizeByUserAsync("gdpr");
 
-            // Run again
             var result = await _store.AnonymizeByUserAsync("gdpr");
             Assert.IsTrue(result.IsSuccess);
 
@@ -358,20 +357,17 @@ namespace RzR.DataVigil.Storage.EfSqlServer.Tests
         [TestMethod]
         public async Task AnonymizeByUserAsync_OnlyMasksUserName_WhenCustomLogicApplied()
         {
-            // Simulate a scenario where only UserName is masked (custom logic, for demo)
             var txn = BuildTransaction(userId: "partial", userName: "Partial User", ipAddress: "9.9.9.9",
                 entries: new List<AuditEntry> { BuildEntry() });
             await _store.SaveAsync(txn);
 
-            // Manually mask only UserName
             var stored = await _dbContext.AuditTransactions.FirstAsync();
             stored.UserName = "[ERASED]";
             await _dbContext.SaveChangesAsync();
 
-            // Now anonymize by user (should not affect UserId/IpAddress if already erased)
             await _store.AnonymizeByUserAsync("partial");
             var result = await _dbContext.AuditTransactions.FirstAsync();
-            Assert.AreEqual("[ERASED]", result.UserId); // Anonymizer always erases UserId
+            Assert.AreEqual("[ERASED]", result.UserId);
             Assert.AreEqual("[ERASED]", result.UserName);
         }
 

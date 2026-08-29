@@ -6,9 +6,6 @@ using RzR.DataVigil.Abstractions.Enums;
 
 namespace RzR.DataVigil.EFCore.Tests.Entities
 {
-    /// <summary>
-    ///     Entity that excludes specific fields from audit via IAuditableEntity.GetExcludedFields().
-    /// </summary>
     public class FieldExclusionEntity : IAuditableEntity
     {
         [Key]

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using RzR.DataVigil.Abstractions.Services;
 using RzR.ResultMessage;
@@ -8,14 +8,7 @@ namespace RzR.DataVigil.Core.Tests.Stubs
 {
     public sealed class StubMetadataEnricher : IAuditMetadataEnricher
     {
-        public enum EnrichOutcome
-        {
-            Pairs,
-            Throw,
-            FailedResult,
-            NullResult,
-            SuccessWithNullPayload
-        }
+        internal const string FailedResultDetail = "enricher-authored-failure-detail";
 
         internal StubMetadataEnricher(params KeyValuePair<string, string>[] pairs)
             => Pairs = pairs ?? [];
@@ -36,7 +29,7 @@ namespace RzR.DataVigil.Core.Tests.Stubs
                     throw new InvalidOperationException("Enricher failed.");
 
                 case EnrichOutcome.FailedResult:
-                    return Result<IEnumerable<KeyValuePair<string, string>>>.Failure("Enricher failed.");
+                    return Result<IEnumerable<KeyValuePair<string, string>>>.Failure(FailedResultDetail);
 
                 case EnrichOutcome.NullResult:
                     return null;

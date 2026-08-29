@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Linq;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -7,6 +7,7 @@ using RzR.DataVigil.Abstractions.Constants;
 using RzR.DataVigil.AspNetCore.Resolvers;
 using RzR.DataVigil.AspNetCore.Tests.Stubs;
 using RzR.DataVigil.Core.Resolvers;
+using RzR.DataVigil.TestSupport;
 
 namespace RzR.DataVigil.AspNetCore.Tests
 {

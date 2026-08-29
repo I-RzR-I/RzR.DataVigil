@@ -6,29 +6,17 @@ using RzR.DataVigil.Abstractions.Models.Gdpr;
 using RzR.DataVigil.Core.Extensions;
 using RzR.DataVigil.Core.Gdpr;
 using RzR.DataVigil.Core.Tests.Models;
-using static RzR.DataVigil.Core.Tests.Helpers.AuditTestDataBuilder;
+using static RzR.DataVigil.TestSupport.AuditTestDataBuilder;
 
 namespace RzR.DataVigil.Core.Tests
 {
-    /// <summary>
-    ///     Integration tests: verify that users are allowed (or denied) access to audit log
-    ///     fields based on GDPR retrieval policies configured with roles and/or claims.
-    /// </summary>
+
     [TestClass]
     public class GdprRetrievalAccessTests
     {
         private GdprProcessor _processor;
         private ServiceProvider _sp;
 
-        /// <summary>
-        ///     Configures GDPR retrieval policies via the fluent API and resolves the
-        ///     processor from DI so every test exercises the full registration pipeline.
-        ///     <para>
-        ///         Email  - MaskOnRetrieval, AllowRoles("Admin", "Auditor")
-        ///         Ssn    - AnonymizeOnRetrieval, AllowClaim("gdpr", "full")
-        ///         Phone  - MaskOnRetrieval, AllowRoles("Admin") + AllowClaim("support", "tier2")
-        ///     </para>
-        /// </summary>
         [TestInitialize]
         public void Setup()
         {
@@ -107,7 +95,7 @@ namespace RzR.DataVigil.Core.Tests
             Assert.AreEqual("u***********m", result.Properties.First().OldValue);
             Assert.AreEqual("c**************m", result.Properties.First().NewValue);
         }
-        
+
         [TestMethod]
         public void CorrectClaim_SeesUnmaskedSsn()
         {
@@ -149,7 +137,7 @@ namespace RzR.DataVigil.Core.Tests
             var result = _processor.ApplyRetrievalPolicies(entry, new GdprRetrievalContext());
 
             Assert.AreEqual("[ANONYMIZED]", result.Properties.First().OldValue);
-            // AsAnonymizedIfPresent returns null for null input
+
             Assert.IsNull(result.Properties.First().NewValue);
         }
 
@@ -209,13 +197,10 @@ namespace RzR.DataVigil.Core.Tests
 
             var props = result.Properties.ToList();
 
-            // Email — Admin is allowed
             Assert.AreEqual("admin@test.com", props[0].OldValue);
 
-            // SSN — requires claim "gdpr=full", Admin role has no effect
             Assert.AreEqual("[ANONYMIZED]", props[1].OldValue);
 
-            // Phone — Admin role is allowed
             Assert.AreEqual("555-1234", props[2].OldValue);
         }
 
@@ -255,9 +240,9 @@ namespace RzR.DataVigil.Core.Tests
             var result = _processor.ApplyRetrievalPolicies(entry, new GdprRetrievalContext());
 
             var props = result.Properties.ToList();
-            Assert.AreEqual("a************m", props[0].OldValue);    // masked
-            Assert.AreEqual("[ANONYMIZED]", props[1].OldValue);       // anonymized
-            Assert.AreEqual("5******4", props[2].OldValue);            // masked
+            Assert.AreEqual("a************m", props[0].OldValue);
+            Assert.AreEqual("[ANONYMIZED]", props[1].OldValue);
+            Assert.AreEqual("5******4", props[2].OldValue);
         }
 
         [TestMethod]
@@ -292,7 +277,6 @@ namespace RzR.DataVigil.Core.Tests
 
             var result = _processor.ApplyRetrievalPolicies(entry, new GdprRetrievalContext());
 
-            // MaskValue returns null for null input
             Assert.IsNull(result.Properties.First().OldValue);
             Assert.AreEqual("n**********m", result.Properties.First().NewValue);
         }

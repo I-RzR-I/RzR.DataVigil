@@ -12,7 +12,7 @@ using RzR.DataVigil.Core.Gdpr;
 using RzR.DataVigil.Core.Pipeline;
 using RzR.DataVigil.Core.Tests.Resolvers;
 using RzR.DataVigil.Core.Tests.Stubs;
-using static RzR.DataVigil.Core.Tests.Helpers.AuditTestDataBuilder;
+using static RzR.DataVigil.TestSupport.AuditTestDataBuilder;
 using static RzR.DataVigil.Core.Tests.Helpers.GdprPolicyRegistryHelper;
 
 namespace RzR.DataVigil.Core.Tests
@@ -72,7 +72,7 @@ namespace RzR.DataVigil.Core.Tests
         [TestMethod]
         public async Task ProcessAsync_EnrichesTransactionWithUserInfo()
         {
-            var tx = BuildTransaction(BuildEntry());
+            var tx = BuildTransaction(BuildPipelineEntry());
 
             await _pipeline.ProcessAsync(tx);
 
@@ -84,7 +84,7 @@ namespace RzR.DataVigil.Core.Tests
         [TestMethod]
         public async Task ProcessAsync_EnrichesTransactionWithSourceAndCorrelation()
         {
-            var tx = BuildTransaction(BuildEntry());
+            var tx = BuildTransaction(BuildPipelineEntry());
 
             await _pipeline.ProcessAsync(tx);
 
@@ -97,7 +97,7 @@ namespace RzR.DataVigil.Core.Tests
         public async Task ProcessAsync_NullUser_DoesNotSetUserId()
         {
             _userResolver.UserToReturn = null;
-            var tx = BuildTransaction(BuildEntry());
+            var tx = BuildTransaction(BuildPipelineEntry());
 
             await _pipeline.ProcessAsync(tx);
 
@@ -107,7 +107,7 @@ namespace RzR.DataVigil.Core.Tests
         [TestMethod]
         public async Task ProcessAsync_CallsSaveAsync()
         {
-            var tx = BuildTransaction(BuildEntry());
+            var tx = BuildTransaction(BuildPipelineEntry());
 
             var result = await _pipeline.ProcessAsync(tx);
 
@@ -119,13 +119,13 @@ namespace RzR.DataVigil.Core.Tests
         [TestMethod]
         public async Task ProcessAsync_NoGdprPolicy_GdprStateRemainsDefault()
         {
-            var tx = BuildTransaction(BuildEntry());
+            var tx = BuildTransaction(BuildPipelineEntry());
 
             await _pipeline.ProcessAsync(tx);
 
             Assert.AreEqual(GdprStorageState.Original, tx.GdprState);
         }
-        
+
         [TestMethod]
         public async Task ProcessAsync_WithGdprPolicy_SetsPartiallyProcessed()
         {
@@ -136,7 +136,7 @@ namespace RzR.DataVigil.Core.Tests
             _gdprProcessor = new GdprProcessor(registry);
             _pipeline = new AuditPipeline(_userResolver, _sourceResolver, _correlationProvider, _gdprProcessor, _store);
 
-            var tx = BuildTransaction(BuildEntry());
+            var tx = BuildTransaction(BuildPipelineEntry());
 
             await _pipeline.ProcessAsync(tx);
 
@@ -154,7 +154,7 @@ namespace RzR.DataVigil.Core.Tests
             _gdprProcessor = new GdprProcessor(registry);
             _pipeline = new AuditPipeline(_userResolver, _sourceResolver, _correlationProvider, _gdprProcessor, _store);
 
-            var tx = BuildTransaction(BuildEntry());
+            var tx = BuildTransaction(BuildPipelineEntry());
 
             await _pipeline.ProcessAsync(tx);
 
@@ -171,7 +171,7 @@ namespace RzR.DataVigil.Core.Tests
             _gdprProcessor = new GdprProcessor(registry);
             _pipeline = new AuditPipeline(_userResolver, _sourceResolver, _correlationProvider, _gdprProcessor, _store);
 
-            var tx = BuildTransaction(BuildEntry());
+            var tx = BuildTransaction(BuildPipelineEntry());
 
             await _pipeline.ProcessAsync(tx);
 
@@ -251,7 +251,7 @@ namespace RzR.DataVigil.Core.Tests
         [TestMethod]
         public async Task ProcessAsync_EntriesWithAndWithoutPolicy_OnlyPolicyEntriesCount()
         {
-            // "Order" has anonymize policy; "Product" has no policy
+
             var registry = CreateRegistry("Order", new EntityGdprPolicy
             {
                 StorageRules = new[] { new FieldGdprRule { FieldName = "Name", Action = GdprFieldAction.Anonymize } }
@@ -273,7 +273,7 @@ namespace RzR.DataVigil.Core.Tests
         public async Task ProcessAsync_StoreReturnsFailure_PropagatesFailure()
         {
             _store.ShouldFail = true;
-            var tx = BuildTransaction(BuildEntry());
+            var tx = BuildTransaction(BuildPipelineEntry());
 
             var result = await _pipeline.ProcessAsync(tx);
 
@@ -284,7 +284,7 @@ namespace RzR.DataVigil.Core.Tests
         public async Task ProcessAsync_UserResolverFails_RecordsUnresolvedSource()
         {
             _userResolver.ShouldFail = true;
-            var tx = BuildTransaction(BuildEntry());
+            var tx = BuildTransaction(BuildPipelineEntry());
 
             await _pipeline.ProcessAsync(tx);
 
@@ -295,7 +295,7 @@ namespace RzR.DataVigil.Core.Tests
         public async Task ProcessAsync_ResolverSucceedsWithNullResponse_RecordsAnonymousSource()
         {
             _userResolver.UserToReturn = null;
-            var tx = BuildTransaction(BuildEntry());
+            var tx = BuildTransaction(BuildPipelineEntry());
 
             await _pipeline.ProcessAsync(tx);
 
@@ -305,11 +305,11 @@ namespace RzR.DataVigil.Core.Tests
         [TestMethod]
         public async Task ProcessAsync_UnresolvedVsAnonymous_AreDistinguishable()
         {
-            var unresolvedTx = BuildTransaction(BuildEntry());
+            var unresolvedTx = BuildTransaction(BuildPipelineEntry());
             _userResolver.ShouldFail = true;
             await _pipeline.ProcessAsync(unresolvedTx);
 
-            var anonymousTx = BuildTransaction(BuildEntry());
+            var anonymousTx = BuildTransaction(BuildPipelineEntry());
             _userResolver.ShouldFail = false;
             _userResolver.UserToReturn = null;
             await _pipeline.ProcessAsync(anonymousTx);
@@ -330,7 +330,7 @@ namespace RzR.DataVigil.Core.Tests
                 UserName = "Alice",
                 Source = AuditUserSource.ScopeContext
             };
-            var tx = BuildTransaction(BuildEntry());
+            var tx = BuildTransaction(BuildPipelineEntry());
 
             await _pipeline.ProcessAsync(tx);
 
@@ -346,7 +346,7 @@ namespace RzR.DataVigil.Core.Tests
                 UserName = "Alice",
                 Source = AuditUserSource.ScopeContext
             };
-            var tx = BuildTransaction(BuildEntry());
+            var tx = BuildTransaction(BuildPipelineEntry());
             tx.Metadata = null;
 
             var result = await _pipeline.ProcessAsync(tx);
@@ -365,12 +365,10 @@ namespace RzR.DataVigil.Core.Tests
                 UserId = "legacy-user-7",
                 UserName = "Legacy Resolver User"
             };
-            var tx = BuildTransaction(BuildEntry());
+            var tx = BuildTransaction(BuildPipelineEntry());
 
-            // Act
             await _pipeline.ProcessAsync(tx);
 
-            // Assert: undeclared provenance, not failed attribution...
             Assert.AreEqual(
                 nameof(AuditUserSource.Unspecified),
                 tx.Metadata[AuditMetadataKeys.UserSource],
@@ -383,24 +381,21 @@ namespace RzR.DataVigil.Core.Tests
         [TestMethod]
         public async Task ProcessAsync_UnspecifiedUnresolvedAndAnonymous_AreThreeDistinctRecordedStrings()
         {
-            // Arrange + Act: resolver failure -> Unresolved
-            var unresolvedTx = BuildTransaction(BuildEntry());
+
+            var unresolvedTx = BuildTransaction(BuildPipelineEntry());
             _userResolver.ShouldFail = true;
             await _pipeline.ProcessAsync(unresolvedTx);
 
-            // Arrange + Act: success with a null response -> Anonymous
-            var anonymousTx = BuildTransaction(BuildEntry());
+            var anonymousTx = BuildTransaction(BuildPipelineEntry());
             _userResolver.ShouldFail = false;
             _userResolver.UserToReturn = null;
             await _pipeline.ProcessAsync(anonymousTx);
 
-            // Arrange + Act: success with a response that never declared Source -> Unspecified
-            var unspecifiedTx = BuildTransaction(BuildEntry());
+            var unspecifiedTx = BuildTransaction(BuildPipelineEntry());
             _userResolver.ShouldFail = false;
             _userResolver.UserToReturn = new AuditUserInfo { UserId = "legacy-user-7", UserName = "Legacy Resolver User" };
             await _pipeline.ProcessAsync(unspecifiedTx);
 
-            // Assert
             var unresolvedValue = unresolvedTx.Metadata[AuditMetadataKeys.UserSource];
             var anonymousValue = anonymousTx.Metadata[AuditMetadataKeys.UserSource];
             var unspecifiedValue = unspecifiedTx.Metadata[AuditMetadataKeys.UserSource];
@@ -427,7 +422,7 @@ namespace RzR.DataVigil.Core.Tests
                 UserName = "Bob",
                 Source = AuditUserSource.HttpContext
             };
-            var tx = BuildTransaction(BuildEntry());
+            var tx = BuildTransaction(BuildPipelineEntry());
 
             await _pipeline.ProcessAsync(tx);
 

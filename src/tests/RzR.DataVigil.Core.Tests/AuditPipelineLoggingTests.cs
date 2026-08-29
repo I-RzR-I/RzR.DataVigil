@@ -14,9 +14,11 @@ using RzR.DataVigil.Abstractions.Services;
 using RzR.DataVigil.Core.Gdpr;
 using RzR.DataVigil.Core.Pipeline;
 using RzR.DataVigil.Core.Tests.Resolvers;
+using RzR.DataVigil.Core.Tests.Stubs.Logging;
 using RzR.DataVigil.Core.Tests.Stubs;
+using RzR.DataVigil.TestSupport;
 using RzR.ResultMessage.Abstractions;
-using static RzR.DataVigil.Core.Tests.Helpers.AuditTestDataBuilder;
+using static RzR.DataVigil.TestSupport.AuditTestDataBuilder;
 using static RzR.DataVigil.Core.Tests.Stubs.StubMetadataEnricher;
 
 namespace RzR.DataVigil.Core.Tests
@@ -29,7 +31,6 @@ namespace RzR.DataVigil.Core.Tests
         private const string SensitiveOldValue = "OldPersonalDataValue";
         private const string SensitiveNewValue = "NewPersonalDataValue";
         private const string SensitiveEntityName = "PatientRecordEntity";
-        private const string StoreFailureMessage = "store exploded";
 
         private StubUserResolver _userResolver;
         private StubSourceResolver _sourceResolver;
@@ -63,7 +64,7 @@ namespace RzR.DataVigil.Core.Tests
         {
             var throwing = new StubMetadataEnricher { Outcome = EnrichOutcome.Throw };
             var pipeline = Build(new ThrowingLogger<AuditPipeline>(), throwing);
-            var transaction = BuildTransaction(BuildEntry());
+            var transaction = BuildTransaction(BuildPipelineEntry());
 
             var result = await pipeline.ProcessAsync(transaction);
 
@@ -78,7 +79,7 @@ namespace RzR.DataVigil.Core.Tests
             var throwing = new StubMetadataEnricher { Outcome = EnrichOutcome.Throw };
             var healthy = new StubMetadataEnricher(Pair(AuditMetadataKeys.HttpRoute, "/orders/{id}"));
             var pipeline = Build(new ThrowingLogger<AuditPipeline>(), throwing, healthy);
-            var transaction = BuildTransaction(BuildEntry());
+            var transaction = BuildTransaction(BuildPipelineEntry());
 
             var result = await pipeline.ProcessAsync(transaction);
 
@@ -93,7 +94,7 @@ namespace RzR.DataVigil.Core.Tests
             var logger = new RecordingLogger<AuditPipeline>();
             var healthy = new StubMetadataEnricher(Pair(AuditMetadataKeys.HttpMethod, "GET"));
             var pipeline = Build(logger, null, healthy);
-            var transaction = BuildTransaction(BuildEntry());
+            var transaction = BuildTransaction(BuildPipelineEntry());
 
             var result = await pipeline.ProcessAsync(transaction);
 
@@ -134,6 +135,69 @@ namespace RzR.DataVigil.Core.Tests
             Assert.IsFalse(message.Contains(transaction.Id.ToString()));
         }
 
+        [TestMethod]
+        public async Task ProcessAsync_EnricherReturnsAFailedResult_TheWarningNamesTheTypeAndTheOutcomeButNotTheAuthoredMessage()
+        {
+            var logger = new RecordingLogger<AuditPipeline>();
+            var failing = new StubMetadataEnricher { Outcome = EnrichOutcome.FailedResult };
+            var pipeline = Build(logger, failing);
+
+            var result = await pipeline.ProcessAsync(BuildTransaction(BuildPipelineEntry()));
+
+            Assert.IsTrue(result.IsSuccess);
+            Assert.AreEqual(1, logger.Entries.Count);
+            Assert.AreEqual(LogLevel.Warning, logger.Entries[0].Level);
+
+            var message = logger.Entries[0].Message;
+            Assert.IsTrue(message.Contains(typeof(StubMetadataEnricher).FullName));
+            Assert.IsTrue(message.Contains("FailedResult"),
+                "The outcome token is what tells the operator which of the three shapes came back.");
+            Assert.IsFalse(message.Contains(FailedResultDetail),
+                "The failure text is enricher authored and may carry the detail of an exception it caught.");
+        }
+
+        [TestMethod]
+        public async Task ProcessAsync_EnricherReturnsANullResult_TheWarningNamesTheTypeAndTheOutcome()
+        {
+            var logger = new RecordingLogger<AuditPipeline>();
+            var nullResult = new StubMetadataEnricher { Outcome = EnrichOutcome.NullResult };
+            var pipeline = Build(logger, nullResult);
+
+            var result = await pipeline.ProcessAsync(BuildTransaction(BuildPipelineEntry()));
+
+            Assert.IsTrue(result.IsSuccess);
+            Assert.AreEqual(1, logger.Entries.Count);
+            Assert.AreEqual(LogLevel.Warning, logger.Entries[0].Level);
+            Assert.IsTrue(logger.Entries[0].Message.Contains("NullResult"));
+            Assert.IsTrue(logger.Entries[0].Message.Contains(typeof(StubMetadataEnricher).FullName));
+        }
+
+        [TestMethod]
+        public async Task ProcessAsync_EnricherReturnsASuccessWithNoPayload_LogsNothing()
+        {
+            var logger = new RecordingLogger<AuditPipeline>();
+            var nothingToAdd = new StubMetadataEnricher { Outcome = EnrichOutcome.SuccessWithNullPayload };
+            var pipeline = Build(logger, nothingToAdd);
+
+            var result = await pipeline.ProcessAsync(BuildTransaction(BuildPipelineEntry()));
+
+            Assert.IsTrue(result.IsSuccess);
+            Assert.AreEqual(0, logger.Entries.Count,
+                "Nothing to add is the ordinary answer outside a request and would fire on every write.");
+        }
+
+        [TestMethod]
+        public async Task ProcessAsync_EnricherReturnsAFailedResultAndTheLogSinkAlsoThrows_TheRecordIsStillPersisted()
+        {
+            var failing = new StubMetadataEnricher { Outcome = EnrichOutcome.FailedResult };
+            var pipeline = Build(new ThrowingLogger<AuditPipeline>(), failing);
+
+            var result = await pipeline.ProcessAsync(BuildTransaction(BuildPipelineEntry()));
+
+            Assert.IsTrue(result.IsSuccess);
+            Assert.AreEqual(1, _store.SaveCallCount);
+        }
+
         #endregion
 
         #region Process failure diagnostics
@@ -170,7 +234,7 @@ namespace RzR.DataVigil.Core.Tests
         {
             var logger = new RecordingLogger<AuditPipeline>();
             var pipeline = Build(logger, new StubMetadataEnricher(Pair(AuditMetadataKeys.HttpMethod, "GET")));
-            var transaction = BuildTransaction(BuildEntry());
+            var transaction = BuildTransaction(BuildPipelineEntry());
 
             var result = await pipeline.ProcessAsync(transaction);
 
@@ -187,33 +251,12 @@ namespace RzR.DataVigil.Core.Tests
             => new AuditPipeline(
                     _userResolver, _sourceResolver, _correlationProvider, _gdprProcessor,
                     new ThrowingAuditStore(), null, logger)
-                .ProcessAsync(BuildTransaction(BuildEntry()));
+                .ProcessAsync(BuildTransaction(BuildPipelineEntry()));
 
         private AuditPipeline Build(ILogger<AuditPipeline> logger, params IAuditMetadataEnricher[] enrichers)
             => new AuditPipeline(
                 _userResolver, _sourceResolver, _correlationProvider, _gdprProcessor, _store,
                 enrichers, logger);
-
-        private sealed class ThrowingAuditStore : IAuditStore
-        {
-            public Task<IResult> SaveAsync(AuditTransaction transaction,
-                CancellationToken cancellationToken = default)
-                => throw new InvalidOperationException(StoreFailureMessage);
-
-            public Task<IResult<IEnumerable<AuditTransaction>>> QueryAsync(
-                AuditTransactionQuery filters,
-                GdprRetrievalContext gdprRetrievalContext = null,
-                CancellationToken cancellationToken = default)
-                => throw new NotImplementedException();
-
-            public Task<IResult> AnonymizeByUserAsync(string userId,
-                CancellationToken cancellationToken = default)
-                => throw new NotImplementedException();
-
-            public Task<IResult> PurgeBeforeAsync(DateTimeOffset before,
-                CancellationToken cancellationToken = default)
-                => throw new NotImplementedException();
-        }
 
         #endregion
     }

@@ -7,7 +7,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using RzR.DataVigil.Abstractions.Enums;
 using RzR.DataVigil.Abstractions.Models.Gdpr;
 using RzR.DataVigil.Core.Gdpr;
-using static RzR.DataVigil.Core.Tests.Helpers.AuditTestDataBuilder;
+using static RzR.DataVigil.TestSupport.AuditTestDataBuilder;
 using static RzR.DataVigil.Core.Tests.Helpers.GdprPolicyRegistryHelper;
 
 namespace RzR.DataVigil.Core.Tests
@@ -113,7 +113,6 @@ namespace RzR.DataVigil.Core.Tests
             Assert.AreEqual(64, prop.OldValue.Length, "SHA256 hex should be 64 chars");
             Assert.IsNull(prop.NewValue);
 
-            // Verify deterministic
             using var sha = SHA256.Create();
             var expected = BitConverter.ToString(sha.ComputeHash(Encoding.UTF8.GetBytes("123-45-6789")))
                 .Replace("-", "").ToLower();
@@ -287,7 +286,7 @@ namespace RzR.DataVigil.Core.Tests
             var (result, applied, _) = processor.ApplyStoragePolicies(entry);
 
             Assert.IsTrue(applied);
-            Assert.AreEqual(3, result.Properties.Count); // CreditCard removed
+            Assert.AreEqual(3, result.Properties.Count);
             Assert.IsTrue(result.Properties.First(p => p.PropertyName == "Email").OldValue.Contains("*"));
             Assert.AreEqual(64, result.Properties.First(p => p.PropertyName == "SSN").OldValue.Length);
             Assert.AreEqual("Alice", result.Properties.First(p => p.PropertyName == "Name").OldValue);

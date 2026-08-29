@@ -18,10 +18,6 @@ using RzR.DataVigil.EFCore.Tests.Stubs;
 
 namespace RzR.DataVigil.EFCore.Tests
 {
-    /// <summary>
-    ///     End-to-end tests simulating a console application (non-web) scenario:
-    ///     full DI registration, no ASP.NET Core, IAuditScopeContext for user identity.
-    /// </summary>
     [TestClass]
     public class ConsoleAppAuditTests
     {
@@ -37,22 +33,17 @@ namespace RzR.DataVigil.EFCore.Tests
 
             var services = new ServiceCollection();
 
-            // Logging (required by interceptors)
             services.AddLogging();
 
-            // Register audit trail the same way a console app would
             services.AddAuditTrail(opts =>
             {
                 opts.EfCore.Intercept<AuditableTestDbContext>();
             });
 
-            // Register EF Core audit interceptors
             services.AddAuditTrailEfCore();
 
-            // Register the in-memory audit store
             services.AddSingleton<IAuditStore>(_auditStore);
 
-            // Register DbContext with audit interceptors wired via DI
             services.AddDbContext<AuditableTestDbContext>((sp, opts) =>
             {
                 opts.UseInMemoryDatabase(_dbName);
@@ -111,12 +102,10 @@ namespace RzR.DataVigil.EFCore.Tests
             var scopeCtx = scope.ServiceProvider.GetRequiredService<IAuditScopeContext>();
             var ctx = scope.ServiceProvider.GetRequiredService<AuditableTestDbContext>();
 
-            // First save as user A
             scopeCtx.SetUser(new AuditUserInfo { UserId = "user-A", UserName = "Alice" });
             ctx.Orders.Add(new AuditableOrder { CustomerName = "Order1", Total = 10m, Quantity = 1 });
             await ctx.SaveChangesAsync();
 
-            // Second save as user B
             scopeCtx.SetUser(new AuditUserInfo { UserId = "user-B", UserName = "Bob" });
             ctx.Orders.Add(new AuditableOrder { CustomerName = "Order2", Total = 20m, Quantity = 2 });
             await ctx.SaveChangesAsync();

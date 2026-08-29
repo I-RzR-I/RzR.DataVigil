@@ -9,7 +9,7 @@ using RzR.DataVigil.Abstractions.Models.Entries;
 using RzR.DataVigil.Abstractions.Models.Query;
 using RzR.DataVigil.Core.Gdpr;
 using RzR.DataVigil.Core.Options;
-using static RzR.DataVigil.Storage.File.Tests.Helpers.AuditTestDataBuilder;
+using static RzR.DataVigil.TestSupport.AuditTestDataBuilder;
 
 namespace RzR.DataVigil.Storage.File.Tests
 {

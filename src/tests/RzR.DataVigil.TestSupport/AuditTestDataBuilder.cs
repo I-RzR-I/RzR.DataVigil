@@ -1,14 +1,26 @@
+#region U S A G E S
+
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using RzR.DataVigil.Abstractions.Enums;
 using RzR.DataVigil.Abstractions.Models.Entries;
 using RzR.DataVigil.Core.Gdpr;
 
-namespace RzR.DataVigil.Storage.EfSqlServer.Tests.Helpers
+#endregion
+
+namespace RzR.DataVigil.TestSupport
 {
-    internal static class AuditTestDataBuilder
+    public static class AuditTestDataBuilder
     {
-        internal static AuditTransaction BuildTransaction(
+        public static AuditTransaction BuildTransaction(params AuditEntry[] entries) => new AuditTransaction
+        {
+            Id = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            Entries = new List<AuditEntry>(entries)
+        };
+
+        public static AuditTransaction BuildTransaction(
             string userId = "user1",
             string userName = "User One",
             string ipAddress = "127.0.0.1",
@@ -32,16 +44,13 @@ namespace RzR.DataVigil.Storage.EfSqlServer.Tests.Helpers
                 Entries = entries ?? new List<AuditEntry>()
             };
 
-            // Auto-assign TransactionId to entries
             foreach (var entry in txn.Entries)
-            {
                 entry.TransactionId = txn.Id;
-            }
 
             return txn;
         }
 
-        internal static AuditEntry BuildEntry(
+        public static AuditEntry BuildEntry(
             string entityName = "Order",
             string entityId = "42",
             AuditAction action = AuditAction.Create,
@@ -58,7 +67,22 @@ namespace RzR.DataVigil.Storage.EfSqlServer.Tests.Helpers
             };
         }
 
-        internal static AuditEntryProperty BuildProperty(string name, string oldValue, string newValue) =>
+        public static AuditEntry BuildPipelineEntry(string entityName = "Order")
+            => BuildEntryWithProperties(entityName, BuildProperty("Name", "Old", "New"));
+
+        public static AuditEntry BuildEntryWithProperties(string entityName, params AuditEntryProperty[] props)
+        {
+            return new AuditEntry
+            {
+                Id = Guid.NewGuid(),
+                EntityName = entityName,
+                EntityId = "1",
+                Action = AuditAction.Update,
+                Properties = new List<AuditEntryProperty>(props)
+            };
+        }
+
+        public static AuditEntryProperty BuildProperty(string name, string oldValue, string newValue) =>
             new AuditEntryProperty
             {
                 PropertyName = name,
@@ -67,11 +91,14 @@ namespace RzR.DataVigil.Storage.EfSqlServer.Tests.Helpers
                 NewValue = newValue
             };
 
-        internal static GdprPolicyRegistry CreateRegistryWithPolicy(string entityName, EntityGdprPolicy policy)
+        public static AuditEntryProperty Prop(string name, string oldValue, string newValue)
+            => BuildProperty(name, oldValue, newValue);
+
+        public static GdprPolicyRegistry CreateRegistryWithPolicy(string entityName, EntityGdprPolicy policy)
         {
             var registry = new GdprPolicyRegistry();
             var field = typeof(GdprPolicyRegistry).GetField("_policiesByName",
-                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+                BindingFlags.Instance | BindingFlags.NonPublic);
             var dict = (IDictionary<string, EntityGdprPolicy>)field.GetValue(registry);
             dict[entityName] = policy;
 

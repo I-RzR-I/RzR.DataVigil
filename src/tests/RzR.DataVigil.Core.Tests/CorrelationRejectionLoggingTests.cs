@@ -5,6 +5,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using RzR.DataVigil.Abstractions.Constants;
 using RzR.DataVigil.Core.Resolvers;
 using RzR.DataVigil.Core.Tests.Stubs;
+using RzR.DataVigil.TestSupport;
 
 namespace RzR.DataVigil.Core.Tests
 {

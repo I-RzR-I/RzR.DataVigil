@@ -49,8 +49,6 @@ namespace RzR.DataVigil.AspNetCore.Tests
 
             var result = resolver.Resolve();
 
-            // No scope user set (anonymous), no HttpContext available — resolver falls through
-            // to the anonymous Success() result rather than returning a bare null
             Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccess);
             Assert.IsNull(result.Response);
@@ -64,8 +62,6 @@ namespace RzR.DataVigil.AspNetCore.Tests
 
             var result = resolver.Resolve();
 
-            // Asserts the never-return-bare-null contract: an unauthenticated HttpContext
-            // still yields an anonymous, successful Result rather than null
             Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccess);
             Assert.IsNull(result.Response);
@@ -74,8 +70,6 @@ namespace RzR.DataVigil.AspNetCore.Tests
         [TestMethod]
         public void Resolve_NoScopeUser_AuthenticatedHttpContext_ReturnsHttpContextUser()
         {
-            // With no scope user set, the resolver falls through to HttpContext and
-            // returns the authenticated user found there
             var httpContext = CreateAuthenticatedContext(userId: "user-42", userName: "Bob");
             var resolver = new AspNetCoreUserResolver(CreateAccessor(httpContext), new AuditScopeContext());
 

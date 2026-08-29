@@ -12,6 +12,7 @@ using RzR.DataVigil.Abstractions.Services;
 using RzR.DataVigil.Core.Extensions;
 using RzR.DataVigil.Core.Hosting;
 using RzR.DataVigil.Core.Options;
+using RzR.DataVigil.Core.Tests.Stubs.Retention;
 using RzR.DataVigil.Core.Tests.Stubs;
 using RzR.ResultMessage;
 using RzR.ResultMessage.Abstractions;
@@ -63,12 +64,11 @@ namespace RzR.DataVigil.Core.Tests
         public async Task ExecuteAsync_NullRetentionDays_DoesNotPurge()
         {
             var store = new StubAuditStore();
-            var options = new StorageOptions(); // RetentionDays = null
+            var options = new StorageOptions();
 
             using var host = BuildHost(store, options);
             await host.StartAsync();
 
-            // Give the background service time to execute
             await Task.Delay(200);
 
             await host.StopAsync();
@@ -109,7 +109,6 @@ namespace RzR.DataVigil.Core.Tests
 
             Assert.IsNotNull(store.LastPurgeCutoff);
 
-            // Cutoff should be approximately UtcNow - 30 days
             var expectedCutoff = before.AddDays(-30);
             var diff = Math.Abs((store.LastPurgeCutoff.Value - expectedCutoff).TotalSeconds);
 
@@ -137,7 +136,7 @@ namespace RzR.DataVigil.Core.Tests
 
             Assert.IsTrue(diff < 5, $"1-day retention cutoff off by {diff:F1}s.");
         }
-        
+
         [TestMethod]
         public async Task ExecuteAsync_PurgeFails_DoesNotCrashHost()
         {
@@ -147,7 +146,6 @@ namespace RzR.DataVigil.Core.Tests
 
             using var host = BuildHost(store, options);
 
-            // Should not throw even though PurgeBeforeAsync fails
             await host.StartAsync();
             await Task.Delay(200);
             await host.StopAsync();
@@ -183,10 +181,8 @@ namespace RzR.DataVigil.Core.Tests
             await host.StartAsync();
             await Task.Delay(100);
 
-            // StopAsync triggers cancellation
             await host.StopAsync();
 
-            // Service should have completed without hanging
             Assert.IsTrue(true, "Service stopped gracefully.");
         }
 
@@ -228,7 +224,6 @@ namespace RzR.DataVigil.Core.Tests
             await Task.Delay(300);
             await host.StopAsync();
 
-            // At minimum 1 purge should have occurred (the first iteration runs immediately)
             Assert.IsTrue(store.PurgeCallCount >= 1);
         }
 
@@ -242,32 +237,6 @@ namespace RzR.DataVigil.Core.Tests
                     services.AddHostedService<AuditRetentionService>();
                 })
                 .Build();
-        }
-
-        /// <summary>
-        ///     An IAuditStore that throws on PurgeBeforeAsync to verify exception resilience.
-        /// </summary>
-        private class ThrowingAuditStore : IAuditStore
-        {
-            public int PurgeCallCount { get; private set; }
-
-            public Task<IResult> SaveAsync(AuditTransaction transaction, CancellationToken cancellationToken = default)
-                => Task.FromResult<IResult>(Result.Failure("Not implemented"));
-
-            public Task<IResult<IEnumerable<AuditTransaction>>> QueryAsync(
-                AuditTransactionQuery filters,
-                GdprRetrievalContext gdprRetrievalContext = null,
-                CancellationToken cancellationToken = default)
-                => Task.FromResult<IResult<IEnumerable<AuditTransaction>>>(Result<IEnumerable<AuditTransaction>>.Failure("Not implemented"));
-
-            public Task<IResult> AnonymizeByUserAsync(string userId, CancellationToken cancellationToken = default)
-                => Task.FromResult<IResult>(Result.Failure("Not implemented"));
-
-            public Task<IResult> PurgeBeforeAsync(DateTimeOffset before, CancellationToken cancellationToken = default)
-            {
-                PurgeCallCount++;
-                throw new InvalidOperationException("Simulated purge failure");
-            }
         }
     }
 }

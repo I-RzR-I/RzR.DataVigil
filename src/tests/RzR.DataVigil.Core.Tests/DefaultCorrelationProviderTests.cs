@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using RzR.DataVigil.Core.Resolvers;
 

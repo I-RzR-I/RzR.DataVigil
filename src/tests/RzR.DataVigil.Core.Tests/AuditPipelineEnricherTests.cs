@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -16,7 +16,7 @@ using RzR.DataVigil.Core.Tests.Resolvers;
 using RzR.DataVigil.Core.Tests.Stubs;
 using RzR.ResultMessage;
 using RzR.ResultMessage.Abstractions;
-using static RzR.DataVigil.Core.Tests.Helpers.AuditTestDataBuilder;
+using static RzR.DataVigil.TestSupport.AuditTestDataBuilder;
 using static RzR.DataVigil.Core.Tests.Stubs.StubMetadataEnricher;
 
 namespace RzR.DataVigil.Core.Tests
@@ -63,7 +63,7 @@ namespace RzR.DataVigil.Core.Tests
             var pipeline = Build(new StubMetadataEnricher(
                 Pair(AuditMetadataKeys.HttpMethod, "POST"),
                 Pair(AuditMetadataKeys.HttpRoute, "/orders/{id}")));
-            var transaction = BuildTransaction(BuildEntry());
+            var transaction = BuildTransaction(BuildPipelineEntry());
 
             var result = await pipeline.ProcessAsync(transaction);
 
@@ -77,7 +77,7 @@ namespace RzR.DataVigil.Core.Tests
         public async Task ProcessAsync_MetadataDictionaryWasNull_EnricherPairsStillLand()
         {
             var pipeline = Build(new StubMetadataEnricher(Pair(AuditMetadataKeys.HttpMethod, "GET")));
-            var transaction = BuildTransaction(BuildEntry());
+            var transaction = BuildTransaction(BuildPipelineEntry());
             transaction.Metadata = null;
 
             var result = await pipeline.ProcessAsync(transaction);
@@ -90,7 +90,7 @@ namespace RzR.DataVigil.Core.Tests
         public async Task ProcessAsync_ConsumerSuppliedMetadata_IsPreservedAlongsideEnricherPairs()
         {
             var pipeline = Build(new StubMetadataEnricher(Pair(AuditMetadataKeys.HttpMethod, "GET")));
-            var transaction = BuildTransaction(BuildEntry());
+            var transaction = BuildTransaction(BuildPipelineEntry());
             transaction.Metadata[CustomKey] = "acme";
 
             await pipeline.ProcessAsync(transaction);
@@ -108,7 +108,7 @@ namespace RzR.DataVigil.Core.Tests
             };
             var healthy = new StubMetadataEnricher(Pair(AuditMetadataKeys.HttpRoute, "/orders/{id}"));
             var pipeline = Build(throwing, healthy);
-            var transaction = BuildTransaction(BuildEntry());
+            var transaction = BuildTransaction(BuildPipelineEntry());
 
             var result = await pipeline.ProcessAsync(transaction);
 
@@ -126,11 +126,11 @@ namespace RzR.DataVigil.Core.Tests
         public async Task ProcessAsync_EnricherReturnsAnUnusableResult_IsSkippedAndTheRecordSurvives(
             EnrichOutcome outcome)
         {
-            var unusable = new StubMetadataEnricher { 
+            var unusable = new StubMetadataEnricher {
                 Outcome = outcome };
             var healthy = new StubMetadataEnricher(Pair(AuditMetadataKeys.HttpMethod, "PUT"));
             var pipeline = Build(unusable, healthy);
-            var transaction = BuildTransaction(BuildEntry());
+            var transaction = BuildTransaction(BuildPipelineEntry());
 
             var result = await pipeline.ProcessAsync(transaction);
 
@@ -144,7 +144,7 @@ namespace RzR.DataVigil.Core.Tests
         {
             var healthy = new StubMetadataEnricher(Pair(AuditMetadataKeys.HttpMethod, "GET"));
             var pipeline = Build(null, healthy);
-            var transaction = BuildTransaction(BuildEntry());
+            var transaction = BuildTransaction(BuildPipelineEntry());
 
             var result = await pipeline.ProcessAsync(transaction);
 
@@ -159,7 +159,7 @@ namespace RzR.DataVigil.Core.Tests
                 Pair(null, "orphan"),
                 Pair(string.Empty, "orphan"),
                 Pair(AuditMetadataKeys.HttpMethod, "GET")));
-            var transaction = BuildTransaction(BuildEntry());
+            var transaction = BuildTransaction(BuildPipelineEntry());
 
             var result = await pipeline.ProcessAsync(transaction);
 
@@ -173,7 +173,7 @@ namespace RzR.DataVigil.Core.Tests
         {
             var pipeline = Build(new StubMetadataEnricher(
                 Pair(AuditMetadataKeys.UserSource, "Forged")));
-            var transaction = BuildTransaction(BuildEntry());
+            var transaction = BuildTransaction(BuildPipelineEntry());
 
             await pipeline.ProcessAsync(transaction);
 
@@ -187,7 +187,7 @@ namespace RzR.DataVigil.Core.Tests
             var pipeline = Build(
                 new StubMetadataEnricher(Pair(AuditMetadataKeys.HttpMethod, "first")),
                 new StubMetadataEnricher(Pair(AuditMetadataKeys.HttpMethod, "second")));
-            var transaction = BuildTransaction(BuildEntry());
+            var transaction = BuildTransaction(BuildPipelineEntry());
 
             await pipeline.ProcessAsync(transaction);
 
@@ -199,7 +199,7 @@ namespace RzR.DataVigil.Core.Tests
         {
             var pipeline = new AuditPipeline(
                 _userResolver, _sourceResolver, _correlationProvider, _gdprProcessor, _store);
-            var transaction = BuildTransaction(BuildEntry());
+            var transaction = BuildTransaction(BuildPipelineEntry());
 
             var result = await pipeline.ProcessAsync(transaction);
 
@@ -214,7 +214,7 @@ namespace RzR.DataVigil.Core.Tests
         {
             var pipeline = new AuditPipeline(
                 _userResolver, _sourceResolver, _correlationProvider, _gdprProcessor, _store, null);
-            var transaction = BuildTransaction(BuildEntry());
+            var transaction = BuildTransaction(BuildPipelineEntry());
 
             var result = await pipeline.ProcessAsync(transaction);
 
@@ -238,7 +238,7 @@ namespace RzR.DataVigil.Core.Tests
                 "Nothing registers an enricher in a non-web host.");
 
             var pipeline = scope.ServiceProvider.GetRequiredService<AuditPipeline>();
-            var transaction = BuildTransaction(BuildEntry());
+            var transaction = BuildTransaction(BuildPipelineEntry());
 
             var result = await pipeline.ProcessAsync(transaction);
 
@@ -273,7 +273,7 @@ namespace RzR.DataVigil.Core.Tests
             var deferred = new DeferredThrowingEnricher();
             var good = new StubMetadataEnricher(Pair("k.after", "v"));
             var pipeline = Build(deferred, good);
-            var transaction = BuildTransaction(BuildEntry());
+            var transaction = BuildTransaction(BuildPipelineEntry());
 
             var result = await pipeline.ProcessAsync(transaction);
 
@@ -281,18 +281,6 @@ namespace RzR.DataVigil.Core.Tests
             Assert.AreEqual(1, _store.SaveCallCount);
             Assert.AreEqual("v", transaction.Metadata["k.after"]);
             Assert.IsTrue(transaction.Metadata.ContainsKey(AuditMetadataKeys.UserSource));
-        }
-
-        private sealed class DeferredThrowingEnricher : IAuditMetadataEnricher
-        {
-            public IResult<IEnumerable<KeyValuePair<string, string>>> Enrich()
-                => Result<IEnumerable<KeyValuePair<string, string>>>.Success(Lazy());
-
-            private static IEnumerable<KeyValuePair<string, string>> Lazy()
-            {
-                yield return new KeyValuePair<string, string>("k.before", "v");
-                throw new InvalidOperationException("thrown during enumeration");
-            }
         }
 
         private AuditPipeline Build(params IAuditMetadataEnricher[] enrichers)

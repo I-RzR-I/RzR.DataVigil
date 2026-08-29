@@ -30,49 +30,4 @@ namespace RzR.DataVigil.EFCore.Tests.Helpers
                 .ToList();
         }
     }
-
-    internal sealed class EnumMember
-    {
-        public EnumMember(string name, int value)
-        {
-            Name = name;
-            Value = value;
-        }
-
-        public string Name { get; }
-
-        public int Value { get; }
-    }
-
-    internal sealed class RefRow
-    {
-        public RefRow(int id, string name, string description)
-        {
-            Id = id;
-            Name = name;
-            Description = description;
-        }
-
-        public int Id { get; }
-
-        public string Name { get; }
-
-        public string Description { get; }
-    }
-
-    internal sealed class ReferenceTable
-    {
-        public ReferenceTable(string tableName, Type enumType, Type entityType)
-        {
-            TableName = tableName;
-            EnumType = enumType;
-            EntityType = entityType;
-        }
-
-        public string TableName { get; }
-
-        public Type EnumType { get; }
-
-        public Type EntityType { get; }
-    }
 }

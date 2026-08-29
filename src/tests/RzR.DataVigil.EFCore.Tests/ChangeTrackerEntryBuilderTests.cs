@@ -132,7 +132,6 @@ namespace RzR.DataVigil.EFCore.Tests
 
             Assert.AreEqual(AuditAction.Update, result.Action);
 
-            // Only CustomerName and Total changed
             Assert.AreEqual(2, result.Properties.Count);
 
             var nameProp = result.Properties.Single(p => p.PropertyName == "CustomerName");
@@ -223,7 +222,6 @@ namespace RzR.DataVigil.EFCore.Tests
             _db.SaveChanges();
             _db.ChangeTracker.Clear();
 
-            // Re-attach without modifications — force Modified state manually
             _db.Orders.Attach(order);
             _db.Entry(order).State = EntityState.Modified;
             _db.ChangeTracker.DetectChanges();
@@ -231,7 +229,6 @@ namespace RzR.DataVigil.EFCore.Tests
             var entry = _db.ChangeTracker.Entries<TestOrder>().Single();
             var result = ChangeTrackerEntryBuilder.Build(entry);
 
-            // All property values are still the same, so no properties should be included
             Assert.AreEqual(0, result.Properties.Count);
         }
 

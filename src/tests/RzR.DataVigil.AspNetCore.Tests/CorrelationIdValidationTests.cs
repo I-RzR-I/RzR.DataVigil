@@ -40,14 +40,11 @@ namespace RzR.DataVigil.AspNetCore.Tests
         [TestMethod]
         public void GetCorrelationId_ScopeValueLongerThanLimit_FallsThroughToCorrelationHeader()
         {
-            // Arrange
             var accessor = CreateAccessorWithHeaders(correlationId: "corr-123");
             var provider = new AspNetCoreCorrelationProvider(accessor, ScopeWith(OverLongValue));
 
-            // Act
             var result = provider.GetCorrelationId();
 
-            // Assert
             Assert.IsTrue(result.IsSuccess);
             Assert.AreNotEqual(OverLongValue, result.Response,
                 "A 300-char scope value overflows the correlation id column and must never be returned.");
@@ -57,15 +54,12 @@ namespace RzR.DataVigil.AspNetCore.Tests
         [TestMethod]
         public void GetCorrelationId_ScopeValueLongerThanLimit_NoHeaders_FallsThroughToTraceIdentifier()
         {
-            // Arrange
             var accessor = StubAccessor();
             accessor.HttpContext.TraceIdentifier = "0HN7CTQ0Q0OJ4:00000001";
             var provider = new AspNetCoreCorrelationProvider(accessor, ScopeWith(OverLongValue));
 
-            // Act
             var result = provider.GetCorrelationId();
 
-            // Assert
             Assert.IsTrue(result.IsSuccess);
             Assert.AreEqual("0HN7CTQ0Q0OJ4:00000001", result.Response);
         }
@@ -77,14 +71,11 @@ namespace RzR.DataVigil.AspNetCore.Tests
         [TestMethod]
         public void GetCorrelationId_ScopeValueContainingComma_FallsThroughToCorrelationHeader()
         {
-            // Arrange
             var accessor = CreateAccessorWithHeaders(correlationId: "corr-123");
             var provider = new AspNetCoreCorrelationProvider(accessor, ScopeWith("corr-1,corr-2"));
 
-            // Act
             var result = provider.GetCorrelationId();
 
-            // Assert
             Assert.IsTrue(result.IsSuccess);
             Assert.AreEqual("corr-123", result.Response);
         }
@@ -92,14 +83,11 @@ namespace RzR.DataVigil.AspNetCore.Tests
         [TestMethod]
         public void GetCorrelationId_ScopeValueContainingCarriageReturnAndLineFeed_FallsThroughToCorrelationHeader()
         {
-            // Arrange
             var accessor = CreateAccessorWithHeaders(correlationId: "corr-123");
             var provider = new AspNetCoreCorrelationProvider(accessor, ScopeWith("corr-1\r\nX-Injected: yes"));
 
-            // Act
             var result = provider.GetCorrelationId();
 
-            // Assert
             Assert.IsTrue(result.IsSuccess);
             Assert.AreEqual("corr-123", result.Response,
                 "An embedded CR/LF must be rejected outright, not stripped and partially honoured.");
@@ -108,14 +96,11 @@ namespace RzR.DataVigil.AspNetCore.Tests
         [TestMethod]
         public void GetCorrelationId_WhitespaceOnlyScopeValue_FallsThroughToCorrelationHeader()
         {
-            // Arrange
             var accessor = CreateAccessorWithHeaders(correlationId: "corr-123");
             var provider = new AspNetCoreCorrelationProvider(accessor, ScopeWith("   "));
 
-            // Act
             var result = provider.GetCorrelationId();
 
-            // Assert
             Assert.IsTrue(result.IsSuccess);
             Assert.AreEqual("corr-123", result.Response,
                 "Web half of the whitespace-parity pair; a blank scope value must be rejected here "
@@ -129,15 +114,12 @@ namespace RzR.DataVigil.AspNetCore.Tests
         [TestMethod]
         public void GetCorrelationId_ScopeValueOfExactlyTheMaximumLength_IsAccepted()
         {
-            // Arrange
             var atLimit = new string('a', AuditColumnLengths.CorrelationId);
             var accessor = CreateAccessorWithHeaders(correlationId: "corr-123");
             var provider = new AspNetCoreCorrelationProvider(accessor, ScopeWith(atLimit));
 
-            // Act
             var result = provider.GetCorrelationId();
 
-            // Assert
             Assert.IsTrue(result.IsSuccess);
             Assert.AreEqual(atLimit, result.Response,
                 "A value of exactly the column length is inclusive and must still be honoured.");
@@ -146,15 +128,12 @@ namespace RzR.DataVigil.AspNetCore.Tests
         [TestMethod]
         public void GetCorrelationId_ScopeValueOneCharOverTheMaximumLength_IsRejected()
         {
-            // Arrange
             var overLimit = new string('a', AuditColumnLengths.CorrelationId + 1);
             var accessor = CreateAccessorWithHeaders(correlationId: "corr-123");
             var provider = new AspNetCoreCorrelationProvider(accessor, ScopeWith(overLimit));
 
-            // Act
             var result = provider.GetCorrelationId();
 
-            // Assert
             Assert.IsTrue(result.IsSuccess);
             Assert.AreNotEqual(overLimit, result.Response);
             Assert.AreEqual("corr-123", result.Response);
@@ -167,16 +146,13 @@ namespace RzR.DataVigil.AspNetCore.Tests
         [TestMethod]
         public void GetCorrelationId_TraceIdentifierLongerThanLimit_FallsThroughToW3CTraceId()
         {
-            // Arrange
             var expectedTraceId = StartW3CActivity();
             var accessor = CreateAccessorWithHeaders();
             accessor.HttpContext.TraceIdentifier = OverLongValue;
             var provider = new AspNetCoreCorrelationProvider(accessor);
 
-            // Act
             var result = provider.GetCorrelationId();
 
-            // Assert
             Assert.IsTrue(result.IsSuccess);
             Assert.AreNotEqual(OverLongValue, result.Response,
                 "A server-generated trace identifier is still validated before it reaches storage.");
@@ -186,16 +162,13 @@ namespace RzR.DataVigil.AspNetCore.Tests
         [TestMethod]
         public void GetCorrelationId_KestrelShapedTraceIdentifier_IsStillAccepted()
         {
-            // Arrange
             StartW3CActivity();
             var accessor = StubAccessor();
             accessor.HttpContext.TraceIdentifier = "0HN7CTQ0Q0OJ4:00000001";
             var provider = new AspNetCoreCorrelationProvider(accessor);
 
-            // Act
             var result = provider.GetCorrelationId();
 
-            // Assert
             Assert.IsTrue(result.IsSuccess);
             Assert.AreEqual("0HN7CTQ0Q0OJ4:00000001", result.Response,
                 "The ':' in a Kestrel trace identifier is inside the allowed charset; rejecting it "
@@ -209,14 +182,11 @@ namespace RzR.DataVigil.AspNetCore.Tests
         [TestMethod]
         public void GetCorrelationId_CorrelationHeaderLongerThanLimit_FallsThroughToRequestIdHeader()
         {
-            // Arrange
             var accessor = CreateAccessorWithHeaders(correlationId: OverLongValue, requestId: "req-456");
             var provider = new AspNetCoreCorrelationProvider(accessor);
 
-            // Act
             var result = provider.GetCorrelationId();
 
-            // Assert
             Assert.IsTrue(result.IsSuccess);
             Assert.AreEqual("req-456", result.Response);
         }
@@ -224,17 +194,14 @@ namespace RzR.DataVigil.AspNetCore.Tests
         [TestMethod]
         public void GetCorrelationId_BothHeadersRejected_FallsThroughToTraceIdentifier()
         {
-            // Arrange
             var accessor = StubAccessor(
                 correlationId: "corr,with,commas",
                 requestId: OverLongValue);
             accessor.HttpContext.TraceIdentifier = "0HN7CTQ0Q0OJ4:00000002";
             var provider = new AspNetCoreCorrelationProvider(accessor);
 
-            // Act
             var result = provider.GetCorrelationId();
 
-            // Assert
             Assert.IsTrue(result.IsSuccess);
             Assert.AreEqual("0HN7CTQ0Q0OJ4:00000002", result.Response);
         }
@@ -246,15 +213,12 @@ namespace RzR.DataVigil.AspNetCore.Tests
         [TestMethod]
         public void GetCorrelationId_ScopeContextThrows_ReturnsFailureInsteadOfPropagating()
         {
-            // Arrange
             var accessor = CreateAccessorWithHeaders(correlationId: "corr-123");
             var scope = new ThrowingScopeContext();
             var provider = new AspNetCoreCorrelationProvider(accessor, scope);
 
-            // Act
             var result = provider.GetCorrelationId();
 
-            // Assert
             Assert.IsNotNull(result);
             Assert.IsFalse(result.IsSuccess);
             Assert.AreEqual(1, scope.GetCorrelationIdCallCount);
@@ -279,28 +243,6 @@ namespace RzR.DataVigil.AspNetCore.Tests
             scope.SetCorrelationId(correlationId);
 
             return scope;
-        }
-
-        private sealed class ThrowingScopeContext : IAuditScopeContext
-        {
-            public int GetCorrelationIdCallCount { get; private set; }
-
-            public IResult SetUser(AuditUserInfo user) => Result.Success();
-
-            public IResult<AuditUserInfo> GetCurrentUser() => Result<AuditUserInfo>.Success(null);
-
-            public IResult SetCorrelationId(string correlationId) => Result.Success();
-
-            public IResult<string> GetCurrentCorrelationId()
-            {
-                GetCorrelationIdCallCount++;
-
-                throw new ObjectDisposedException(nameof(ThrowingScopeContext));
-            }
-
-            public void Dispose()
-            {
-            }
         }
 
         private static IHttpContextAccessor StubAccessor(

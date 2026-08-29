@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -163,7 +163,7 @@ namespace RzR.DataVigil.AspNetCore.Tests.Extensions
             scope.ServiceProvider.GetRequiredService<IAuditScopeContext>()
                 .SetUser(new AuditUserInfo
                 {
-                    UserId = "nightly-job", 
+                    UserId = "nightly-job",
                     UserName = "Nightly job"
                 });
 

@@ -214,11 +214,8 @@ namespace RzR.DataVigil.EFCore.Tests
             await ctx.SaveChangesAsync();
             _store.SavedTransactions.Clear();
 
-            // Create
             ctx.Orders.Add(new AuditableOrder { CustomerName = "New-One", Total = 30m, Quantity = 3 });
-            // Update
             toUpdate.Total = 99m;
-            // Delete
             ctx.Orders.Remove(toDelete);
 
             await ctx.SaveChangesAsync();
@@ -242,7 +239,6 @@ namespace RzR.DataVigil.EFCore.Tests
             await ctx.SaveChangesAsync();
             _store.SavedTransactions.Clear();
 
-            // SaveChanges with no modifications
             await ctx.SaveChangesAsync();
 
             Assert.AreEqual(0, _store.SavedTransactions.Count);
@@ -486,7 +482,6 @@ namespace RzR.DataVigil.EFCore.Tests
         {
             using var ctx = new AuditableTestDbContext(_dbOptions);
 
-            // IAuditable order (always audited for CUD) + IAuditableEntity product (Create denied)
             ctx.Orders.Add(new AuditableOrder { CustomerName = "Mixed", Total = 1m, Quantity = 1 });
             ctx.Products.Add(new SelectiveAuditProduct
             {
@@ -500,7 +495,6 @@ namespace RzR.DataVigil.EFCore.Tests
             Assert.AreEqual(1, _store.SavedTransactions.Count);
             var entries = _store.SavedTransactions[0].Entries.ToList();
 
-            // Only the Order should be audited; the Product's Create is denied
             Assert.AreEqual(1, entries.Count);
             Assert.AreEqual("AuditableOrder", entries[0].EntityName);
         }
@@ -592,7 +586,6 @@ namespace RzR.DataVigil.EFCore.Tests
             var (dbOpts, _) = BuildInterceptorAndDbOptions<AuditableTestDbContext>(opts, store);
 
             using var ctx = new AuditableTestDbContext(dbOpts);
-            // Add is excluded too, but we need an entity in the tracker
             var order = new AuditableOrder { CustomerName = "Seed", Total = 10m, Quantity = 1 };
             ctx.Orders.Add(order);
             await ctx.SaveChangesAsync();
@@ -698,7 +691,6 @@ namespace RzR.DataVigil.EFCore.Tests
             Assert.AreEqual("SelectiveAuditProduct", entries[0].EntityName);
         }
 
-        // ───────── Excluded fields / properties ─────────
 
         [TestMethod]
         public async Task ExcludedFields_Create_ExcludedPropertyOmitted()
@@ -832,7 +824,6 @@ namespace RzR.DataVigil.EFCore.Tests
             Assert.IsTrue(propNames.Contains("Quantity"));
         }
 
-        // ───────── Helper ─────────
 
         private (DbContextOptions<T> dbOptions, AuditSaveChangesInterceptor interceptor)
             BuildInterceptorAndDbOptions<T>(AuditTrailOptions opts, StubAuditStore store)

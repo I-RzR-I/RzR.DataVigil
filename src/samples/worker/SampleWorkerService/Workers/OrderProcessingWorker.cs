@@ -24,6 +24,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using RzR.DataVigil.Abstractions.Enums;
+using RzR.DataVigil.Abstractions.Extensions;
 using RzR.DataVigil.Abstractions.Models.Entries;
 using RzR.DataVigil.Abstractions.Models.Identity;
 using RzR.DataVigil.Abstractions.Services;
@@ -155,6 +156,8 @@ namespace SampleWorkerService.Workers
                 _logger.LogInformation(
                     "Audit recorded for Order #{OrderId} — status changed to Shipped.",
                     42);
+            else if (result.IsAuditCanceled())
+                _logger.LogDebug("Audit pipeline was canceled while the host was shutting down.");
             else
                 _logger.LogWarning("Audit pipeline returned failure.");
         }

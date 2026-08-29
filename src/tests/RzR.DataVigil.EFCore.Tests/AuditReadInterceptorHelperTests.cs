@@ -223,7 +223,6 @@ namespace RzR.DataVigil.EFCore.Tests
             var sql = "SELECT \"t\".\"Id\", \"c\".\"Content\" FROM \"Posts\" AS \"t\" INNER JOIN \"Comments\" AS \"c\" ON \"t\".\"Id\" = \"c\".\"PostId\"";
             var cols = AuditReadInterceptorHelper.ParseSelectedColumns(sql);
 
-            // Only columns before FROM are selected columns
             Assert.IsNotNull(cols);
             Assert.AreEqual(2, cols.Count);
             Assert.IsTrue(cols.Contains("Id"));
@@ -245,7 +244,6 @@ namespace RzR.DataVigil.EFCore.Tests
             var sql = "SELECT * FROM Orders";
             var cols = AuditReadInterceptorHelper.ParseSelectedColumns(sql);
 
-            // No alias.column patterns — returns null
             Assert.IsNull(cols);
         }
 

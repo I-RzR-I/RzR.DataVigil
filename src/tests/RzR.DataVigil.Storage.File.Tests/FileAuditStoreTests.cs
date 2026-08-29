@@ -14,8 +14,8 @@ using RzR.DataVigil.Abstractions.Models.Query;
 using RzR.DataVigil.Core.Gdpr;
 using RzR.DataVigil.Core.Options;
 using RzR.DataVigil.Core.Pipeline;
-using RzR.DataVigil.Storage.File.Tests.Helpers;
-using static RzR.DataVigil.Storage.File.Tests.Helpers.AuditTestDataBuilder;
+using RzR.DataVigil.Storage.File.Tests.Stubs;
+using static RzR.DataVigil.TestSupport.AuditTestDataBuilder;
 
 namespace RzR.DataVigil.Storage.File.Tests
 {
@@ -312,7 +312,6 @@ namespace RzR.DataVigil.Storage.File.Tests
             var txn = BuildTransaction(userId: "gdpr", userName: "GDPR User", ipAddress: "1.2.3.4", timestamp: timestamp, entries: new List<AuditEntry> { BuildEntry() });
             await store.SaveAsync(txn);
             await store.AnonymizeByUserAsync("gdpr");
-            // Run again
             var result = await store.AnonymizeByUserAsync("gdpr");
             Assert.IsTrue(result.IsSuccess);
             var filePath = Path.Combine(_testDirectory, "audit-2026-04-01.json");
@@ -388,17 +387,15 @@ namespace RzR.DataVigil.Storage.File.Tests
             var txn = BuildTransaction(userId: "partial", userName: "Partial User", ipAddress: "9.9.9.9",
                 timestamp: timestamp, entries: new List<AuditEntry> { BuildEntry() });
             await store.SaveAsync(txn);
-            // Manually mask only UserName
             var filePath = Path.Combine(_testDirectory, "audit-2026-04-05.json");
             var json = await System.IO.File.ReadAllTextAsync(filePath);
             var saved = JsonSerializer.Deserialize<List<AuditTransaction>>(json);
             saved[0].UserName = "[ERASED]";
             await System.IO.File.WriteAllTextAsync(filePath, JsonSerializer.Serialize(saved));
-            // Now anonymize by user (should not affect UserId/IpAddress if already erased)
             await store.AnonymizeByUserAsync("partial");
             var json2 = await System.IO.File.ReadAllTextAsync(filePath);
             var result = JsonSerializer.Deserialize<List<AuditTransaction>>(json2);
-            Assert.AreEqual("[ERASED]", result[0].UserId); // Anonymizer always erases UserId
+            Assert.AreEqual("[ERASED]", result[0].UserId);
             Assert.AreEqual("[ERASED]", result[0].UserName);
         }
 
@@ -734,11 +731,9 @@ namespace RzR.DataVigil.Storage.File.Tests
             var timestamp = new DateTimeOffset(2026, 5, 8, 0, 0, 0, TimeSpan.Zero);
             await store.SaveAsync(BuildTransaction(timestamp: timestamp, entries: new List<AuditEntry> { entry }));
 
-            // First query anonymizes on retrieval
             var result1 = await store.QueryAsync(new AuditTransactionQuery(), new GdprRetrievalContext());
             Assert.AreEqual("[ANONYMIZED]", result1.Response.First().Entries.First().Properties.First().OldValue);
 
-            // Verify stored data on disk is untouched
             var filePath = Path.Combine(_testDirectory, $"audit-{timestamp.UtcDateTime:yyyy-MM-dd}.json");
             var json = await System.IO.File.ReadAllTextAsync(filePath);
             var stored = JsonSerializer.Deserialize<List<AuditTransaction>>(json);

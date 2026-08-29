@@ -1,20 +1,3 @@
-// ***********************************************************************
-//  Assembly          : RzR.DataVigil.RzR.DataVigil.EFCore.Tests
-//  Author            : RzR
-//  Created           : 18-08-2026 22:08
-// 
-//  Last Modified By : RzR
-//  Last Modified On : 19-08-2026 00:37
-//  ***********************************************************************
-//  <copyright file="AuditSaveChangesInterceptorSqliteTests.cs" company="RzR SOFT & TECH">
-//      Copyright (c) RzR. All rights reserved.
-//  </copyright>
-//  <contact>
-//      https://iamrzr.dev/contact
-//  </contact>
-//  <summary></summary>
-//  ***********************************************************************
-
 #region U S I N G
 
 using System;
