@@ -1,3 +1,7 @@
+### **v2.0.1.6447** [[RzR](mailto:108324929+I-RzR-I@users.noreply.github.com)] 29-08-2026
+* [52030fe] (RzR) -> Auto commit uncommited files
+* [099191a] (RzR) -> Fix ef core migration with cross compatible version.
+
 ### **v2.0.0.5512** [[RzR](mailto:108324929+I-RzR-I@users.noreply.github.com)] 29-08-2026
 * [55ca436] (RzR) -> Auto commit uncommited files
 * [64e1ad3] (RzR) -> Adjust the documentation (readme and using).
