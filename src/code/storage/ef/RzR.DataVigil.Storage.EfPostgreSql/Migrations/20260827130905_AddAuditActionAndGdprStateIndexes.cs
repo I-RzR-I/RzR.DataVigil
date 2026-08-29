@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Migrations.Operations;
 
 namespace RzR.DataVigil.Storage.EfPostgreSql.Migrations
 {
@@ -6,63 +7,83 @@ namespace RzR.DataVigil.Storage.EfPostgreSql.Migrations
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropIndex(
-                name: "IX_AuditEntries_EntityName",
-                schema: "audit",
-                table: "AuditEntries");
+            migrationBuilder.Operations.Add(new DropIndexOperation
+            {
+                Name = "IX_AuditEntries_EntityName",
+                Schema = "audit",
+                Table = "AuditEntries"
+            });
 
-            migrationBuilder.DropIndex(
-                name: "IX_AuditEntries_TransactionId",
-                schema: "audit",
-                table: "AuditEntries");
+            migrationBuilder.Operations.Add(new DropIndexOperation
+            {
+                Name = "IX_AuditEntries_TransactionId",
+                Schema = "audit",
+                Table = "AuditEntries"
+            });
 
-            migrationBuilder.CreateIndex(
-                name: "IX_AuditTransactions_GdprState_Timestamp",
-                schema: "audit",
-                table: "AuditTransactions",
-                columns: new[] { "GdprState", "Timestamp" });
+            migrationBuilder.Operations.Add(new CreateIndexOperation
+            {
+                Name = "IX_AuditTransactions_GdprState_Timestamp",
+                Schema = "audit",
+                Table = "AuditTransactions",
+                Columns = new[] { "GdprState", "Timestamp" }
+            });
 
-            migrationBuilder.CreateIndex(
-                name: "IX_AuditEntries_EntityName",
-                schema: "audit",
-                table: "AuditEntries",
-                columns: new[] { "EntityName", "Action" });
+            migrationBuilder.Operations.Add(new CreateIndexOperation
+            {
+                Name = "IX_AuditEntries_EntityName",
+                Schema = "audit",
+                Table = "AuditEntries",
+                Columns = new[] { "EntityName", "Action" }
+            });
 
-            migrationBuilder.CreateIndex(
-                name: "IX_AuditEntries_TransactionId",
-                schema: "audit",
-                table: "AuditEntries",
-                columns: new[] { "TransactionId", "Action" });
+            migrationBuilder.Operations.Add(new CreateIndexOperation
+            {
+                Name = "IX_AuditEntries_TransactionId",
+                Schema = "audit",
+                Table = "AuditEntries",
+                Columns = new[] { "TransactionId", "Action" }
+            });
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropIndex(
-                name: "IX_AuditTransactions_GdprState_Timestamp",
-                schema: "audit",
-                table: "AuditTransactions");
+            migrationBuilder.Operations.Add(new DropIndexOperation
+            {
+                Name = "IX_AuditTransactions_GdprState_Timestamp",
+                Schema = "audit",
+                Table = "AuditTransactions"
+            });
 
-            migrationBuilder.DropIndex(
-                name: "IX_AuditEntries_EntityName",
-                schema: "audit",
-                table: "AuditEntries");
+            migrationBuilder.Operations.Add(new DropIndexOperation
+            {
+                Name = "IX_AuditEntries_EntityName",
+                Schema = "audit",
+                Table = "AuditEntries"
+            });
 
-            migrationBuilder.DropIndex(
-                name: "IX_AuditEntries_TransactionId",
-                schema: "audit",
-                table: "AuditEntries");
+            migrationBuilder.Operations.Add(new DropIndexOperation
+            {
+                Name = "IX_AuditEntries_TransactionId",
+                Schema = "audit",
+                Table = "AuditEntries"
+            });
 
-            migrationBuilder.CreateIndex(
-                name: "IX_AuditEntries_EntityName",
-                schema: "audit",
-                table: "AuditEntries",
-                column: "EntityName");
+            migrationBuilder.Operations.Add(new CreateIndexOperation
+            {
+                Name = "IX_AuditEntries_EntityName",
+                Schema = "audit",
+                Table = "AuditEntries",
+                Columns = new[] { "EntityName" }
+            });
 
-            migrationBuilder.CreateIndex(
-                name: "IX_AuditEntries_TransactionId",
-                schema: "audit",
-                table: "AuditEntries",
-                column: "TransactionId");
+            migrationBuilder.Operations.Add(new CreateIndexOperation
+            {
+                Name = "IX_AuditEntries_TransactionId",
+                Schema = "audit",
+                Table = "AuditEntries",
+                Columns = new[] { "TransactionId" }
+            });
         }
     }
 }
