@@ -28,6 +28,7 @@ using RzR.DataVigil.Abstractions.Enums;
 using RzR.DataVigil.Abstractions.Models.Entries;
 using RzR.DataVigil.Abstractions.Services;
 using RzR.DataVigil.Core.Gdpr;
+using RzR.DataVigil.Core.Helpers;
 using RzR.Extensions.Domain.Collections;
 using RzR.Extensions.Domain.Primitives;
 using RzR.Extensions.Domain.Text;
@@ -194,6 +195,9 @@ namespace RzR.DataVigil.Core.Pipeline
                 var correlationId = _correlationProvider.GetCorrelationId();
                 var traceId = _correlationProvider.GetTraceId();
 
+                var oversizeFields = new List<string>();
+                var oversizeSizes = new List<string>();
+
                 AuditUserSource userSource;
                 if (user.IsNull() || user.IsSuccess.IsFalse())
                 {
@@ -211,6 +215,13 @@ namespace RzR.DataVigil.Core.Pipeline
                     userSource = user.Response.Source;
                 }
 
+                transaction.UserId = GuardColumnLength(transaction.UserId, AuditColumnLengths.UserId,
+                    nameof(AuditTransaction.UserId), truncate: true, oversizeFields, oversizeSizes);
+                transaction.UserName = GuardColumnLength(transaction.UserName, AuditColumnLengths.UserName,
+                    nameof(AuditTransaction.UserName), truncate: true, oversizeFields, oversizeSizes);
+                transaction.IpAddress = GuardColumnLength(transaction.IpAddress, AuditColumnLengths.IpAddress,
+                    nameof(AuditTransaction.IpAddress), truncate: true, oversizeFields, oversizeSizes);
+
                 if (transaction.Metadata.IsNull())
                     transaction.Metadata = new Dictionary<string, string>();
 
@@ -218,9 +229,23 @@ namespace RzR.DataVigil.Core.Pipeline
 
                 transaction.Metadata[AuditMetadataKeys.UserSource] = userSource.ToString();
 
-                transaction.Source = ValueOrNull(source);
-                transaction.CorrelationId = ValueOrNull(correlationId);
-                transaction.TraceId = ValueOrNull(traceId);
+                transaction.Source = GuardColumnLength(ValueOrNull(source), AuditColumnLengths.Source,
+                    nameof(AuditTransaction.Source), truncate: true, oversizeFields, oversizeSizes);
+                transaction.CorrelationId = GuardColumnLength(ValueOrNull(correlationId),
+                    AuditColumnLengths.CorrelationId, nameof(AuditTransaction.CorrelationId),
+                    truncate: false, oversizeFields, oversizeSizes);
+                transaction.TraceId = GuardColumnLength(ValueOrNull(traceId), AuditColumnLengths.TraceId,
+                    nameof(AuditTransaction.TraceId), truncate: false, oversizeFields, oversizeSizes);
+
+                if (oversizeFields.Count > 0)
+                {
+                    transaction.Metadata[AuditMetadataKeys.Oversize] = string.Join(",", oversizeFields);
+                    LogColumnLengthGuard(userSource, oversizeFields, oversizeSizes);
+                }
+                else
+                {
+                    transaction.Metadata.Remove(AuditMetadataKeys.Oversize);
+                }
 
                 // Apply GDPR storage policies to each entry
                 var anyGdprApplied = false;
@@ -244,10 +269,10 @@ namespace RzR.DataVigil.Core.Pipeline
                 return await _auditStore.SaveAsync(transaction, cancellationToken)
                     .ConfigureAwait(false);
             }
-            catch (OperationCanceledException ex)
+            catch (OperationCanceledException ex) when (cancellationToken.IsCancellationRequested)
             {
                 return Result
-                    .Failure(ex.Message)
+                    .Failure(AuditResultCodes.OperationCanceled, ex.Message)
                     .WithError(ex);
             }
             catch (Exception ex)
@@ -274,7 +299,22 @@ namespace RzR.DataVigil.Core.Pipeline
                 try
                 {
                     var enriched = enricher.Enrich();
-                    if (enriched.IsNull() || enriched.IsSuccess.IsFalse() || enriched.Response.IsNull())
+                    if (enriched.IsNull())
+                    {
+                        LogEnricherUnusableResult(enricher, "NullResult");
+
+                        continue;
+                    }
+
+                    if (enriched.IsSuccess.IsFalse())
+                    {
+                        LogEnricherUnusableResult(enricher, "FailedResult");
+
+                        continue;
+                    }
+
+                    // Success with no payload is the ordinary answer outside a request, not a defect.
+                    if (enriched.Response.IsNull())
                         continue;
 
                     foreach (var pair in enriched.Response)
@@ -313,6 +353,133 @@ namespace RzR.DataVigil.Core.Pipeline
             {
                 /* logging must never break the audit write */
             }
+        }
+
+        /// -------------------------------------------------------------------------------------------------
+        /// <summary>
+        ///     Reports that a single enricher returned a result the pipeline cannot read pairs from, and
+        ///     was skipped, without ever letting the report itself break the audit write.
+        /// </summary>
+        /// <param name="enricher">The enricher that returned the unusable result, may be null.</param>
+        /// <param name="outcome">
+        ///     A token naming what was wrong with the result. The result's own failure message is never
+        ///     logged: it is enricher-authored text and may carry the detail of an exception the enricher
+        ///     caught.
+        /// </param>
+        /// =================================================================================================
+        private void LogEnricherUnusableResult(IAuditMetadataEnricher enricher, string outcome)
+        {
+            try
+            {
+                var enricherType = enricher?.GetType().FullName ?? "<null>";
+
+                _logger.LogWarning(
+                    "DataVigil metadata enricher {EnricherType} returned an unusable result ({Outcome}) " +
+                    "and was skipped. The audit record is still written, without that enricher's " +
+                    "metadata. The result's own message is not logged.",
+                    enricherType, outcome);
+            }
+            catch
+            {
+                /* logging must never break the audit write */
+            }
+        }
+
+        /// -------------------------------------------------------------------------------------------------
+        /// <summary>
+        ///     Reports, at most once per transaction, that one or more fields exceeded their storage
+        ///     column length and were guarded, without ever letting the report itself break the audit
+        ///     write. The guarded values are never logged; only the field names, the observed lengths
+        ///     against the column maximum, and how the actor was resolved.
+        /// </summary>
+        /// <param name="userSource">How the transaction's actor was determined.</param>
+        /// <param name="fields">The names of the fields that were guarded, in storage order.</param>
+        /// <param name="sizes">The observed length against the column maximum, one entry per field.</param>
+        /// =================================================================================================
+        private void LogColumnLengthGuard(AuditUserSource userSource, List<string> fields, List<string> sizes)
+        {
+            try
+            {
+                var fieldNames = string.Join(",", fields);
+                var fieldSizes = string.Join(",", sizes);
+
+                var expected = userSource == AuditUserSource.HttpContext && fields.All(IsUserAttributeField);
+
+                if (expected.IsFalse())
+                {
+                    _logger.LogWarning(
+                        "DataVigil guarded oversize audit fields {Fields} on a transaction whose actor " +
+                        "came from {UserSource}. Observed length against the column maximum: {FieldSizes}. " +
+                        "Identity fields were truncated and join keys were dropped, and the audit record " +
+                        "was still written. The values themselves are not logged.",
+                        fieldNames, userSource, fieldSizes);
+                }
+                else if (_logger.IsEnabled(LogLevel.Debug))
+                {
+                    _logger.LogDebug(
+                        "DataVigil guarded oversize audit fields {Fields} on a transaction whose actor " +
+                        "came from {UserSource}. Observed length against the column maximum: {FieldSizes}. " +
+                        "Identity fields were truncated and the audit record was still written. The " +
+                        "values themselves are not logged.",
+                        fieldNames, userSource, fieldSizes);
+                }
+            }
+            catch
+            {
+                /* logging must never break the audit write */
+            }
+        }
+
+        /// -------------------------------------------------------------------------------------------------
+        /// <summary>
+        ///     Returns <c>true</c> when the named field is an actor attribute rather than a machine join
+        ///     key.
+        /// </summary>
+        /// <param name="fieldName">The guarded field name.</param>
+        /// <returns>
+        ///     True for the actor attributes, false for every other guarded field.
+        /// </returns>
+        /// =================================================================================================
+        private static bool IsUserAttributeField(string fieldName)
+            => fieldName == nameof(AuditTransaction.UserId)
+               || fieldName == nameof(AuditTransaction.UserName)
+               || fieldName == nameof(AuditTransaction.IpAddress);
+
+        /// -------------------------------------------------------------------------------------------------
+        /// <summary>
+        ///     Brings a resolved value within its storage column length. The guard lives here rather than
+        ///     in the resolvers because the resolvers are public extension points, so a third-party
+        ///     implementation would bypass a guard placed in them and the over-long value would fail the
+        ///     insert, losing the whole audit record.
+        /// </summary>
+        /// <param name="value">The resolved value, may be null.</param>
+        /// <param name="max">The storage column length.</param>
+        /// <param name="fieldName">The field name recorded when the value is guarded.</param>
+        /// <param name="truncate">
+        ///     True to keep a truncated prefix, false to reject the value to null. Actor attributes are
+        ///     truncated because a partially attributed record is still an investigative lead, while an
+        ///     unattributed one is not. Machine join keys are rejected because a truncated key looks
+        ///     valid and joins to nothing, which is false evidence.
+        /// </param>
+        /// <param name="fields">Receives the field name when the value was guarded.</param>
+        /// <param name="sizes">Receives the observed length against the column maximum.</param>
+        /// <returns>
+        ///     The value as it will be stored.
+        /// </returns>
+        /// =================================================================================================
+        private static string GuardColumnLength(string value, int max, string fieldName, bool truncate,
+            ICollection<string> fields, ICollection<string> sizes)
+        {
+            if (value.IsNull() || value.Length <= max)
+                return value;
+
+            fields.Add(fieldName);
+            sizes.Add($"{fieldName}={value.Length}/{max}");
+
+            if (truncate.IsFalse())
+                return null;
+
+            return AuditColumnValue.TruncateToColumnLength(value, max);
         }
 
         /// -------------------------------------------------------------------------------------------------

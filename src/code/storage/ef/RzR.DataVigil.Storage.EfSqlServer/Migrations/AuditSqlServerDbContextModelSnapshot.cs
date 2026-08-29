@@ -124,13 +124,13 @@ namespace RzR.DataVigil.Storage.EfSqlServer.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CorrelationId");
+                    b.HasIndex("Timestamp", "Id");
 
-                    b.HasIndex("Timestamp");
+                    b.HasIndex("CorrelationId", "Timestamp", "Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("GdprState", "Timestamp", "Id");
 
-                    b.HasIndex("GdprState", "Timestamp");
+                    b.HasIndex("UserId", "Timestamp", "Id");
 
                     b.ToTable("AuditTransactions", "audit");
                 });

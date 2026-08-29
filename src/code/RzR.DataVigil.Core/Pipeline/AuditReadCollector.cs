@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using RzR.DataVigil.Abstractions.Extensions;
 using RzR.DataVigil.Abstractions.Models.Entries;
 using RzR.Extensions.Domain.Primitives;
 
@@ -119,7 +120,14 @@ namespace RzR.DataVigil.Core.Pipeline
                     .ConfigureAwait(false);
 
                 if (result.IsFailure)
-                    _logger.LogWarning("Audit pipeline failed while flushing {Count} Read entries.", snapshot.Count);
+                {
+                    if (result.IsAuditCanceled())
+                        _logger.LogDebug("Audit pipeline was canceled while flushing {Count} Read entries.",
+                            snapshot.Count);
+                    else
+                        _logger.LogWarning("Audit pipeline failed while flushing {Count} Read entries.",
+                            snapshot.Count);
+                }
             }
             catch (Exception ex)
             {

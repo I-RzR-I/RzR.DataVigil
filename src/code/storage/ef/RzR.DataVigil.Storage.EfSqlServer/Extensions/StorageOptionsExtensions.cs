@@ -36,6 +36,13 @@ namespace RzR.DataVigil.Storage.EfSqlServer.Extensions
     {
         /// -------------------------------------------------------------------------------------------------
         /// <summary>
+        ///     (Immutable) the command timeout, in seconds, applied to the scope that runs migrations.
+        /// </summary>
+        /// =================================================================================================
+        private const int MigrationCommandTimeoutSeconds = 6 * 60 * 60;
+
+        /// -------------------------------------------------------------------------------------------------
+        /// <summary>
         ///     Configures SQL Server as the audit store backend.
         ///     Pass the same connection string as your application for same-database storage,
         ///     or a different one for a separate dedicated audit database.
@@ -46,8 +53,7 @@ namespace RzR.DataVigil.Storage.EfSqlServer.Extensions
         ///     The <see cref="StorageOptions"/> instance for fluent chaining.
         /// </returns>
         /// =================================================================================================
-        public static StorageOptions UseSqlServer(
-            this StorageOptions options,
+        public static StorageOptions UseSqlServer(this StorageOptions options,
             string connectionString)
         {
             options.ConnectionString = connectionString;
@@ -110,6 +116,9 @@ namespace RzR.DataVigil.Storage.EfSqlServer.Extensions
             using (var scope = serviceProvider.CreateScope())
             {
                 var auditDb = scope.ServiceProvider.GetRequiredService<AuditSqlServerDbContext>();
+
+                auditDb.Database.SetCommandTimeout(MigrationCommandTimeoutSeconds);
+
                 auditDb.Database.Migrate();
             }
         }

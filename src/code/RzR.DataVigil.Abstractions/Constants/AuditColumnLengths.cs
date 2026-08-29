@@ -30,5 +30,40 @@ namespace RzR.DataVigil.Abstractions.Constants
         /// </summary>
         /// =================================================================================================
         public static readonly int CorrelationId = 256;
+
+        /// -------------------------------------------------------------------------------------------------
+        /// <summary>
+        ///     (Immutable) the maximum length of the audit user id column.
+        /// </summary>
+        /// =================================================================================================
+        public static readonly int UserId = 256;
+
+        /// -------------------------------------------------------------------------------------------------
+        /// <summary>
+        ///     (Immutable) the maximum length of the audit username column.
+        /// </summary>
+        /// =================================================================================================
+        public static readonly int UserName = 256;
+
+        /// -------------------------------------------------------------------------------------------------
+        /// <summary>
+        ///     (Immutable) the maximum length of the audit ip address column.
+        /// </summary>
+        /// =================================================================================================
+        public static readonly int IpAddress = 64;
+
+        /// -------------------------------------------------------------------------------------------------
+        /// <summary>
+        ///     (Immutable) the maximum length of the audit source column.
+        /// </summary>
+        /// =================================================================================================
+        public static readonly int Source = 512;
+
+        /// -------------------------------------------------------------------------------------------------
+        /// <summary>
+        ///     (Immutable) the maximum length of the audit trace id column.
+        /// </summary>
+        /// =================================================================================================
+        public static readonly int TraceId = 256;
     }
 }

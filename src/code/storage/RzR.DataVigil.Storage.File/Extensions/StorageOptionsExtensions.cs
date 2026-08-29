@@ -1,4 +1,4 @@
-// ***********************************************************************
+﻿// ***********************************************************************
 //  Assembly         : RzR.DataVigil.Storage.File
 //  Author           : RzR
 //  Created On       : 2026-04-10 23:04
@@ -17,6 +17,7 @@
 #region U S A G E S
 
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using RzR.DataVigil.Abstractions.Services;
 using RzR.DataVigil.Core.Gdpr;
 using RzR.DataVigil.Core.Options;
@@ -67,7 +68,8 @@ namespace RzR.DataVigil.Storage.File.Extensions
                 var options = sp.GetRequiredService<StorageOptions>();
                 var gdprProcessor = sp.GetRequiredService<GdprProcessor>();
 
-                return new FileAuditStore(options, gdprProcessor);
+                return new FileAuditStore(options, gdprProcessor,
+                    sp.GetService<ILogger<FileAuditStore>>());
             });
 
             return services;

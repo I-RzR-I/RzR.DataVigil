@@ -27,12 +27,6 @@ namespace RzR.DataVigil.Abstractions.Models.Query
     /// <summary>
     ///     Query parameters for filtering and paginating audit transaction results.
     /// </summary>
-    /// <remarks>
-    ///     Filter properties are added additively over time, so a store applies only the filters it
-    ///     knows about. A filter left at its default (<see langword="null"/>, or null-or-whitespace for
-    ///     the string filters) is not applied at all, which means a default instance produces the same
-    ///     unfiltered result set as before any filter existed. Supplied filters combine with AND only.
-    /// </remarks>
     /// =================================================================================================
     public class AuditTransactionQuery
     {

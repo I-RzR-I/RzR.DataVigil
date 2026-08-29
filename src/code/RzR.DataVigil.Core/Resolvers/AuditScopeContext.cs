@@ -43,7 +43,7 @@ namespace RzR.DataVigil.Core.Resolvers
 
         private string _currentCorrelationId;
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public IResult SetUser(AuditUserInfo user)
         {
             _currentUser = user;
@@ -51,13 +51,13 @@ namespace RzR.DataVigil.Core.Resolvers
             return Result.Success();
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public IResult<AuditUserInfo> GetCurrentUser()
         {
             return Result<AuditUserInfo>.Success(_currentUser);
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public IResult SetCorrelationId(string correlationId)
         {
             _currentCorrelationId = correlationId;
@@ -65,17 +65,15 @@ namespace RzR.DataVigil.Core.Resolvers
             return Result.Success();
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public IResult<string> GetCurrentCorrelationId()
         {
             return Result<string>.Success(_currentCorrelationId);
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public void Dispose()
         {
-            _currentUser = null;
-            _currentCorrelationId = null;
         }
     }
 }

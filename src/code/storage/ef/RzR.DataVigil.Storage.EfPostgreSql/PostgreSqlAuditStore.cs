@@ -1,4 +1,4 @@
-// ***********************************************************************
+﻿// ***********************************************************************
 //  Assembly         : RzR.DataVigil.Storage.EfPostgreSql
 //  Author           : RzR
 //  Created On       : 2026-04-10 23:04
@@ -18,13 +18,16 @@
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using RzR.DataVigil.Abstractions.Constants;
 using RzR.DataVigil.Abstractions.Enums;
+using RzR.DataVigil.Abstractions.Extensions;
 using RzR.DataVigil.Abstractions.Models.Entries;
 using RzR.DataVigil.Abstractions.Models.Gdpr;
 using RzR.DataVigil.Abstractions.Models.Query;
 using RzR.DataVigil.Abstractions.Services;
 using RzR.DataVigil.Core.Extensions;
 using RzR.DataVigil.Core.Gdpr;
+using RzR.DataVigil.Core.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -128,6 +131,24 @@ namespace RzR.DataVigil.Storage.EfPostgreSql
             try
             {
                 filters = filters.IfIsNull(new AuditTransactionQuery());
+
+                filters.GetEffectivePaging(out var skip, out var take, out var pagingWasNormalized,
+                    out var takeWasCapped);
+
+                if (takeWasCapped)
+                    _logger.LogWarning(
+                        "The requested audit query page size {RequestedTake} exceeds the maximum {MaxTake} and " +
+                        "the result was capped. Use Skip to page through the remaining records; a short page is " +
+                        "not the end of the audit trail.",
+                        filters.Take, AuditQueryLimits.MaxTake);
+
+                if (pagingWasNormalized && _logger.IsEnabled(LogLevel.Debug))
+                    _logger.LogDebug("The audit query paging values were normalized to Skip {Skip} and Take {Take}.",
+                        skip, take);
+
+                if (take == 0)
+                    return Result<IEnumerable<AuditTransaction>>.Success(new List<AuditTransaction>());
+
                 gdprRetrievalContext = gdprRetrievalContext.IfIsNull(new GdprRetrievalContext());
                 var source = ApplyFilters(_dbContext.AuditTransactions
                     .Include(t => t.Entries)
@@ -137,8 +158,8 @@ namespace RzR.DataVigil.Storage.EfPostgreSql
                 var query = await source
                     .OrderByDescending(x => x.Timestamp)
                     .ThenByDescending(x => x.Id)
-                    .Skip(filters.Skip)
-                    .Take(filters.Take)
+                    .Skip(skip)
+                    .Take(take)
                     .ToListAsync(cancellationToken);
 
                 foreach (var txn in query.NotNull())
@@ -177,6 +198,8 @@ namespace RzR.DataVigil.Storage.EfPostgreSql
         {
             try
             {
+                userId = AuditColumnValue.TruncateToColumnLength(userId, AuditColumnLengths.UserId);
+
                 var transactions = await _dbContext.AuditTransactions
                     .Where(t => t.UserId == userId)
                     .ToListAsync(cancellationToken)

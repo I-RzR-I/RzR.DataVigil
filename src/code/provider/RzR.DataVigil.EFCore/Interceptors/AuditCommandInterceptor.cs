@@ -26,6 +26,7 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Logging;
 using RzR.DataVigil.Abstractions.Contracts;
 using RzR.DataVigil.Abstractions.Enums;
+using RzR.DataVigil.Abstractions.Extensions;
 using RzR.DataVigil.Abstractions.Models.Entries;
 using RzR.DataVigil.Core.Options;
 using RzR.DataVigil.Core.Pipeline;
@@ -217,9 +218,16 @@ namespace RzR.DataVigil.EFCore.Interceptors
 
                 var auditResult = await _pipeline.ProcessAsync(transaction, cancellationToken).ConfigureAwait(false);
                 if (auditResult.IsFailure)
-                    _logger.LogWarning(
-                        "Audit pipeline failed for Read on context {Context}.",
-                        context.GetType().Name);
+                {
+                    if (auditResult.IsAuditCanceled())
+                        _logger.LogDebug(
+                            "Audit pipeline was canceled for Read on context {Context}.",
+                            context.GetType().Name);
+                    else
+                        _logger.LogWarning(
+                            "Audit pipeline failed for Read on context {Context}.",
+                            context.GetType().Name);
+                }
             }
             catch (Exception ex)
             {

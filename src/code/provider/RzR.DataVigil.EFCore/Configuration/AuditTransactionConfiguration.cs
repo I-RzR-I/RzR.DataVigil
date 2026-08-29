@@ -65,12 +65,12 @@ namespace RzR.DataVigil.EFCore.Configuration
             builder.Property(t => t.Id).ValueGeneratedNever();
 
             builder.Property(t => t.Timestamp).IsRequired();
-            builder.Property(t => t.UserId).HasMaxLength(256);
-            builder.Property(t => t.UserName).HasMaxLength(256);
-            builder.Property(t => t.IpAddress).HasMaxLength(64);
+            builder.Property(t => t.UserId).HasMaxLength(AuditColumnLengths.UserId);
+            builder.Property(t => t.UserName).HasMaxLength(AuditColumnLengths.UserName);
+            builder.Property(t => t.IpAddress).HasMaxLength(AuditColumnLengths.IpAddress);
             builder.Property(t => t.CorrelationId).HasMaxLength(AuditColumnLengths.CorrelationId);
-            builder.Property(t => t.TraceId).HasMaxLength(256);
-            builder.Property(t => t.Source).HasMaxLength(512);
+            builder.Property(t => t.TraceId).HasMaxLength(AuditColumnLengths.TraceId);
+            builder.Property(t => t.Source).HasMaxLength(AuditColumnLengths.Source);
             builder.Property(t => t.GdprState).IsRequired();
 
             var metadataConverter = new ValueConverter<IDictionary<string, string>, string>(
@@ -95,10 +95,10 @@ namespace RzR.DataVigil.EFCore.Configuration
                 .OnDelete(DeleteBehavior.Cascade);
 
             // Indexes
-            builder.HasIndex(t => t.Timestamp);
-            builder.HasIndex(t => t.UserId);
-            builder.HasIndex(t => t.CorrelationId);
-            builder.HasIndex(t => new { t.GdprState, t.Timestamp });
+            builder.HasIndex(t => new { t.Timestamp, t.Id });
+            builder.HasIndex(t => new { t.UserId, t.Timestamp, t.Id });
+            builder.HasIndex(t => new { t.CorrelationId, t.Timestamp, t.Id });
+            builder.HasIndex(t => new { t.GdprState, t.Timestamp, t.Id });
         }
 
         /// -------------------------------------------------------------------------------------------------

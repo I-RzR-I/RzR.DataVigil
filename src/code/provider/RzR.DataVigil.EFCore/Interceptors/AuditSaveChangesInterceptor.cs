@@ -27,6 +27,7 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Logging;
 using RzR.DataVigil.Abstractions.Contracts;
 using RzR.DataVigil.Abstractions.Enums;
+using RzR.DataVigil.Abstractions.Extensions;
 using RzR.DataVigil.Abstractions.Models.Entries;
 using RzR.DataVigil.Core.Options;
 using RzR.DataVigil.Core.Pipeline;
@@ -284,9 +285,17 @@ namespace RzR.DataVigil.EFCore.Interceptors
                 .ConfigureAwait(false);
 
             if (auditResult.IsFailure)
-                _logger.LogWarning(
-                    "Audit pipeline failed for context {Context}. Check AuditStore logs for details.",
-                    context.GetType().Name);
+            {
+                if (auditResult.IsAuditCanceled())
+                    _logger.LogInformation(
+                        "Audit pipeline was canceled for context {Context} after the audited write " +
+                        "committed, so no audit record was written for it.",
+                        context.GetType().Name);
+                else
+                    _logger.LogWarning(
+                        "Audit pipeline failed for context {Context}. Check AuditStore logs for details.",
+                        context.GetType().Name);
+            }
 
             await FlushAmbientContextWritesAsync(context, trackedBeforeStore, callerWorkStillPending,
                 cancellationToken).ConfigureAwait(false);
@@ -440,7 +449,7 @@ namespace RzR.DataVigil.EFCore.Interceptors
                     if (auditableEntity.ShouldAudit(action).IsFalse())
                         continue;
 
-                    var fields = auditableEntity.GetExcludedFields();
+                    var fields = auditableEntity.GetExcludedFields().ToList();
                     if (fields.IsNotNullOrEmptyEnumerable())
                         excludedFields = new List<string>(fields);
                 }

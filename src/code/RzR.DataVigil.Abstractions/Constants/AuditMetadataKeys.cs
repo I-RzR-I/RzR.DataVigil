@@ -51,5 +51,14 @@ namespace RzR.DataVigil.Abstractions.Constants
         /// </summary>
         /// =================================================================================================
         public const string HttpRoute = "__datavigil.http.route";
+
+        /// -------------------------------------------------------------------------------------------------
+        /// <summary>
+        ///     Metadata key under which the pipeline records the names of the transaction fields that
+        ///     exceeded their storage column length, comma separated with no spaces, in the fixed order
+        ///     <c>UserId,UserName,IpAddress,Source,CorrelationId,TraceId</c>.
+        /// </summary>
+        /// =================================================================================================
+        public const string Oversize = "__datavigil.oversize";
     }
 }

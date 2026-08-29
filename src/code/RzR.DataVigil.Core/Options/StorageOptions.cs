@@ -75,6 +75,18 @@ namespace RzR.DataVigil.Core.Options
 
         /// -------------------------------------------------------------------------------------------------
         /// <summary>
+        ///     Controls how an unsupported PostgreSQL server version is handled when the audit migrations
+        ///     are applied.
+        /// </summary>
+        /// <value>
+        ///     True to fail fast on an unsupported PostgreSQL server version, false to warn and continue.
+        ///     Default: false.
+        /// </value>
+        /// =================================================================================================
+        public bool ThrowOnUnsupportedPostgreSqlVersion { get; set; }
+
+        /// -------------------------------------------------------------------------------------------------
+        /// <summary>
         ///     Set the retention policy (auto-delete entries older than N days).
         /// </summary>
         /// <param name="days">The days.</param>
