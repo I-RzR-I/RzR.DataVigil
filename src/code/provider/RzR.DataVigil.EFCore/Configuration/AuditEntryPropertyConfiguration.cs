@@ -63,7 +63,7 @@ namespace RzR.DataVigil.EFCore.Configuration
             builder.HasKey("Id");
             builder.Property<Guid>("Id").ValueGeneratedOnAdd();
 
-            // Shadow FK — set by EF via relationship on AuditEntry
+            // Shadow FK - set by EF via relationship on AuditEntry
             builder.Property<Guid>("AuditEntryId");
 
             builder.Property(e => e.PropertyName).HasMaxLength(256);

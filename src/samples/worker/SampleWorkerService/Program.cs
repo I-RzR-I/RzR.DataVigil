@@ -20,7 +20,7 @@ namespace SampleWorkerService
             Host.CreateDefaultBuilder(args)
                 .ConfigureServices((hostContext, services) =>
                 {
-                    // Register the audit trail (Core only — no ASP.NET Core)
+                    // Register the audit trail (Core only - no ASP.NET Core)
                     services.AddAuditTrail(options =>
                     {
                         // Identify this application in audit logs

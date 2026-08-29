@@ -1,4 +1,4 @@
-// ***********************************************************************
+﻿// ***********************************************************************
 //  Assembly         : RzR.DataVigil.Core
 //  Author           : RzR
 //  Created On       : 2026-04-10 23:04
@@ -41,7 +41,9 @@ namespace RzR.DataVigil.Core.Resolvers
         /// =================================================================================================
         private AuditUserInfo _currentUser;
 
-        /// <inheritdoc/>
+        private string _currentCorrelationId;
+
+        /// <inheritdoc />
         public IResult SetUser(AuditUserInfo user)
         {
             _currentUser = user;
@@ -49,16 +51,29 @@ namespace RzR.DataVigil.Core.Resolvers
             return Result.Success();
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public IResult<AuditUserInfo> GetCurrentUser()
         {
             return Result<AuditUserInfo>.Success(_currentUser);
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
+        public IResult SetCorrelationId(string correlationId)
+        {
+            _currentCorrelationId = correlationId;
+
+            return Result.Success();
+        }
+
+        /// <inheritdoc />
+        public IResult<string> GetCurrentCorrelationId()
+        {
+            return Result<string>.Success(_currentCorrelationId);
+        }
+
+        /// <inheritdoc />
         public void Dispose()
         {
-            _currentUser = null;
         }
     }
 }

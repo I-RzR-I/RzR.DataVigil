@@ -1,10 +1,10 @@
-// ***********************************************************************
+﻿// ***********************************************************************
 //  Assembly         : RzR.DataVigil.EFCore
 //  Author           : RzR
 //  Created On       : 2026-04-11 02:04
 // 
 //  Last Modified By : RzR
-//  Last Modified On : 2026-04-14 18:02
+//  Last Modified On : 2026-08-27 16:13
 // ***********************************************************************
 //  <copyright file="AuditEntryConfiguration.cs" company="RzR SOFT & TECH">
 //   Copyright © RzR. All rights reserved.
@@ -70,9 +70,11 @@ namespace RzR.DataVigil.EFCore.Configuration
                 .HasForeignKey("AuditEntryId")
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Indexes
-            builder.HasIndex(e => e.TransactionId);
-            builder.HasIndex(e => e.EntityName);
+            // Indexes.
+            builder.HasIndex(e => new { e.TransactionId, e.Action })
+                .HasDatabaseName("IX_AuditEntries_TransactionId");
+            builder.HasIndex(e => new { e.EntityName, e.Action })
+                .HasDatabaseName("IX_AuditEntries_EntityName");
         }
     }
 }

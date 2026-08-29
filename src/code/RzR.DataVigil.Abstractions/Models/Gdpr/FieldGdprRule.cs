@@ -53,7 +53,7 @@ namespace RzR.DataVigil.Abstractions.Models.Gdpr
 
         /// -------------------------------------------------------------------------------------------------
         /// <summary>
-        ///     Custom transformer — used only when Action = Custom.
+        ///     Custom transformer - used only when Action = Custom.
         /// </summary>
         /// <value>
         ///     A function delegate that yields a string.

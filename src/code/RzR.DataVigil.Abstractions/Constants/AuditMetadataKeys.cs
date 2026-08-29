@@ -4,7 +4,7 @@
 //  Created On       : 2026-08-18 22:40
 //
 //  Last Modified By : RzR
-//  Last Modified On : 2026-08-18 22:40
+//  Last Modified On : 2026-08-28 20:40
 // ***********************************************************************
 //  <copyright file="AuditMetadataKeys.cs" company="RzR SOFT & TECH">
 //   Copyright © RzR. All rights reserved.
@@ -34,5 +34,31 @@ namespace RzR.DataVigil.Abstractions.Constants
         /// </summary>
         /// =================================================================================================
         public const string UserSource = "__datavigil.user.source";
+
+        /// -------------------------------------------------------------------------------------------------
+        /// <summary>
+        ///     Metadata key under which the HTTP method of the request that produced the transaction is
+        ///     recorded, for example <c>GET</c> or <c>POST</c>. Absent when the change did not arrive
+        ///     over HTTP, such as in a worker or a background task.
+        /// </summary>
+        /// =================================================================================================
+        public const string HttpMethod = "__datavigil.http.method";
+
+        /// -------------------------------------------------------------------------------------------------
+        /// <summary>
+        ///     Metadata key under which the matched route <b>template</b> is recorded, for example
+        ///     <c>/orders/{id}</c>.
+        /// </summary>
+        /// =================================================================================================
+        public const string HttpRoute = "__datavigil.http.route";
+
+        /// -------------------------------------------------------------------------------------------------
+        /// <summary>
+        ///     Metadata key under which the pipeline records the names of the transaction fields that
+        ///     exceeded their storage column length, comma separated with no spaces, in the fixed order
+        ///     <c>UserId,UserName,IpAddress,Source,CorrelationId,TraceId</c>.
+        /// </summary>
+        /// =================================================================================================
+        public const string Oversize = "__datavigil.oversize";
     }
 }

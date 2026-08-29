@@ -1,4 +1,4 @@
-// ***********************************************************************
+﻿// ***********************************************************************
 //  Assembly         : RzR.DataVigil.Storage.EfPostgreSql
 //  Author           : RzR
 //  Created On       : 2026-04-10 23:04
@@ -18,13 +18,16 @@
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using RzR.DataVigil.Abstractions.Constants;
 using RzR.DataVigil.Abstractions.Enums;
+using RzR.DataVigil.Abstractions.Extensions;
 using RzR.DataVigil.Abstractions.Models.Entries;
 using RzR.DataVigil.Abstractions.Models.Gdpr;
 using RzR.DataVigil.Abstractions.Models.Query;
 using RzR.DataVigil.Abstractions.Services;
 using RzR.DataVigil.Core.Extensions;
 using RzR.DataVigil.Core.Gdpr;
+using RzR.DataVigil.Core.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -33,6 +36,7 @@ using System.Threading.Tasks;
 using RzR.Extensions.Domain.Collections;
 using RzR.Extensions.Domain.Primitives;
 using RzR.Extensions.Domain.Reflection.TypeParam;
+using RzR.Extensions.Domain.Text;
 using RzR.ResultMessage;
 using RzR.ResultMessage.Abstractions;
 using RzR.ResultMessage.Extensions.Result;
@@ -120,33 +124,43 @@ namespace RzR.DataVigil.Storage.EfPostgreSql
             }
         }
 
-        /// -------------------------------------------------------------------------------------------------
-        /// <summary>
-        ///     Queries audit transactions with pagination and applies GDPR retrieval policies
-        ///     to each entry before returning the results.
-        /// </summary>
-        /// <param name="filters">Pagination parameters (skip/take).</param>
-        /// <param name="gdprRetrievalContext">GDPR context with user roles/claims for field-level access control.</param>
-        /// <param name="cancellationToken">A token to cancel the operation.</param>
-        /// <returns>
-        ///     An <see cref="IResult{T}"/> containing the matching audit transactions.
-        /// </returns>
-        /// =================================================================================================
+        /// <inheritdoc />
         public async Task<IResult<IEnumerable<AuditTransaction>>> QueryAsync(AuditTransactionQuery filters,
             GdprRetrievalContext gdprRetrievalContext = null, CancellationToken cancellationToken = default)
         {
             try
             {
                 filters = filters.IfIsNull(new AuditTransactionQuery());
+
+                filters.GetEffectivePaging(out var skip, out var take, out var pagingWasNormalized,
+                    out var takeWasCapped);
+
+                if (takeWasCapped)
+                    _logger.LogWarning(
+                        "The requested audit query page size {RequestedTake} exceeds the maximum {MaxTake} and " +
+                        "the result was capped. Use Skip to page through the remaining records; a short page is " +
+                        "not the end of the audit trail.",
+                        filters.Take, AuditQueryLimits.MaxTake);
+
+                if (pagingWasNormalized && _logger.IsEnabled(LogLevel.Debug))
+                    _logger.LogDebug("The audit query paging values were normalized to Skip {Skip} and Take {Take}.",
+                        skip, take);
+
+                if (take == 0)
+                    return Result<IEnumerable<AuditTransaction>>.Success(new List<AuditTransaction>());
+
                 gdprRetrievalContext = gdprRetrievalContext.IfIsNull(new GdprRetrievalContext());
-                var query = await _dbContext.AuditTransactions
-                     .Include(t => t.Entries)
-                         .ThenInclude(e => e.Properties)
-                     .AsNoTracking()
-                     .OrderByDescending(x => x.Timestamp)
-                     .Skip(filters.Skip)
-                     .Take(filters.Take)
-                     .ToListAsync(cancellationToken);
+                var source = ApplyFilters(_dbContext.AuditTransactions
+                    .Include(t => t.Entries)
+                    .ThenInclude(e => e.Properties)
+                    .AsNoTracking(), filters);
+
+                var query = await source
+                    .OrderByDescending(x => x.Timestamp)
+                    .ThenByDescending(x => x.Id)
+                    .Skip(skip)
+                    .Take(take)
+                    .ToListAsync(cancellationToken);
 
                 foreach (var txn in query.NotNull())
                 {
@@ -184,6 +198,8 @@ namespace RzR.DataVigil.Storage.EfPostgreSql
         {
             try
             {
+                userId = AuditColumnValue.TruncateToColumnLength(userId, AuditColumnLengths.UserId);
+
                 var transactions = await _dbContext.AuditTransactions
                     .Where(t => t.UserId == userId)
                     .ToListAsync(cancellationToken)
@@ -242,6 +258,54 @@ namespace RzR.DataVigil.Storage.EfPostgreSql
 
                 return Result.Failure(ex.Message);
             }
+        }
+
+        /// -------------------------------------------------------------------------------------------------
+        /// <summary>
+        ///     Composes the optional filter predicates onto the query, combined with AND. A filter left
+        ///     at its default contributes no predicate at all, so an unfiltered query object still
+        ///     produces the result set this store returned before filtering existed.
+        /// </summary>
+        /// <param name="source">The query to compose the predicates onto.</param>
+        /// <param name="filters">The filters supplied by the caller.</param>
+        /// <returns>
+        ///     The query with every supplied filter applied.
+        /// </returns>
+        /// =================================================================================================
+        private static IQueryable<AuditTransaction> ApplyFilters(IQueryable<AuditTransaction> source,
+            AuditTransactionQuery filters)
+        {
+            if (filters.FromUtc.HasValue)
+            {
+                var fromUtc = filters.FromUtc.Value;
+                source = source.Where(x => x.Timestamp >= fromUtc);
+            }
+
+            if (filters.ToUtc.HasValue)
+            {
+                var toUtc = filters.ToUtc.Value;
+                source = source.Where(x => x.Timestamp < toUtc);
+            }
+
+            if (filters.UserId.IsPresent())
+            {
+                var userId = filters.UserId;
+                source = source.Where(x => x.UserId == userId);
+            }
+
+            if (filters.CorrelationId.IsPresent())
+            {
+                var correlationId = filters.CorrelationId;
+                source = source.Where(x => x.CorrelationId == correlationId);
+            }
+
+            if (filters.GdprState.HasValue)
+            {
+                var gdprState = filters.GdprState.Value;
+                source = source.Where(x => x.GdprState == gdprState);
+            }
+
+            return source;
         }
     }
 }

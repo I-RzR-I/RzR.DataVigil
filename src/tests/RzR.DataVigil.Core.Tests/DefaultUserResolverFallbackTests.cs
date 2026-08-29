@@ -2,9 +2,11 @@ using System.Security.Claims;
 using System.Security.Principal;
 using System.Threading;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using RzR.DataVigil.Abstractions.Enums;
 using RzR.DataVigil.Abstractions.Models.Identity;
 using RzR.DataVigil.Abstractions.Services;
 using RzR.DataVigil.Core.Resolvers;
+using RzR.DataVigil.Core.Tests.Stubs;
 using RzR.ResultMessage;
 using RzR.ResultMessage.Abstractions;
 using RzR.ResultMessage.Extensions.Result;
@@ -68,15 +70,13 @@ namespace RzR.DataVigil.Core.Tests
         [TestMethod]
         public void Resolve_NoScopeUser_AuthenticatedPrincipal_FallsBackToPrincipal()
         {
-            // Arrange
+
             var scope = new AuditScopeContext();
             var resolver = new DefaultUserResolver(scope);
             Thread.CurrentPrincipal = new GenericPrincipal(new GenericIdentity("principal-user"), null);
 
-            // Act
             var result = resolver.Resolve();
 
-            // Assert
             Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccess);
             Assert.IsNotNull(result.Response);
@@ -87,15 +87,13 @@ namespace RzR.DataVigil.Core.Tests
         [TestMethod]
         public void Resolve_NoScopeUser_NullPrincipal_ReturnsSuccessWithNullResponse()
         {
-            // Arrange
+
             var scope = new AuditScopeContext();
             var resolver = new DefaultUserResolver(scope);
             Thread.CurrentPrincipal = null;
 
-            // Act
             var result = resolver.Resolve();
 
-            // Assert
             Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccess);
             Assert.IsNull(result.Response);
@@ -104,15 +102,13 @@ namespace RzR.DataVigil.Core.Tests
         [TestMethod]
         public void Resolve_NoScopeUser_UnauthenticatedPrincipal_ReturnsSuccessWithNullResponse()
         {
-            // Arrange
+
             var scope = new AuditScopeContext();
             var resolver = new DefaultUserResolver(scope);
             Thread.CurrentPrincipal = new GenericPrincipal(new GenericIdentity(""), null);
 
-            // Act
             var result = resolver.Resolve();
 
-            // Assert
             Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccess);
             Assert.IsNull(result.Response);
@@ -121,16 +117,14 @@ namespace RzR.DataVigil.Core.Tests
         [TestMethod]
         public void Resolve_ScopeUserSet_DifferentAuthenticatedPrincipalAlsoSet_ScopeTakesPrecedence()
         {
-            // Arrange
+
             var scope = new AuditScopeContext();
             scope.SetUser(new AuditUserInfo { UserId = "scope-user", UserName = "Scope" });
             var resolver = new DefaultUserResolver(scope);
             Thread.CurrentPrincipal = new GenericPrincipal(new GenericIdentity("principal-user"), null);
 
-            // Act
             var result = resolver.Resolve();
 
-            // Assert
             Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccess);
             Assert.AreEqual("scope-user", result.Response.UserId);
@@ -139,15 +133,13 @@ namespace RzR.DataVigil.Core.Tests
         [TestMethod]
         public void Resolve_NoScopeUser_AuthenticatedPrincipalWithNullName_ResponseHasNullUserIdAndUserName()
         {
-            // Arrange
+
             var scope = new AuditScopeContext();
             var resolver = new DefaultUserResolver(scope);
             Thread.CurrentPrincipal = new ClaimsPrincipal(new ClaimsIdentity("TestAuth"));
 
-            // Act
             var result = resolver.Resolve();
 
-            // Assert
             Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccess);
             Assert.IsNotNull(result.Response);
@@ -158,15 +150,13 @@ namespace RzR.DataVigil.Core.Tests
         [TestMethod]
         public void Resolve_ScopeReturnsFailureWithNonNullResponse_DoesNotTrustFailedLookup_FallsBackToPrincipal()
         {
-            // Arrange
+
             var scope = new FailingScopeContextWithResponse(new AuditUserInfo { UserId = "leaked-failed-user" });
             var resolver = new DefaultUserResolver(scope);
             Thread.CurrentPrincipal = new GenericPrincipal(new GenericIdentity("principal-user"), null);
 
-            // Act
             var result = resolver.Resolve();
 
-            // Assert
             Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccess);
             Assert.AreEqual("principal-user", result.Response.UserId);
@@ -175,67 +165,35 @@ namespace RzR.DataVigil.Core.Tests
         [TestMethod]
         public void Resolve_ScopeReturnsBareNull_DoesNotThrow_FallsBackToPrincipal()
         {
-            // Arrange
+
             var scope = new NullReturningScopeContext();
             var resolver = new DefaultUserResolver(scope);
             Thread.CurrentPrincipal = new GenericPrincipal(new GenericIdentity("principal-user"), null);
 
-            // Act
             var result = resolver.Resolve();
 
-            // Assert
             Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccess);
             Assert.AreEqual("principal-user", result.Response.UserId);
         }
 
         [TestMethod]
-        public void Resolve_ScopeUserSetThenDisposed_NoPrincipal_FallsBackToAnonymous()
+        public void Resolve_ScopeUserSetThenDisposed_StillResolvesTheScopeUser()
         {
-            // Arrange
+
             var scope = new AuditScopeContext();
             scope.SetUser(new AuditUserInfo { UserId = "scope-user" });
             scope.Dispose();
             var resolver = new DefaultUserResolver(scope);
             Thread.CurrentPrincipal = null;
 
-            // Act
             var result = resolver.Resolve();
 
-            // Assert
             Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccess);
-            Assert.IsNull(result.Response);
-        }
-
-        private class NullReturningScopeContext : IAuditScopeContext
-        {
-            public IResult SetUser(AuditUserInfo user) => Result.Success();
-
-            public IResult<AuditUserInfo> GetCurrentUser() => null;
-
-            public void Dispose()
-            {
-            }
-        }
-
-        private class FailingScopeContextWithResponse : IAuditScopeContext
-        {
-            private readonly AuditUserInfo _response;
-
-            public FailingScopeContextWithResponse(AuditUserInfo response)
-            {
-                _response = response;
-            }
-
-            public IResult SetUser(AuditUserInfo user) => Result.Success();
-
-            public IResult<AuditUserInfo> GetCurrentUser()
-                => Result<AuditUserInfo>.Success(_response).Validate(_ => false, "forced failure for test");
-
-            public void Dispose()
-            {
-            }
+            Assert.IsNotNull(result.Response);
+            Assert.AreEqual("scope-user", result.Response.UserId);
+            Assert.AreEqual(AuditUserSource.ScopeContext, result.Response.Source);
         }
     }
 }

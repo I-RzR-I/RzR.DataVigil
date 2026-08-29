@@ -1,3 +1,13 @@
+### **v2.0.0.5512** [[RzR](mailto:108324929+I-RzR-I@users.noreply.github.com)] 29-08-2026
+* [55ca436] (RzR) -> Auto commit uncommited files
+* [64e1ad3] (RzR) -> Adjust the documentation (readme and using).
+* [300c479] (RzR) -> Consolidate duplicated test helpers.
+* [8710320] (RzR) -> Guard audit columns, widen the query indexes and bound paging.
+* [f774cf0] (RzR) -> Add audit diagnostics, query filters and order-independent HTTP registration.
+* [89c9b24] (RzR) -> Add http (method and path) form request info in transaction metadata.
+* [b7651ed] (RzR) -> Add referee lookup tables for the audit enums.
+* [fe540d4] (RzR) -> Add improvements in parse and set the `CorrelationId` and `TraceId`.
+
 ### **v1.2.1.4420** [[RzR](mailto:108324929+I-RzR-I@users.noreply.github.com)] 19-08-2026
 * [55076dc] (RzR) -> Flush audit store writes made through the audited context.
 

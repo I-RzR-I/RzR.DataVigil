@@ -1,4 +1,4 @@
-// ***********************************************************************
+﻿// ***********************************************************************
 //  Assembly         : RzR.DataVigil.Storage.File
 //  Author           : RzR
 //  Created On       : 2026-04-10 23:04
@@ -16,13 +16,18 @@
 
 #region U S A G E S
 
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+using RzR.DataVigil.Abstractions.Constants;
 using RzR.DataVigil.Abstractions.Enums;
+using RzR.DataVigil.Abstractions.Extensions;
 using RzR.DataVigil.Abstractions.Models.Entries;
 using RzR.DataVigil.Abstractions.Models.Gdpr;
 using RzR.DataVigil.Abstractions.Models.Query;
 using RzR.DataVigil.Abstractions.Services;
 using RzR.DataVigil.Core.Extensions;
 using RzR.DataVigil.Core.Gdpr;
+using RzR.DataVigil.Core.Helpers;
 using RzR.DataVigil.Core.Options;
 using System;
 using System.Collections.Generic;
@@ -85,15 +90,41 @@ namespace RzR.DataVigil.Storage.File
 
         /// -------------------------------------------------------------------------------------------------
         /// <summary>
+        ///     (Immutable) the logger, never null.
+        /// </summary>
+        /// =================================================================================================
+        private readonly ILogger<FileAuditStore> _logger;
+
+        /// -------------------------------------------------------------------------------------------------
+        /// <summary>
         ///     Initializes a new instance of the <see cref="FileAuditStore"/> class.
         /// </summary>
         /// <param name="options">Options for controlling the operation.</param>
         /// <param name="gdprProcessor">(Immutable) the gdpr processor.</param>
         /// =================================================================================================
         public FileAuditStore(StorageOptions options, GdprProcessor gdprProcessor)
+            : this(options, gdprProcessor, logger: null)
+        {
+        }
+
+        /// -------------------------------------------------------------------------------------------------
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="FileAuditStore"/> class.
+        /// </summary>
+        /// <param name="options">Options for controlling the operation.</param>
+        /// <param name="gdprProcessor">(Immutable) the gdpr processor.</param>
+        /// <param name="logger">
+        ///     The logger used to report a capped page size, may be null. Without it a caller who asks for
+        ///     more records than the store will serve gets a short page and no signal at all, which reads
+        ///     as "there are no more records" - the one way an audit export must never mislead.
+        /// </param>
+        /// =================================================================================================
+        public FileAuditStore(StorageOptions options, GdprProcessor gdprProcessor,
+            ILogger<FileAuditStore> logger)
         {
             _options = options;
             _gdprProcessor = gdprProcessor;
+            _logger = logger ?? NullLogger<FileAuditStore>.Instance;
 
             if (_options.FilePath.IsPresent())
                 Directory.CreateDirectory(_options.FilePath);
@@ -147,6 +178,24 @@ namespace RzR.DataVigil.Storage.File
             try
             {
                 filters = filters.IfIsNull(new AuditTransactionQuery());
+
+                filters.GetEffectivePaging(out var skip, out var take, out var pagingWasNormalized,
+                    out var takeWasCapped);
+
+                if (takeWasCapped)
+                    _logger.LogWarning(
+                        "Audit query requested Take={RequestedTake}, which exceeds the maximum page size " +
+                        "of {MaxTake}; the result was capped. A short page does not mean there are no " +
+                        "further records - use Skip to page through the rest.",
+                        filters.Take, AuditQueryLimits.MaxTake);
+
+                if (pagingWasNormalized && _logger.IsEnabled(LogLevel.Debug))
+                    _logger.LogDebug(
+                        "Audit query paging was normalized to Skip={Skip}, Take={Take}.", skip, take);
+
+                if (take == 0)
+                    return Result<IEnumerable<AuditTransaction>>.Success(new List<AuditTransaction>());
+
                 gdprRetrievalContext = gdprRetrievalContext.IfIsNull(new GdprRetrievalContext());
 
                 var basePath = GetBasePath();
@@ -164,10 +213,11 @@ namespace RzR.DataVigil.Storage.File
                     }
                 }
 
-                var resultList = allTransactions
+                var resultList = ApplyFilters(allTransactions, filters)
                     .OrderByDescending(x => x.Timestamp)
-                    .Skip(filters.Skip)
-                    .Take(filters.Take)
+                    .ThenByDescending(x => x.Id)
+                    .Skip(skip)
+                    .Take(take)
                     .ToList();
 
                 foreach (var txn in resultList.NotNull())
@@ -194,6 +244,8 @@ namespace RzR.DataVigil.Storage.File
         {
             try
             {
+                userId = AuditColumnValue.TruncateToColumnLength(userId, AuditColumnLengths.UserId);
+
                 var basePath = GetBasePath();
 
                 if (Directory.Exists(basePath).IsFalse())
@@ -291,6 +343,54 @@ namespace RzR.DataVigil.Storage.File
             return _options.FilePath.IsPresent()
                 ? _options.FilePath
                 : Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "audit-logs");
+        }
+
+        /// -------------------------------------------------------------------------------------------------
+        /// <summary>
+        ///     Composes the optional filter predicates onto the query, combined with AND. A filter left
+        ///     at its default contributes no predicate at all, so an unfiltered query object still
+        ///     produces the result set this store returned before filtering existed.
+        /// </summary>
+        /// <param name="source">The query to compose the predicates onto.</param>
+        /// <param name="filters">The filters supplied by the caller.</param>
+        /// <returns>
+        ///     The query with every supplied filter applied.
+        /// </returns>
+        /// =================================================================================================
+        private static IEnumerable<AuditTransaction> ApplyFilters(IEnumerable<AuditTransaction> source,
+            AuditTransactionQuery filters)
+        {
+            if (filters.FromUtc.HasValue)
+            {
+                var fromUtc = filters.FromUtc.Value;
+                source = source.Where(x => x.Timestamp >= fromUtc);
+            }
+
+            if (filters.ToUtc.HasValue)
+            {
+                var toUtc = filters.ToUtc.Value;
+                source = source.Where(x => x.Timestamp < toUtc);
+            }
+
+            if (filters.UserId.IsPresent())
+            {
+                var userId = filters.UserId;
+                source = source.Where(x => x.UserId == userId);
+            }
+
+            if (filters.CorrelationId.IsPresent())
+            {
+                var correlationId = filters.CorrelationId;
+                source = source.Where(x => x.CorrelationId == correlationId);
+            }
+
+            if (filters.GdprState.HasValue)
+            {
+                var gdprState = filters.GdprState.Value;
+                source = source.Where(x => x.GdprState == gdprState);
+            }
+
+            return source;
         }
     }
 }

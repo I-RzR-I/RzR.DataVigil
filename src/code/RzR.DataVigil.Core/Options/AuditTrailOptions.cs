@@ -64,7 +64,7 @@ namespace RzR.DataVigil.Core.Options
 
         /// -------------------------------------------------------------------------------------------------
         /// <summary>
-        ///     Entity types excluded globally from audit — applies to all ORMs.
+        ///     Entity types excluded globally from audit - applies to all ORMs.
         /// </summary>
         /// <value>
         ///     The global exclusions.

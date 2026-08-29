@@ -39,7 +39,7 @@ namespace RzR.DataVigil.AspNetCore.Extensions
         ///     with non-relational providers (e.g. MongoDB, Cosmos).
         ///     <para>
         ///     Place this call after <c>UseRouting()</c> and before <c>MapControllers()</c>,
-        ///     or after <c>MapControllers()</c> — the middleware flushes after downstream middleware
+        ///     or after <c>MapControllers()</c> - the middleware flushes after downstream middleware
         ///     completes.
         ///     </para>
         /// </summary>

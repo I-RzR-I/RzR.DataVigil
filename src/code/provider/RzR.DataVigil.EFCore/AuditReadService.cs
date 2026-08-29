@@ -27,6 +27,7 @@ using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.Logging;
 using RzR.DataVigil.Abstractions.Contracts;
 using RzR.DataVigil.Abstractions.Enums;
+using RzR.DataVigil.Abstractions.Extensions;
 using RzR.DataVigil.Abstractions.Models.Entries;
 using RzR.DataVigil.Core.Options;
 using RzR.DataVigil.Core.Pipeline;
@@ -215,9 +216,16 @@ namespace RzR.DataVigil.EFCore
 
                 var result = await _pipeline.ProcessAsync(transaction, cancellationToken).ConfigureAwait(false);
                 if (result.IsFailure)
-                    _logger.LogWarning(
-                        "Audit pipeline failed for Read on entity {Entity}.",
-                        clrType.Name);
+                {
+                    if (result.IsAuditCanceled())
+                        _logger.LogDebug(
+                            "Audit pipeline was canceled for Read on entity {Entity}.",
+                            clrType.Name);
+                    else
+                        _logger.LogWarning(
+                            "Audit pipeline failed for Read on entity {Entity}.",
+                            clrType.Name);
+                }
             }
             catch (Exception ex)
             {

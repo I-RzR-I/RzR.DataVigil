@@ -33,7 +33,7 @@ namespace RzR.DataVigil.AspNetCore.Resolvers
 {
     /// -------------------------------------------------------------------------------------------------
     /// <summary>
-    ///     Resolves the current user with fallback chain: IAuditScopeContext (manually set — worker/test
+    ///     Resolves the current user with fallback chain: IAuditScopeContext (manually set - worker/test
     ///     override) first, then HttpContext (ASP.NET Core), extracting UserId, UserName, IpAddress,
     ///     Roles, and Claims. Anonymous when neither source yields a user.
     ///
@@ -74,7 +74,7 @@ namespace RzR.DataVigil.AspNetCore.Resolvers
         /// <inheritdoc/>
         public IResult<AuditUserInfo> Resolve()
         {
-            // Check scope context (manually set — worker/test override)
+            // Check scope context (manually set - worker/test override)
             var scopeUser = _scopeContext.GetCurrentUser();
             if (scopeUser.IsNotNull() && scopeUser.IsSuccess && scopeUser.Response.IsNotNull())
             {

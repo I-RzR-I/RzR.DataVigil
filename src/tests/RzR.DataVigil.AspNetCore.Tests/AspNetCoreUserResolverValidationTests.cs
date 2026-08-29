@@ -10,6 +10,7 @@ using RzR.DataVigil.AspNetCore.Resolvers;
 using RzR.DataVigil.Core.Resolvers;
 using RzR.ResultMessage;
 using RzR.ResultMessage.Abstractions;
+using RzR.DataVigil.AspNetCore.Tests.Stubs;
 using static RzR.DataVigil.AspNetCore.Tests.Helpers.HttpContextHelper;
 
 namespace RzR.DataVigil.AspNetCore.Tests
@@ -22,7 +23,6 @@ namespace RzR.DataVigil.AspNetCore.Tests
         [TestMethod]
         public void Resolve_ScopeFullyPopulated_HttpContextDifferentUser_AllFieldsComeFromScope()
         {
-            // Arrange
             var httpContext = CreateAuthenticatedContext(
                 userId: "http-user",
                 userName: "HttpUser",
@@ -38,10 +38,8 @@ namespace RzR.DataVigil.AspNetCore.Tests
             });
             var resolver = new AspNetCoreUserResolver(CreateAccessor(httpContext), scope);
 
-            // Act
             var result = resolver.Resolve();
 
-            // Assert
             Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccess);
             Assert.IsNotNull(result.Response);
@@ -55,7 +53,6 @@ namespace RzR.DataVigil.AspNetCore.Tests
         [TestMethod]
         public void Resolve_ScopeWithOnlyUserIdSet_HttpContextPresent_ReturnsScopeAsIsWithoutMerging()
         {
-            // Arrange
             var httpContext = CreateAuthenticatedContext(
                 userId: "http-user",
                 userName: "HttpUser",
@@ -64,7 +61,6 @@ namespace RzR.DataVigil.AspNetCore.Tests
             scope.SetUser(new AuditUserInfo { UserId = "only-id-set" });
             var resolver = new AspNetCoreUserResolver(CreateAccessor(httpContext), scope);
 
-            // Act
             var result = resolver.Resolve();
 
             Assert.IsNotNull(result);
@@ -83,10 +79,8 @@ namespace RzR.DataVigil.AspNetCore.Tests
             var freshScope = new AuditScopeContext();
             var resolver = new AspNetCoreUserResolver(CreateAccessor(httpContext), freshScope);
 
-            // Act
             var result = resolver.Resolve();
 
-            // Assert
             Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccess);
             Assert.IsNotNull(result.Response);
@@ -100,10 +94,8 @@ namespace RzR.DataVigil.AspNetCore.Tests
             var resolver = new AspNetCoreUserResolver(
                 CreateAccessor(httpContext), new FailureWithResponseScopeContext());
 
-            // Act
             var result = resolver.Resolve();
 
-            // Assert
             Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccess);
             Assert.IsNotNull(result.Response);
@@ -113,15 +105,12 @@ namespace RzR.DataVigil.AspNetCore.Tests
         [TestMethod]
         public void Resolve_ScopeGetCurrentUserReturnsBareNull_DoesNotThrow_FallsThroughToHttpContext()
         {
-            // Arrange
             var httpContext = CreateAuthenticatedContext(userId: "user-42", userName: "Bob");
             var resolver = new AspNetCoreUserResolver(
                 CreateAccessor(httpContext), new NullReturningScopeContext());
 
-            // Act
             var result = resolver.Resolve();
 
-            // Assert
             Assert.IsNotNull(result);
             Assert.IsTrue(result.IsSuccess);
             Assert.IsNotNull(result.Response);
@@ -135,29 +124,24 @@ namespace RzR.DataVigil.AspNetCore.Tests
         [TestMethod]
         public void Resolve_NeverReturnsBareNull_AcrossAllPaths()
         {
-            // No scope, no HttpContext
             var noScopeNoHttp = new AspNetCoreUserResolver(
                 new HttpContextAccessor { HttpContext = null }, new AuditScopeContext()).Resolve();
             Assert.IsNotNull(noScopeNoHttp);
 
-            // No scope, unauthenticated HttpContext
             var noScopeUnauthHttp = new AspNetCoreUserResolver(
                 CreateAccessor(new DefaultHttpContext()), new AuditScopeContext()).Resolve();
             Assert.IsNotNull(noScopeUnauthHttp);
 
-            // No scope, authenticated HttpContext
             var noScopeAuthHttp = new AspNetCoreUserResolver(
                 CreateAccessor(CreateAuthenticatedContext()), new AuditScopeContext()).Resolve();
             Assert.IsNotNull(noScopeAuthHttp);
 
-            // Scope set
             var setScope = new AuditScopeContext();
             setScope.SetUser(new AuditUserInfo { UserId = "u" });
             var scopeSet = new AspNetCoreUserResolver(
                 new HttpContextAccessor { HttpContext = null }, setScope).Resolve();
             Assert.IsNotNull(scopeSet);
 
-            // Scope failure
             var scopeFailure = new AspNetCoreUserResolver(
                 new HttpContextAccessor { HttpContext = null }, new FailureWithResponseScopeContext()).Resolve();
             Assert.IsNotNull(scopeFailure);
@@ -367,14 +351,12 @@ namespace RzR.DataVigil.AspNetCore.Tests
         [TestMethod]
         public void Resolve_ResultIsDetachedFromHttpContext_RolesAndClaimsSurviveHttpContextBeingNulledOut()
         {
-            // Arrange
             var httpContext = CreateAuthenticatedContext(
                 roles: new[] { "Admin", "User" },
                 extraClaims: new Dictionary<string, string> { ["dept"] = "IT" });
             var accessor = CreateAccessor(httpContext);
             var resolver = new AspNetCoreUserResolver(accessor, new AuditScopeContext());
 
-            // Act
             var result = resolver.Resolve();
             accessor.HttpContext = null;
 
@@ -454,34 +436,6 @@ namespace RzR.DataVigil.AspNetCore.Tests
         private static DefaultHttpContext BuildAuthenticatedContext(ClaimsIdentity identity)
         {
             return new DefaultHttpContext { User = new ClaimsPrincipal(identity) };
-        }
-
-        private sealed class FailureWithResponseScopeContext : IAuditScopeContext
-        {
-            public IResult SetUser(AuditUserInfo user) => Result.Success();
-
-            public IResult<AuditUserInfo> GetCurrentUser()
-            {
-                var failure = Result<AuditUserInfo>.Failure("scope lookup failed");
-                failure.Response = new AuditUserInfo { UserId = "should-not-be-used" };
-
-                return failure;
-            }
-
-            public void Dispose()
-            {
-            }
-        }
-
-        private sealed class NullReturningScopeContext : IAuditScopeContext
-        {
-            public IResult SetUser(AuditUserInfo user) => Result.Success();
-
-            public IResult<AuditUserInfo> GetCurrentUser() => null;
-
-            public void Dispose()
-            {
-            }
         }
 
         #endregion

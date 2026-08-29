@@ -13,24 +13,10 @@ using RzR.DataVigil.Core.Options;
 using RzR.DataVigil.Core.Resolvers;
 using RzR.ResultMessage;
 using RzR.ResultMessage.Abstractions;
+using RzR.DataVigil.AspNetCore.Tests.Stubs;
 
 namespace RzR.DataVigil.AspNetCore.Tests.Extensions
 {
-    internal sealed class CustomUserResolver : IAuditUserResolver
-    {
-        /// <inheritdoc/>
-        public IResult<AuditUserInfo> Resolve() => Result<AuditUserInfo>.Success();
-    }
-
-    internal sealed class CustomCorrelationProvider : IAuditCorrelationProvider
-    {
-        /// <inheritdoc/>
-        public IResult<string> GetCorrelationId() => Result<string>.Success(null);
-
-        /// <inheritdoc/>
-        public IResult<string> GetTraceId() => Result<string>.Success(null);
-    }
-
     [TestClass]
     public class ServiceCollectionExtensionsOrderTests
     {
@@ -236,8 +222,6 @@ namespace RzR.DataVigil.AspNetCore.Tests.Extensions
         [TestMethod]
         public void SourceResolver_ConfiguredCustom_ExplicitSingleton_ResolvesFromRootProvider_WithScopeValidation()
         {
-            // The point of the opt-in: a singleton consumer can resolve IAuditSourceResolver without
-            // tripping ServiceProviderOptions.ValidateScopes.
             var services = NewServices();
             services.AddAuditTrail(
                 o => o.UseSourceResolver<CustomSourceResolver>(ServiceLifetime.Singleton));
@@ -250,9 +234,5 @@ namespace RzR.DataVigil.AspNetCore.Tests.Extensions
             Assert.IsInstanceOfType(resolved, typeof(CustomSourceResolver));
         }
 
-        private sealed class CustomSourceResolver : IAuditSourceResolver
-        {
-            public IResult<string> Resolve() => Result<string>.Success("custom-source");
-        }
     }
 }

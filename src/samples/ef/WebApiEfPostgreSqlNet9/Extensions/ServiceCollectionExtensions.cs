@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -46,12 +48,15 @@ namespace WebApiEfPostgreSqlNet9.Extensions
                 })
                 .Services
                 .AddAuditTrailEfCore()
-                .AddAuditTrailAspNetCore();
+                .AddAuditTrailAspNetCore(ResolveRouteTemplate);
 
             serviceCollection.AddAuditTrailPostgreSqlServer();
 
             return serviceCollection;
         }
+
+        private static string ResolveRouteTemplate(HttpContext httpContext)
+            => (httpContext.GetEndpoint() as RouteEndpoint)?.RoutePattern?.RawText;
 
         public static IServiceCollection RegisterBlogContext(this IServiceCollection serviceCollection, IConfiguration configuration)
         {

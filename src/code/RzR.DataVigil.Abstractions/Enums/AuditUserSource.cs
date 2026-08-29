@@ -27,7 +27,7 @@ namespace RzR.DataVigil.Abstractions.Enums
     {
         /// <summary>
         ///     A resolver returned a user, but did not declare where that identity came from. This
-        ///     does not mean resolution failed — that is <see cref="Unresolved"/>; the recorded
+        ///     does not mean resolution failed - that is <see cref="Unresolved"/>; the recorded
         ///     actor is real and can be trusted, only its provenance is undeclared. In practice this
         ///     marks a custom <see cref="T:RzR.DataVigil.Abstractions.Services.IAuditUserResolver"/>
         ///     that predates the
@@ -38,7 +38,7 @@ namespace RzR.DataVigil.Abstractions.Enums
 
         /// <summary>
         ///     No <see cref="T:RzR.DataVigil.Abstractions.Services.IAuditUserResolver"/> could be
-        ///     consulted, or the resolver returned a failed result. Attribution failed — the absence
+        ///     consulted, or the resolver returned a failed result. Attribution failed - the absence
         ///     of a user on this record does not mean the action was anonymous, only that identity
         ///     resolution broke down.
         /// </summary>

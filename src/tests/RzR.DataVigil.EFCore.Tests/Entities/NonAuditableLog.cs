@@ -3,9 +3,6 @@ using System.ComponentModel.DataAnnotations;
 
 namespace RzR.DataVigil.EFCore.Tests.Entities
 {
-    /// <summary>
-    ///     Entity that does NOT implement IAuditable — should never be audited.
-    /// </summary>
     public class NonAuditableLog
     {
         [Key]

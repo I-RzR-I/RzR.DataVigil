@@ -4,7 +4,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using RzR.DataVigil.Abstractions.Models.Entries;
 using RzR.DataVigil.Abstractions.Models.Gdpr;
-using RzR.DataVigil.Abstractions.Models.Identity;
 using RzR.DataVigil.Abstractions.Models.Query;
 using RzR.DataVigil.Abstractions.Services;
 using RzR.ResultMessage;
@@ -12,31 +11,6 @@ using RzR.ResultMessage.Abstractions;
 
 namespace RzR.DataVigil.EFCore.Tests.Stubs
 {
-    internal class StubUserResolver : IAuditUserResolver
-    {
-        public IResult<AuditUserInfo> Resolve()
-        {
-            return Result<AuditUserInfo>.Success(new AuditUserInfo
-            {
-                UserId = "test-user",
-                UserName = "TestUser",
-                IpAddress = "127.0.0.1"
-            });
-        }
-    }
-
-    internal class StubSourceResolver : IAuditSourceResolver
-    {
-        public IResult<string> Resolve() => Result<string>.Success("Tests");
-    }
-
-    internal class StubCorrelationProvider : IAuditCorrelationProvider
-    {
-        public IResult<string> GetCorrelationId() => Result<string>.Success("corr-1");
-
-        public IResult<string> GetTraceId() => Result<string>.Success("trace-1");
-    }
-
     internal class StubAuditStore : IAuditStore
     {
         public List<AuditTransaction> SavedTransactions { get; } = new List<AuditTransaction>();

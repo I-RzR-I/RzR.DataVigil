@@ -6,7 +6,7 @@ using RzR.DataVigil.Abstractions.Models.Gdpr;
 using RzR.DataVigil.Core.Extensions;
 using RzR.DataVigil.Core.Gdpr;
 using RzR.DataVigil.Core.Tests.Models;
-using static RzR.DataVigil.Core.Tests.Helpers.AuditTestDataBuilder;
+using static RzR.DataVigil.TestSupport.AuditTestDataBuilder;
 
 namespace RzR.DataVigil.Core.Tests
 {
@@ -211,7 +211,7 @@ namespace RzR.DataVigil.Core.Tests
             };
             var result = _processor.ApplyRetrievalPolicies(entry, ctx);
 
-            Assert.IsTrue(result.Properties.First().OldValue.Contains("*"), "gdpr=full claim should not unlock email — only Admin role can");
+            Assert.IsTrue(result.Properties.First().OldValue.Contains("*"), "gdpr=full claim should not unlock email - only Admin role can");
         }
 
         [TestMethod]
@@ -261,14 +261,14 @@ namespace RzR.DataVigil.Core.Tests
         [TestMethod]
         public void Retrieval_AdminRoleAlone_DoesNotUnlockPhone()
         {
-            // Phone is claim-gated ("gdpr=full"), not role-gated
+
             var entry = BuildEntryWithProperties("Order",
                 Prop("CustomerPhone", "555-1234", "555-5678"));
 
             var ctx = new GdprRetrievalContext { UserRoles = new[] { "Admin" } };
             var result = _processor.ApplyRetrievalPolicies(entry, ctx);
 
-            Assert.AreEqual("[ANONYMIZED]", result.Properties.First().OldValue, "Admin role should not unlock phone — only gdpr=full claim can");
+            Assert.AreEqual("[ANONYMIZED]", result.Properties.First().OldValue, "Admin role should not unlock phone - only gdpr=full claim can");
         }
 
         [TestMethod]
@@ -401,7 +401,7 @@ namespace RzR.DataVigil.Core.Tests
         [TestMethod]
         public void Pipeline_StorageThenRetrieval_DoubleProtection()
         {
-            // First: storage masks both fields
+
             var entry = BuildEntryWithProperties("Order",
                 Prop("CustomerEmail", "alice@contoso.com", "bob@contoso.com"),
                 Prop("CustomerPhone", "555-1234", "555-5678"));
@@ -409,14 +409,12 @@ namespace RzR.DataVigil.Core.Tests
             var (storedEntry, storageApplied, _) = _processor.ApplyStoragePolicies(entry);
             Assert.IsTrue(storageApplied);
 
-            // Verify stored values are already masked
             var storedProps = storedEntry.Properties.ToList();
             var storedEmail = storedProps[0].OldValue;
             var storedPhone = storedProps[1].OldValue;
             Assert.IsTrue(storedEmail.Contains("*"));
             Assert.IsTrue(storedPhone.Contains("*"));
 
-            // Now: retrieval by a user with no access applies retrieval rules on top of stored data
             var retrieved = _processor.ApplyRetrievalPolicies(storedEntry, new GdprRetrievalContext());
 
             var props = retrieved.Properties.ToList();
@@ -427,23 +425,20 @@ namespace RzR.DataVigil.Core.Tests
         [TestMethod]
         public void Pipeline_StorageThenRetrievalByAdmin_EmailRecoveredPhoneAnonymized()
         {
-            // Storage masks both fields
+
             var entry = BuildEntryWithProperties("Order",
                 Prop("CustomerEmail", "alice@contoso.com", "bob@contoso.com"),
                 Prop("CustomerPhone", "555-1234", "555-5678"));
 
             var (storedEntry, _, _) = _processor.ApplyStoragePolicies(entry);
 
-            // Admin retrieval: email rule skips masking (Admin allowed), phone anonymized
             var ctx = new GdprRetrievalContext { UserRoles = new[] { "Admin" } };
             var retrieved = _processor.ApplyRetrievalPolicies(storedEntry, ctx);
 
             var props = retrieved.Properties.ToList();
 
-            // Email: Admin bypasses retrieval mask, but sees storage-masked value
-            Assert.IsTrue(props[0].OldValue.Contains("*"), "Storage mask persists — Admin skips retrieval mask but sees stored value");
+            Assert.IsTrue(props[0].OldValue.Contains("*"), "Storage mask persists - Admin skips retrieval mask but sees stored value");
 
-            // Phone: Admin has no gdpr=full claim, so retrieval anonymizes
             Assert.AreEqual("[ANONYMIZED]", props[1].OldValue);
         }
 
@@ -464,10 +459,8 @@ namespace RzR.DataVigil.Core.Tests
 
             var props = retrieved.Properties.ToList();
 
-            // Email: no Admin role - retrieval re-masks stored value
             Assert.IsTrue(props[0].OldValue.Contains("*"));
 
-            // Phone: gdpr=full bypasses retrieval anonymize - sees storage-masked value
             Assert.IsTrue(props[1].OldValue.Contains("*"), "gdpr=full bypasses retrieval, sees storage-masked phone");
             Assert.AreNotEqual("[ANONYMIZED]", props[1].OldValue);
         }

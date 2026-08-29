@@ -18,7 +18,7 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-// MongoDB is schema-less — no migrations needed.
+// MongoDB is schema-less - no migrations needed.
 // Collections are created automatically when data is first inserted.
 
 if (app.Environment.IsDevelopment())

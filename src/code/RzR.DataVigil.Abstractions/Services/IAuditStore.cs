@@ -52,7 +52,7 @@ namespace RzR.DataVigil.Abstractions.Services
         /// <summary>
         ///     Queries the audit store.
         /// </summary>
-        /// <param name="filters">The filters.</param>
+        /// <param name="filters">The filters, including paging and the optional filter predicates.</param>
         /// <param name="gdprRetrievalContext">(Optional) Context for the gdpr retrieval.</param>
         /// <param name="cancellationToken">(Optional) Cancellation token.</param>
         /// <returns>

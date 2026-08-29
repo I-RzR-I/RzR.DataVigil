@@ -35,7 +35,7 @@ namespace RzR.DataVigil.AspNetCore.Hosting
     /// <summary>
     ///     Startup diagnostic that warns, but never throws, when
     ///     <c>AddAuditTrailAspNetCore()</c> was called but <see cref="IAuditUserResolver"/> still resolves to the built-in
-    ///     <see cref="DefaultUserResolver"/> — the symptom of a registration-order mistake that would
+    ///     <see cref="DefaultUserResolver"/> - the symptom of a registration-order mistake that would
     ///     otherwise silently drop HTTP identity from every audit record.
     ///     <para>
     ///     A resolved type of <see cref="AspNetCoreUserResolver"/> or any other custom type is left

@@ -38,12 +38,15 @@ I needed a way to track data changes in EF Core apps without touching every repo
   - [Read Auditing](#read-auditing)
   - [Audit Data Model](#audit-data-model)
   - [User & Correlation Enrichment](#user--correlation-enrichment)
+  - [Column Length Guards](#column-length-guards)
 - [GDPR Compliance](#gdpr-compliance)
   - [Storage Policies](#storage-policies)
   - [Retrieval Policies](#retrieval-policies)
   - [Right to Erasure](#right-to-erasure)
 - [Non-Web Scenarios](#non-web-scenarios)
 - [Querying Audit Logs](#querying-audit-logs)
+  - [Filters](#filters)
+  - [Paging](#paging)
 - [Customization](#customization)
   - [Custom User Resolver](#custom-user-resolver)
   - [Custom Source Resolver](#custom-source-resolver)
@@ -51,6 +54,8 @@ I needed a way to track data changes in EF Core apps without touching every repo
 - [Storage Providers Reference](#storage-providers-reference)
 - [Samples](#samples)
 - [Requirements](#requirements)
+  - [Supported Runtimes](#supported-runtimes)
+  - [PostgreSQL Version](#postgresql-version)
 
 ---
 
@@ -63,6 +68,9 @@ I needed a way to track data changes in EF Core apps without touching every repo
 - Retrieval access control by role or claim
 - Ships with SQL Server, PostgreSQL, MongoDB, and file (JSON) storage providers. Or implement `IAuditStore` yourself
 - ASP.NET Core: grabs user + correlation IDs from `HttpContext` automatically. Console/worker apps: use `AuditScopeContext` instead
+- Records which HTTP operation a change arrived through - method, and the route template if you supply a route accessor
+- Query filters on time range, user, correlation ID, and GDPR state, on top of paging (page size capped at 500)
+- Over-long user, source, correlation and trace values are bounded before the write, so a long value can't cost you the whole audit record
 - Built-in retention service (runs daily, deletes old records)
 - `AnonymizeByUserAsync()` for right-to-erasure (GDPR Art. 17)
 - Opt entities in/out with `IAuditable`, or exclude globally
@@ -274,7 +282,32 @@ app.ApplicationServices.MigrateAuditPostgreSqlDb();
 services.AddAuditTrailAspNetCore();
 ```
 
-That call registers two things: `AspNetCoreUserResolver` which grabs user info from `HttpContext`, and `AspNetCoreCorrelationProvider` which looks for `X-Correlation-Id` or `X-Request-Id` headers (falls back to `Activity.Current` if neither exists).
+That call registers five things:
+
+- `IHttpContextAccessor`, unless your host already registered one.
+- `AspNetCoreUserResolver`, which grabs user info from `HttpContext`.
+- `AspNetCoreCorrelationProvider`. Its resolution order is in [User & Correlation Enrichment](#user--correlation-enrichment).
+- `HttpOperationMetadataEnricher`, which records the HTTP method each change arrived through, in `Metadata` under `__datavigil.http.method`.
+- `AuditIdentityResolutionDiagnostic`, a hosted service that checks at startup whether `IAuditUserResolver` still resolves to the built-in `DefaultUserResolver`, which is the symptom of a registration-order mistake that would otherwise silently drop HTTP identity from every audit record. It logs a warning and never fails startup.
+
+The user resolver and the correlation provider only take over an empty slot or one still holding the built-in default, so your own `IAuditUserResolver` is left alone whatever the call order.
+
+Pass a route accessor and the matched route **template** is recorded too, under `__datavigil.http.route`:
+
+```csharp
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
+
+// ASP.NET Core 3.0+ endpoint routing
+static string ResolveRouteTemplate(HttpContext httpContext)
+    => (httpContext.GetEndpoint() as RouteEndpoint)?.RoutePattern?.RawText;
+
+services.AddAuditTrailAspNetCore(ResolveRouteTemplate);
+```
+
+Without the accessor the route key is never stamped. You supply it rather than the library reading the route itself because `RzR.DataVigil.AspNetCore` targets `netstandard2.1` against `Microsoft.AspNetCore.Http` 2.2.0 - `GetEndpoint()` doesn't exist there, and the routing surface differs across ASP.NET Core versions. Your host knows its own version.
+
+Call order doesn't matter and the last non-null accessor wins, so a parameterless call never clears an accessor installed elsewhere. Full details in [HTTP Operation Metadata](docs/using.md#13-http-operation-metadata).
 
 Using read auditing? You'll also want the flush middleware - otherwise buffered read entries won't get persisted:
 
@@ -364,9 +397,11 @@ AuditTransaction (1)
 
 | Table | Schema | Key Indexes |
 |-------|--------|-------------|
-| `AuditTransactions` | `audit` | Timestamp, UserId, CorrelationId |
+| `AuditTransactions` | `audit` | (Timestamp, Id), (UserId, Timestamp, Id), (CorrelationId, Timestamp, Id), (GdprState, Timestamp, Id) |
 | `AuditEntries` | `audit` | TransactionId, EntityName |
 | `AuditEntryProperties` | `audit` | AuditEntryId (shadow FK) |
+
+Each `AuditTransactions` index ends in `Id` so it covers the filter *and* the `Timestamp DESC, Id DESC` ordering every query uses, instead of leaving the sort to a separate step.
 
 ### User & Correlation Enrichment
 
@@ -377,8 +412,8 @@ Each transaction gets context data attached. The source differs based on your ho
 | UserId | `NameIdentifier` or `sub` claim | `AuditScopeContext.SetUser()` or `Thread.CurrentPrincipal` |
 | UserName | `Name` claim | Same fallback chain |
 | IpAddress | `RemoteIpAddress` | Manual via scope context |
-| CorrelationId | `X-Correlation-Id` > `X-Request-Id` > `Activity.Current.Id` | `Activity.Current.Id` |
-| TraceId | `HttpContext.TraceIdentifier` | `Activity.Current.TraceId` |
+| CorrelationId | `SetCorrelationId()` > `X-Correlation-Id` > `X-Request-Id` > `HttpContext.TraceIdentifier` > `Activity.Current.TraceId` | `SetCorrelationId()` > `Activity.Current.TraceId` |
+| TraceId | `Activity.Current.TraceId` | `Activity.Current.TraceId` |
 | Source | Custom `IAuditSourceResolver` (default: "Unknown") | Same |
 
 Every transaction also records **how** that actor was determined, in `AuditTransaction.Metadata` under the reserved key `__datavigil.user.source`:
@@ -398,7 +433,41 @@ Writing the key needs no schema change - `Metadata` is already persisted - but n
 
 `AuditUserInfo.Claims` and `.Roles` are resolved for use at retrieval time and are **not** persisted; `AuditTransaction` has no such columns.
 
+Two more reserved keys record the HTTP operation the change arrived through, when there was one:
+
+| Key | Constant | Example | Stamped |
+|-----|----------|---------|---------|
+| `__datavigil.http.method` | `AuditMetadataKeys.HttpMethod` | `POST` | Whenever the change happened inside a request |
+| `__datavigil.http.route` | `AuditMetadataKeys.HttpRoute` | `/orders/{id}` | Only when a route accessor was supplied |
+
+The route value is the route *template*, not the resolved path, so it groups requests by endpoint and can't leak an identifier out of the URL into the audit record. Neither key appears in a worker or console host. See [HTTP Operation Metadata](docs/using.md#13-http-operation-metadata).
+
 See [Custom Resolvers](docs/using.md#11-custom-resolvers) for how to stamp `Source` from your own `IAuditUserResolver`.
+
+### Column Length Guards
+
+Every length-bound field on `AuditTransaction` is brought within its storage column before the store sees it. The guard sits in the pipeline rather than in the resolvers, because the resolvers are a public extension point and a third-party implementation would bypass a guard placed there.
+
+| Field | Max characters | Over the limit |
+|-------|----------------|----------------|
+| `UserId` | 256 | Truncated |
+| `UserName` | 256 | Truncated |
+| `IpAddress` | 64 | Truncated |
+| `Source` | 512 | Truncated |
+| `CorrelationId` | 256 | Rejected to `null` |
+| `TraceId` | 256 | Rejected to `null` |
+
+The limits come from `AuditColumnLengths`. Actor attributes are truncated because a partially attributed record is still an investigative lead, while an unattributed one is not. The two machine join keys are rejected instead: a truncated correlation or trace ID looks valid and joins to nothing, which is false evidence. Truncation never splits a surrogate pair, so the stored value stays encodable.
+
+Whenever a value was guarded, the affected property names go into `Metadata` under the reserved key `__datavigil.oversize` (`AuditMetadataKeys.Oversize`), comma separated, in the fixed order `UserId,UserName,IpAddress,Source,CorrelationId,TraceId`:
+
+```
+__datavigil.oversize = UserId,CorrelationId
+```
+
+The pipeline also logs a warning with the observed length against the column maximum. The key is absent when nothing was guarded.
+
+Why this exists: an over-long value used to fail the audit `INSERT`. The business write had already committed, so the change happened and no audit record described it. Bounding the value keeps the record, and the metadata key keeps the fact that it was bounded.
 
 ---
 
@@ -543,6 +612,50 @@ public async Task<IActionResult> Query(CancellationToken ct)
 }
 ```
 
+### Filters
+
+`AuditTransactionQuery` also carries five optional filters. Leave one at its default and it isn't applied; supplied filters combine with AND:
+
+| Property | Type | Matches |
+|----------|------|---------|
+| `FromUtc` | `DateTimeOffset?` | `Timestamp >= FromUtc` |
+| `ToUtc` | `DateTimeOffset?` | `Timestamp < ToUtc` |
+| `UserId` | `string` | exact equality (null/whitespace = not applied) |
+| `CorrelationId` | `string` | exact equality (null/whitespace = not applied) |
+| `GdprState` | `GdprStorageState?` | exact equality |
+
+```csharp
+var result = await auditStore.QueryAsync(new AuditTransactionQuery
+{
+    FromUtc = DateTimeOffset.UtcNow.AddDays(-7),
+    UserId = "alice",
+    Take = 100
+});
+```
+
+The date range is half-open - `>= FromUtc`, `< ToUtc` - so adjacent windows tile without overlap.
+
+> **WARNING:** string matching follows each store's own equality semantics. A relational provider compares under the column collation (case-*insensitive* on a default SQL Server); the file store compares ordinally and is case-*sensitive*. The same query object can return different result sets on different stores.
+
+Results come back newest-first by `Timestamp`, tie-broken on `Id` descending so paging stays stable within a store.
+
+### Paging
+
+`Skip` and `Take` are bounded the same way by every store, through `AuditQueryLimits`:
+
+| Requested | Executed |
+|-----------|----------|
+| `Take` above 500 (`AuditQueryLimits.MaxTake`) | Capped to 500, logged at Warning |
+| `Take` of 0 | Empty successful result; storage is not read at all |
+| `Take` below 0 | 10 (`AuditQueryLimits.DefaultTake`) |
+| `Skip` below 0 | 0 (`AuditQueryLimits.MinSkip`) |
+
+> **WARNING:** a short page does **not** mean there are no more records. Ask for 2000 and you get 500 back with the rest still there, reachable through `Skip`. Code shaped like `while (page.Count == pageSize)` stops early and silently for any page size above the cap - page on `Skip` instead, and stop when a page comes back empty.
+
+Nothing is ever rejected for paging reasons: an out-of-range value is corrected and the query runs.
+
+See [Querying Audit Data](docs/using.md#8-querying-audit-data) for the full semantics and the `IAuditStore` implementer contract.
+
 ---
 
 ## Customization
@@ -665,9 +778,26 @@ The Web API samples are a simple Blog API (Posts + Comments) with GDPR policies,
 
 - **.NET Standard 2.1** (library targets)
 - **EF Core 5.0+** (compatible with 5.x through 9.x)
+- **PostgreSQL 13 or later** (tested minimum)
 - **Test projects:** .NET 8.0, MSTest 3.3.1
 
 ### Supported Runtimes
 
 Targets `netstandard2.1`, so anything .NET Core 3.x or later (.NET 5 through 9+).
+
+### PostgreSQL Version
+
+PostgreSQL 13 is the lowest major version this library is tested against. Older servers are not blocked and are expected to work, but they are untested, and PostgreSQL 12 has reached end of life.
+
+`MigrateAuditPostgreSqlDb()` reads the server version and logs a warning when it is below 13. To turn that into a startup failure instead:
+
+```csharp
+services.AddAuditTrail(options =>
+{
+    options.Storage.UsePostgreSql(connectionString);
+    options.Storage.ThrowOnUnsupportedPostgreSqlVersion = true; // default: false
+});
+```
+
+With the flag set, the version is checked *before* any migration runs, so an unsupported server throws `NotSupportedException` rather than leaving the audit database half-migrated.
 

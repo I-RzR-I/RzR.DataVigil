@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using RzR.DataVigil.AspNetCore.Resolvers;
@@ -46,7 +46,7 @@ namespace RzR.DataVigil.AspNetCore.Tests
         }
 
         [TestMethod]
-        public void GetCorrelationId_NoHeaders_FallsBackToActivity()
+        public void GetCorrelationId_NoHeaders_FallsBackToRequestTraceIdentifier()
         {
             Activity.Current = null;
             var accessor = CreateAccessorWithHeaders();
@@ -55,7 +55,7 @@ namespace RzR.DataVigil.AspNetCore.Tests
             var result = provider.GetCorrelationId();
 
             Assert.IsTrue(result.IsSuccess);
-            Assert.IsNull(result.Response);
+            Assert.AreEqual(accessor.HttpContext.TraceIdentifier, result.Response);
         }
 
         [TestMethod]
@@ -72,12 +72,12 @@ namespace RzR.DataVigil.AspNetCore.Tests
         }
 
         [TestMethod]
-        public void GetTraceId_WithHttpContext_ReturnsTraceIdentifier()
+        public void GetTraceId_NoW3CActivity_ReturnsNull()
         {
+            Activity.Current = null;
+
             var context = new DefaultHttpContext();
-            // DefaultHttpContext auto-generates a TraceIdentifier
-            var traceId = context.TraceIdentifier;
-            Assert.IsFalse(string.IsNullOrEmpty(traceId));
+            Assert.IsFalse(string.IsNullOrEmpty(context.TraceIdentifier));
 
             var accessor = new HttpContextAccessor { HttpContext = context };
             var provider = new AspNetCoreCorrelationProvider(accessor);
@@ -85,7 +85,7 @@ namespace RzR.DataVigil.AspNetCore.Tests
             var result = provider.GetTraceId();
 
             Assert.IsTrue(result.IsSuccess);
-            Assert.AreEqual(traceId, result.Response);
+            Assert.IsNull(result.Response);
         }
 
         [TestMethod]
