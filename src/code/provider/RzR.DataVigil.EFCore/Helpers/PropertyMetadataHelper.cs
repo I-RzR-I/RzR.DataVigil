@@ -135,7 +135,7 @@ namespace RzR.DataVigil.EFCore.Helpers
         /// <summary>
         ///     Resolves a property by name on a runtime type. First checks the concrete type hierarchy
         ///     (works for EF Core 5 <c>EntityType</c>/<c>Property</c> classes). If not found, falls
-        ///     back to scanning implemented interfaces — required for EF Core 6+ where
+        ///     back to scanning implemented interfaces - required for EF Core 6+ where
         ///     <c>RuntimeEntityType</c>/<c>RuntimeProperty</c> expose metadata through default
         ///     interface methods on <c>IReadOnlyTypeBase</c>/<c>IReadOnlyPropertyBase</c> only.
         /// </summary>

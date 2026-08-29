@@ -146,7 +146,7 @@ namespace RzR.DataVigil.EFCore.Interceptors
                 if (sql.IsMissing())
                     return;
 
-                // Only audit actual SELECT queries — skip DELETE, UPDATE, INSERT
+                // Only audit actual SELECT queries - skip DELETE, UPDATE, INSERT
                 if (sql.TrimStart().StartsWith("SELECT", StringComparison.OrdinalIgnoreCase).IsFalse())
                     return;
 

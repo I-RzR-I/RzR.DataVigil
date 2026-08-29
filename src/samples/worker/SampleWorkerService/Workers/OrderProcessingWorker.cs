@@ -154,7 +154,7 @@ namespace SampleWorkerService.Workers
 
             if (result.IsSuccess)
                 _logger.LogInformation(
-                    "Audit recorded for Order #{OrderId} — status changed to Shipped.",
+                    "Audit recorded for Order #{OrderId} - status changed to Shipped.",
                     42);
             else if (result.IsAuditCanceled())
                 _logger.LogDebug("Audit pipeline was canceled while the host was shutting down.");

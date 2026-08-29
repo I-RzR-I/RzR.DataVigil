@@ -112,7 +112,7 @@ namespace RzR.DataVigil.Core.Tests
             var expectedCutoff = before.AddDays(-30);
             var diff = Math.Abs((store.LastPurgeCutoff.Value - expectedCutoff).TotalSeconds);
 
-            Assert.IsTrue(diff < 5, $"Cutoff was off by {diff:F1}s — expected ~{expectedCutoff}, got {store.LastPurgeCutoff.Value}.");
+            Assert.IsTrue(diff < 5, $"Cutoff was off by {diff:F1}s - expected ~{expectedCutoff}, got {store.LastPurgeCutoff.Value}.");
         }
 
         [TestMethod]

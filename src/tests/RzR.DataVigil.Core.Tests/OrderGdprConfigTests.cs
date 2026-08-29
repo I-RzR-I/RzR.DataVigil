@@ -211,7 +211,7 @@ namespace RzR.DataVigil.Core.Tests
             };
             var result = _processor.ApplyRetrievalPolicies(entry, ctx);
 
-            Assert.IsTrue(result.Properties.First().OldValue.Contains("*"), "gdpr=full claim should not unlock email — only Admin role can");
+            Assert.IsTrue(result.Properties.First().OldValue.Contains("*"), "gdpr=full claim should not unlock email - only Admin role can");
         }
 
         [TestMethod]
@@ -268,7 +268,7 @@ namespace RzR.DataVigil.Core.Tests
             var ctx = new GdprRetrievalContext { UserRoles = new[] { "Admin" } };
             var result = _processor.ApplyRetrievalPolicies(entry, ctx);
 
-            Assert.AreEqual("[ANONYMIZED]", result.Properties.First().OldValue, "Admin role should not unlock phone — only gdpr=full claim can");
+            Assert.AreEqual("[ANONYMIZED]", result.Properties.First().OldValue, "Admin role should not unlock phone - only gdpr=full claim can");
         }
 
         [TestMethod]
@@ -437,7 +437,7 @@ namespace RzR.DataVigil.Core.Tests
 
             var props = retrieved.Properties.ToList();
 
-            Assert.IsTrue(props[0].OldValue.Contains("*"), "Storage mask persists — Admin skips retrieval mask but sees stored value");
+            Assert.IsTrue(props[0].OldValue.Contains("*"), "Storage mask persists - Admin skips retrieval mask but sees stored value");
 
             Assert.AreEqual("[ANONYMIZED]", props[1].OldValue);
         }

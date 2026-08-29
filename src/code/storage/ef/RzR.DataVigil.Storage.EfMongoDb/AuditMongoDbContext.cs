@@ -31,7 +31,7 @@ namespace RzR.DataVigil.Storage.EfMongoDb
     ///     relational-only configuration (ToTable, HasDefaultSchema, FK relationships,
     ///     shadow properties, ValueConverters) that is incompatible with the MongoDB
     ///     EF Core provider. Instead, maps audit entities as a single MongoDB collection
-    ///     with embedded documents for entries and properties — the natural document
+    ///     with embedded documents for entries and properties - the natural document
     ///     model for audit data.
     /// </summary>
     /// <seealso cref="T:Microsoft.EntityFrameworkCore.DbContext" />

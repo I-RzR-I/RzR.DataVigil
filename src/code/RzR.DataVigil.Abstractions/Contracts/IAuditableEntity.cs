@@ -25,7 +25,7 @@ namespace RzR.DataVigil.Abstractions.Contracts
 {
     /// -------------------------------------------------------------------------------------------------
     /// <summary>
-    ///     Granular audit control per entity. Optional — <see cref="IAuditable" /> is sufficient for
+    ///     Granular audit control per entity. Optional - <see cref="IAuditable" /> is sufficient for
     ///     the simple case.
     /// </summary>
     /// =================================================================================================

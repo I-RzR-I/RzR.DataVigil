@@ -38,7 +38,7 @@ namespace RzR.DataVigil.Storage.EfMongoDb.Interceptors
     ///     every <see cref="IAuditable"/> entity materialized during a query.
     ///     <para>
     ///     This interceptor works with all EF Core providers (including non-relational ones like
-    ///     MongoDB) because it hooks into entity materialization — not SQL execution.
+    ///     MongoDB) because it hooks into entity materialization - not SQL execution.
     ///     </para>
     ///     <para>
     ///     Entries are collected synchronously in the <see cref="AuditReadCollector"/> and flushed

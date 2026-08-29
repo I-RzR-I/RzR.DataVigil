@@ -234,7 +234,7 @@ namespace RzR.DataVigil.EFCore.Helpers
 
                 if (match.Groups[4].Success || match.Groups[5].Success || match.Groups[6].Success)
                 {
-                    // schema.table form — groups 1-3 = schema, groups 4-6 = table
+                    // schema.table form - groups 1-3 = schema, groups 4-6 = table
                     schema = match.Groups[1].Success ? match.Groups[1].Value
                         : match.Groups[2].Success ? match.Groups[2].Value
                         : match.Groups[3].Value;
@@ -245,7 +245,7 @@ namespace RzR.DataVigil.EFCore.Helpers
                 }
                 else
                 {
-                    // table-only form — groups 7-9
+                    // table-only form - groups 7-9
                     schema = null;
                     table = match.Groups[7].Success ? match.Groups[7].Value
                         : match.Groups[8].Success ? match.Groups[8].Value

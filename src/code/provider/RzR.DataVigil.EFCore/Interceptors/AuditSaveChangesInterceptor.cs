@@ -221,7 +221,7 @@ namespace RzR.DataVigil.EFCore.Interceptors
         /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Stores the collected transaction against the context, replacing any earlier one.
-        ///     A null transaction clears the slot — this is what prevents a stash orphaned by a
+        ///     A null transaction clears the slot - this is what prevents a stash orphaned by a
         ///     previous save from being picked up by a later, unrelated one.
         /// </summary>
         /// <param name="context">The context.</param>

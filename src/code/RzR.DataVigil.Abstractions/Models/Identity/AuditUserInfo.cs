@@ -62,7 +62,7 @@ namespace RzR.DataVigil.Abstractions.Models.Identity
 
         /// -------------------------------------------------------------------------------------------------
         /// <summary>
-        ///     User roles — used for GDPR retrieval policies.
+        ///     User roles - used for GDPR retrieval policies.
         /// </summary>
         /// <value>
         ///     The roles.
@@ -72,7 +72,7 @@ namespace RzR.DataVigil.Abstractions.Models.Identity
 
         /// -------------------------------------------------------------------------------------------------
         /// <summary>
-        ///     User claims — used for GDPR retrieval policies. Key = claim type, Value = claim value.
+        ///     User claims - used for GDPR retrieval policies. Key = claim type, Value = claim value.
         /// </summary>
         /// <value>
         ///     The claims.

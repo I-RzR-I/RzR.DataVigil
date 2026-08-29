@@ -93,7 +93,7 @@ namespace RzR.DataVigil.Core.Hosting
                 }
                 catch
                 {
-                    // Swallow — retention failure should not crash the host.
+                    // Swallow - retention failure should not crash the host.
                 }
 
                 try
