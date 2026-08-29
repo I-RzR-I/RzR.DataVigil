@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Migrations.Operations;
 
 namespace RzR.DataVigil.Storage.EfSqlServer.Migrations
 {
@@ -113,33 +114,41 @@ namespace RzR.DataVigil.Storage.EfSqlServer.Migrations
                     { 3, "Data has been erased under right-to-erasure.", "Erased" }
                 });
 
-            migrationBuilder.CreateIndex(
-                name: "IX_RefAuditActions_Name",
-                schema: "audit",
-                table: "RefAuditActions",
-                column: "Name",
-                unique: true);
+            migrationBuilder.Operations.Add(new CreateIndexOperation
+            {
+                Name = "IX_RefAuditActions_Name",
+                Schema = "audit",
+                Table = "RefAuditActions",
+                Columns = new[] { "Name" },
+                IsUnique = true
+            });
 
-            migrationBuilder.CreateIndex(
-                name: "IX_RefAuditUserSources_Name",
-                schema: "audit",
-                table: "RefAuditUserSources",
-                column: "Name",
-                unique: true);
+            migrationBuilder.Operations.Add(new CreateIndexOperation
+            {
+                Name = "IX_RefAuditUserSources_Name",
+                Schema = "audit",
+                Table = "RefAuditUserSources",
+                Columns = new[] { "Name" },
+                IsUnique = true
+            });
 
-            migrationBuilder.CreateIndex(
-                name: "IX_RefGdprFieldActions_Name",
-                schema: "audit",
-                table: "RefGdprFieldActions",
-                column: "Name",
-                unique: true);
+            migrationBuilder.Operations.Add(new CreateIndexOperation
+            {
+                Name = "IX_RefGdprFieldActions_Name",
+                Schema = "audit",
+                Table = "RefGdprFieldActions",
+                Columns = new[] { "Name" },
+                IsUnique = true
+            });
 
-            migrationBuilder.CreateIndex(
-                name: "IX_RefGdprStorageStates_Name",
-                schema: "audit",
-                table: "RefGdprStorageStates",
-                column: "Name",
-                unique: true);
+            migrationBuilder.Operations.Add(new CreateIndexOperation
+            {
+                Name = "IX_RefGdprStorageStates_Name",
+                Schema = "audit",
+                Table = "RefGdprStorageStates",
+                Columns = new[] { "Name" },
+                IsUnique = true
+            });
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)

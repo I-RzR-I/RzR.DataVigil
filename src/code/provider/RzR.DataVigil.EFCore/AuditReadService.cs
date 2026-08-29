@@ -174,7 +174,16 @@ namespace RzR.DataVigil.EFCore
                 if (_options.GlobalExclusions.Contains(clrType))
                     return;
 
-                var entityType = context.Model.FindEntityType(clrType);
+                IEntityType entityType = null;
+                foreach (var candidate in context.Model.GetEntityTypes())
+                {
+                    if (PropertyMetadataHelper.GetClrType(candidate) != clrType)
+                        continue;
+
+                    entityType = candidate;
+                    break;
+                }
+
                 if (entityType == null)
                     return;
 
