@@ -192,6 +192,33 @@ First the interceptor goes through the change tracker looking for any Added, Mod
 
 You don't have to touch your controllers or repositories at all. It just works.
 
+#### How values are recorded
+
+`OldValue` and `NewValue` are always `string` columns, but the property behind them can be almost anything - an `enum`, a value converted by EF, a `byte[]`, an owned/complex type, a collection. Each captured value goes through the same precedence to decide what actually gets written:
+
+1. **`null` stays `null`.**
+2. **Enums record the member name**, not the numeric value - `Status = "Shipped"`, not `Status = "2"`. This is checked before converters, so an enum backed by a value converter still records the name.
+3. **A property mapped through an EF `ValueConverter` records the converter's *provider* value**, not the CLR value you set on the entity. If you have an encrypting converter, the audit trail records ciphertext - the plaintext you assigned never reaches the record. If the converter throws while converting, the property records `[unrecordable: converter threw <ExceptionType>]` instead of falling back to the CLR value; a converter that exists but failed must not leak the value it was supposed to protect.
+4. **Simple types** (numbers, `string`, `bool`, `Guid`, `DateTime`/`DateTimeOffset`, and a handful of others that already have a meaningful `ToString()`) are recorded with `ToString()`.
+5. **`byte[]` records its length**, as `byte[N]` - never the bytes themselves.
+6. **Collections, and complex/owned types that don't override `ToString()`**, are serialized to JSON. This is what makes complex types and value objects show up as readable structured data in `OldValue`/`NewValue` instead of their CLR type name.
+7. **Everything else falls back to `ToString()`.**
+
+**`EntityId` follows the same precedence, with one difference for `byte[]`.** The entity key recorded in `EntityId` (and each part of a composite key) goes through the same converter step as any other property - a converted key is recorded as the converter's provider value, not the CLR value on the entity. The one difference is `byte[]`: a `byte[]`-typed key (for example a `Guid` key converted to `byte[16]`) is never recorded as the `byte[N]` size marker used for an ordinary property - every row with a same-length key would then share the same `EntityId`, making the trail unqueryable by entity. Instead it is recorded as lowercase hex with no separators, e.g. `3fa85f6457174562b3fc2c963f66afa`, and, unlike JSON values, it is never truncated.
+
+JSON serialization is bounded to 8,000 characters - that budget is what the *library generates*, not a limit on your data. A 50 KB `string` property is still recorded in full; only the JSON the library builds for complex values is capped. A value that serializes past the cap is truncated and stamped with a marker instead of being silently cut:
+
+```
+...[truncated, full length 41213, sha256 9f86d081884c7d65]
+```
+
+The marker carries the full pre-truncation length and the first 16 hex characters of the SHA-256 of the full JSON, so two values that only differ after the cut still show up as different records instead of looking identical. If serialization itself fails (a cyclic or otherwise unserializable graph past what `ReferenceHandler.IgnoreCycles` can resolve), the property records `[unrecordable: <ExceptionType>]` rather than a value that could be mistaken for real data.
+
+Two things worth knowing if you also use [GDPR storage policies](#6-gdpr-configuration) or query values back:
+
+- **GDPR storage rules match against the audited *property name*, not against anything inside a JSON-serialized value.** If `ShippingAddress` is a complex type serialized as JSON, `ExcludeOnStorage`/`MaskOnStorage`/etc. apply to the whole `ShippingAddress` property - there's no rule that reaches into the JSON to redact just `ShippingAddress.Street`. Mask or exclude the container property if any field inside it is sensitive.
+- **The `[unrecordable: ...]` markers are deliberate, not a bug.** They exist so that a value the library could not capture correctly never masquerades as `null`, as the previous value, or as a successfully-recorded value. If you see one, treat it as "this value was not recorded" - the converter or the graph is worth checking, but the underlying data was never at risk of being logged incorrectly.
+
 ---
 
 ## 3. ASP.NET Core Web API + File Storage

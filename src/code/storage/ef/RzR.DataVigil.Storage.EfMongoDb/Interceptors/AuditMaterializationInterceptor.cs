@@ -4,7 +4,7 @@
 //  Created On       : 2026-04-15 18:04
 // 
 //  Last Modified By : RzR
-//  Last Modified On : 2026-04-15 18:04
+//  Last Modified On : 2026-09-11 21:30
 // ***********************************************************************
 //  <copyright file="AuditMaterializationInterceptor.cs" company="RzR SOFT & TECH">
 //   Copyright © RzR. All rights reserved.
@@ -24,6 +24,7 @@ using Microsoft.EntityFrameworkCore.Metadata;
 using RzR.DataVigil.Abstractions.Contracts;
 using RzR.DataVigil.Abstractions.Enums;
 using RzR.DataVigil.Abstractions.Models.Entries;
+using RzR.DataVigil.Core.Helpers;
 using RzR.DataVigil.Core.Options;
 using RzR.DataVigil.Core.Pipeline;
 using RzR.Extensions.Domain.Primitives;
@@ -70,30 +71,22 @@ namespace RzR.DataVigil.Storage.EfMongoDb.Interceptors
         /// <param name="options">The audit trail options.</param>
         /// <param name="collector">The scoped read collector.</param>
         /// =================================================================================================
-        public AuditMaterializationInterceptor(
-            AuditTrailOptions options,
-            AuditReadCollector collector)
+        public AuditMaterializationInterceptor(AuditTrailOptions options, AuditReadCollector collector)
         {
             _options = options;
             _collector = collector;
         }
 
         /// <inheritdoc/>
-        public InterceptionResult<object> CreatingInstance(
-            MaterializationInterceptionData materializationData,
-            InterceptionResult<object> result)
+        public InterceptionResult<object> CreatingInstance(MaterializationInterceptionData materializationData, InterceptionResult<object> result)
             => result;
 
         /// <inheritdoc/>
-        public object CreatedInstance(
-            MaterializationInterceptionData materializationData,
-            object entity)
+        public object CreatedInstance(MaterializationInterceptionData materializationData, object entity)
             => entity;
 
         /// <inheritdoc/>
-        public object InitializedInstance(
-            MaterializationInterceptionData materializationData,
-            object entity)
+        public object InitializedInstance(MaterializationInterceptionData materializationData, object entity)
         {
             if (entity.IsNull())
                 return entity;
@@ -155,26 +148,42 @@ namespace RzR.DataVigil.Storage.EfMongoDb.Interceptors
         private static string GetPrimaryKeyValue(IEntityType entityType, object entity)
         {
             var keyProperties = entityType.FindPrimaryKey()?.Properties;
-            if (keyProperties == null || keyProperties.Count == 0)
+            if (keyProperties.IsNull() || keyProperties!.Count == 0)
                 return null;
 
             if (keyProperties.Count == 1)
             {
-                var propName = keyProperties[0].Name;
-                var propInfo = entity.GetType().GetProperty(propName, BindingFlags.Public | BindingFlags.Instance);
+                var keyProperty = keyProperties[0];
+                var propInfo = entity.GetType().GetProperty(keyProperty.Name, BindingFlags.Public | BindingFlags.Instance);
 
-                return propInfo?.GetValue(entity)?.ToString();
+                return ToAuditKeyValue(keyProperty, propInfo?.GetValue(entity));
             }
 
             var parts = new string[keyProperties.Count];
             for (var i = 0; i < keyProperties.Count; i++)
             {
-                var propName = keyProperties[i].Name;
-                var propInfo = entity.GetType().GetProperty(propName, BindingFlags.Public | BindingFlags.Instance);
-                parts[i] = propInfo?.GetValue(entity)?.ToString() ?? "null";
+                var keyProperty = keyProperties[i];
+                var propInfo = entity.GetType().GetProperty(keyProperty.Name, BindingFlags.Public | BindingFlags.Instance);
+                parts[i] = ToAuditKeyValue(keyProperty, propInfo?.GetValue(entity)) ?? "null";
             }
 
             return string.Join(",", parts);
+        }
+
+        /// -------------------------------------------------------------------------------------------------
+        /// <summary>
+        ///     Converts a property value to the form recorded as (part of) an entity key, applying the
+        ///     property's value converter (when configured) before formatting.
+        /// </summary>
+        /// <param name="property">The EF Core property metadata.</param>
+        /// <param name="value">The property value.</param>
+        /// <returns>
+        ///     The recorded key value, or <c>null</c> when the value is <c>null</c>.
+        /// </returns>
+        /// =================================================================================================
+        private static string ToAuditKeyValue(IProperty property, object value)
+        {
+            return ConvertAndFormat(property, value, AuditValueFormatter.FormatKey);
         }
 
         /// -------------------------------------------------------------------------------------------------
@@ -191,16 +200,17 @@ namespace RzR.DataVigil.Storage.EfMongoDb.Interceptors
             {
                 var propertyName = property.Name;
                 var propertyType = property.ClrType;
-                var underlyingType = propertyType != null ? Nullable.GetUnderlyingType(propertyType) : null;
-                var cleanTypeName = underlyingType != null
-                    ? underlyingType.FullName + "?"
+                var underlyingType = propertyType.IsNotNull() ? Nullable.GetUnderlyingType(propertyType) : null;
+                var cleanTypeName = underlyingType.IsNotNull()
+                    ? underlyingType!.FullName + "?"
                     : propertyType?.FullName;
 
                 string value = null;
                 if (_options.EfCore.IncludeReadPropertiesValueEnabled)
                 {
                     var propInfo = entity.GetType().GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance);
-                    value = propInfo?.GetValue(entity)?.ToString();
+
+                    value = ConvertAndFormat(property, propInfo?.GetValue(entity), AuditValueFormatter.Format);
                 }
 
                 auditEntry.Properties.Add(new AuditEntryProperty
@@ -211,6 +221,36 @@ namespace RzR.DataVigil.Storage.EfMongoDb.Interceptors
                     NewValue = value
                 });
             }
+        }
+
+        /// -------------------------------------------------------------------------------------------------
+        /// <summary>
+        ///     Applies the property's value converter (when one is configured) to a captured value, then
+        ///     formats the resulting provider value with <paramref name="format"/>.
+        /// </summary>
+        /// <param name="property">The EF Core property metadata.</param>
+        /// <param name="value">The captured value.</param>
+        /// <param name="format">The formatter to apply to the (possibly converted) value - either
+        ///     <see cref="AuditValueFormatter.Format"/> or <see cref="AuditValueFormatter.FormatKey"/>.</param>
+        /// <returns>
+        ///     The recorded value.
+        /// </returns>
+        /// =================================================================================================
+        private static string ConvertAndFormat(IProperty property, object value, Func<object, string> format)
+        {
+            var converter = property.GetValueConverter();
+
+            object providerValue;
+            try
+            {
+                providerValue = converter.IsNull() ? value : converter!.ConvertToProvider(value);
+            }
+            catch (Exception ex)
+            {
+                return "[unrecordable: converter threw " + ex.GetType().Name + "]";
+            }
+
+            return format(providerValue);
         }
     }
 }

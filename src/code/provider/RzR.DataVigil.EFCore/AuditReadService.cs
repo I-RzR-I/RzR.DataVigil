@@ -4,7 +4,7 @@
 //  Created On       : 2026-04-15 13:04
 // 
 //  Last Modified By : RzR
-//  Last Modified On : 2026-04-15 13:25
+//  Last Modified On : 2026-09-11 21:30
 // ***********************************************************************
 //  <copyright file="AuditReadService.cs" company="RzR SOFT & TECH">
 //   Copyright © RzR. All rights reserved.
@@ -110,9 +110,7 @@ namespace RzR.DataVigil.EFCore
         ///     A Task representing the async operation.
         /// </returns>
         /// =================================================================================================
-        public Task LogReadAsync<TEntity>(
-            DbContext context,
-            TEntity entity,
+        public Task LogReadAsync<TEntity>(DbContext context, TEntity entity,
             CancellationToken cancellationToken = default)
             where TEntity : class, IAuditable
         {
@@ -135,9 +133,7 @@ namespace RzR.DataVigil.EFCore
         ///     A Task representing the async operation.
         /// </returns>
         /// =================================================================================================
-        public Task LogReadAsync<TEntity>(
-            DbContext context,
-            IEnumerable<TEntity> entities,
+        public Task LogReadAsync<TEntity>(DbContext context, IEnumerable<TEntity> entities,
             CancellationToken cancellationToken = default)
             where TEntity : class, IAuditable
         {
@@ -156,11 +152,8 @@ namespace RzR.DataVigil.EFCore
         ///     A Task.
         /// </returns>
         /// =================================================================================================
-        private async Task LogReadInternalAsync(
-            DbContext context,
-            Type clrType,
-            IEnumerable entities,
-            CancellationToken cancellationToken)
+        private async Task LogReadInternalAsync(DbContext context, Type clrType,
+            IEnumerable entities, CancellationToken cancellationToken)
         {
             try
             {
@@ -244,7 +237,7 @@ namespace RzR.DataVigil.EFCore
 
         /// -------------------------------------------------------------------------------------------------
         /// <summary>
-        ///     Extracts the primary key value from an entity instance using EF Core model metadata.
+        ///     Extracts the primary key value from an entity instance using EF Core model metadata. 
         /// </summary>
         /// <param name="entityType">Type of the entity.</param>
         /// <param name="entity">The entity instance that was read.</param>
@@ -263,7 +256,7 @@ namespace RzR.DataVigil.EFCore
                 var propName = PropertyMetadataHelper.GetName(keyProperties[0]);
                 var propInfo = entity.GetType().GetProperty(propName, BindingFlags.Public | BindingFlags.Instance);
 
-                return propInfo?.GetValue(entity)?.ToString();
+                return ChangeTrackerEntryBuilder.ToAuditKeyValue(keyProperties[0], propInfo?.GetValue(entity));
             }
 
             // Composite key
@@ -272,7 +265,7 @@ namespace RzR.DataVigil.EFCore
             {
                 var propName = PropertyMetadataHelper.GetName(keyProperties[i]);
                 var propInfo = entity.GetType().GetProperty(propName, BindingFlags.Public | BindingFlags.Instance);
-                parts.Add(propInfo?.GetValue(entity)?.ToString() ?? "null");
+                parts.Add(ChangeTrackerEntryBuilder.ToAuditKeyValue(keyProperties[i], propInfo?.GetValue(entity)) ?? "null");
             }
 
             return string.Join(",", parts);
@@ -300,7 +293,7 @@ namespace RzR.DataVigil.EFCore
                 {
                     var propInfo = entity.GetType()
                         .GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance);
-                    value = propInfo?.GetValue(entity)?.ToString();
+                    value = ChangeTrackerEntryBuilder.ToAuditValue(property, propInfo?.GetValue(entity));
                 }
 
                 auditEntry.Properties.Add(new AuditEntryProperty

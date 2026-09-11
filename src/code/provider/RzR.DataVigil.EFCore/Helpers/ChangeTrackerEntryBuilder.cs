@@ -4,7 +4,7 @@
 //  Created On       : 2026-04-10 23:04
 // 
 //  Last Modified By : RzR
-//  Last Modified On : 2026-04-14 18:10
+//  Last Modified On : 2026-09-11 21:30
 // ***********************************************************************
 //  <copyright file="ChangeTrackerEntryBuilder.cs" company="RzR SOFT & TECH">
 //   Copyright © RzR. All rights reserved.
@@ -22,6 +22,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using RzR.DataVigil.Abstractions.Enums;
 using RzR.DataVigil.Abstractions.Models.Entries;
+using RzR.DataVigil.Core.Helpers;
 using RzR.Extensions.Domain.Collections;
 using RzR.Extensions.Domain.Primitives;
 
@@ -98,7 +99,7 @@ namespace RzR.DataVigil.EFCore.Helpers
                     PropertyName = propertyName,
                     PropertyType = PropertyMetadataHelper.GetCleanTypeName(PropertyMetadataHelper.GetClrType(property)),
                     OldValue = null,
-                    NewValue = currentValue?.ToString()
+                    NewValue = ToAuditValue(property, currentValue)
                 });
             }
         }
@@ -119,21 +120,60 @@ namespace RzR.DataVigil.EFCore.Helpers
                 if (excludedFields.IsNotNullOrEmptyEnumerable() && excludedFields.Contains(propertyName))
                     continue;
 
-                var originalValue = entry.OriginalValues[property];
-                var currentValue = entry.CurrentValues[property];
+                var originalModelValue = entry.OriginalValues[property];
+                var currentModelValue = entry.CurrentValues[property];
 
-                // Only include properties that actually changed
-                if (Equals(originalValue, currentValue).IsFalse())
+                if (ValuesDiffer(property, originalModelValue, currentModelValue).IsFalse())
+                    continue;
+
+                auditEntry.Properties.Add(new AuditEntryProperty
                 {
-                    auditEntry.Properties.Add(new AuditEntryProperty
-                    {
-                        PropertyName = propertyName,
-                        PropertyType = PropertyMetadataHelper.GetCleanTypeName(PropertyMetadataHelper.GetClrType(property)),
-                        OldValue = originalValue?.ToString(),
-                        NewValue = currentValue?.ToString()
-                    });
+                    PropertyName = propertyName,
+                    PropertyType = PropertyMetadataHelper.GetCleanTypeName(PropertyMetadataHelper.GetClrType(property)),
+                    OldValue = ToAuditValue(property, originalModelValue),
+                    NewValue = ToAuditValue(property, currentModelValue)
+                });
+            }
+        }
+
+        /// -------------------------------------------------------------------------------------------------
+        /// <summary>
+        ///     Decides whether a property changed, comparing the MODEL values rather than their formatted
+        ///     audit representation, matching EF Core's own change-detection semantics (EF marks a property
+        ///     modified by comparing model values through the property's <c>ValueComparer</c>).
+        /// </summary>
+        /// <param name="property">The EF Core property metadata.</param>
+        /// <param name="original">The original model value.</param>
+        /// <param name="current">The current model value.</param>
+        /// <returns>
+        ///     True when the property changed, false when it did not.
+        /// </returns>
+        /// =================================================================================================
+        private static bool ValuesDiffer(object property, object original, object current)
+        {
+            var comparer = PropertyMetadataHelper.GetValueComparer(property);
+            if (comparer.IsNotNull())
+            {
+                try
+                {
+                    return PropertyMetadataHelper.ComparerEquals(comparer, original, current).IsFalse();
+                }
+                catch (Exception)
+                {
+                    /* ignored */
                 }
             }
+
+            if (original.IsNull() && current.IsNull())
+                return false;
+
+            if (original.IsNull() || current.IsNull())
+                return true;
+
+            if (original is byte[] originalBytes && current is byte[] currentBytes)
+                return originalBytes.SequenceEqual(currentBytes).IsFalse();
+
+            return Equals(original, current).IsFalse();
         }
 
         /// -------------------------------------------------------------------------------------------------
@@ -157,9 +197,83 @@ namespace RzR.DataVigil.EFCore.Helpers
                 {
                     PropertyName = propertyName,
                     PropertyType = PropertyMetadataHelper.GetCleanTypeName(PropertyMetadataHelper.GetClrType(property)),
-                    OldValue = originalValue?.ToString(),
+                    OldValue = ToAuditValue(property, originalValue),
                     NewValue = null
                 });
+            }
+        }
+
+        /// -------------------------------------------------------------------------------------------------
+        /// <summary>
+        ///     Converts a property value to the form recorded in the audit trail. 
+        /// </summary>
+        /// <param name="property">The EF Core property metadata.</param>
+        /// <param name="value">The property value.</param>
+        /// <returns>
+        ///     The recorded value, or <c>null</c> when the value is <c>null</c>.
+        /// </returns>
+        /// =================================================================================================
+        internal static string ToAuditValue(object property, object value)
+        {
+            if (value.IsNull())
+                return null;
+
+            var clrType = value.GetType();
+            if (clrType.IsEnum)
+                return value.ToString();
+
+            var converter = PropertyMetadataHelper.GetValueConverter(property);
+            if (converter.IsNull())
+                return AuditValueFormatter.Format(value);
+
+            try
+            {
+                var providerValue = PropertyMetadataHelper.ConvertToProvider(converter, value);
+
+                return AuditValueFormatter.Format(providerValue);
+            }
+            catch (Exception ex)
+            {
+                return "[unrecordable: converter threw " + ex.GetType().Name + "]";
+            }
+        }
+
+        /// -------------------------------------------------------------------------------------------------
+        /// <summary>
+        ///     Converts a property value to the form recorded as (part of) an entity key. Applies the same
+        ///     converter step as <see cref="ToAuditValue" />, but formats the provider value through
+        ///     <see cref="AuditValueFormatter.FormatKey" /> instead of <see cref="AuditValueFormatter.Format" />
+        ///     so a <c>byte[]</c>-typed key (for example a converted <see cref="Guid" /> key) is recorded as
+        ///     hex rather than collapsing to the same size marker for every entity.
+        /// </summary>
+        /// <param name="property">The EF Core property metadata.</param>
+        /// <param name="value">The property value.</param>
+        /// <returns>
+        ///     The recorded key value, or <c>null</c> when the value is <c>null</c>.
+        /// </returns>
+        /// =================================================================================================
+        internal static string ToAuditKeyValue(object property, object value)
+        {
+            if (value.IsNull())
+                return null;
+
+            var clrType = value.GetType();
+            if (clrType.IsEnum)
+                return value.ToString();
+
+            var converter = PropertyMetadataHelper.GetValueConverter(property);
+            if (converter.IsNull())
+                return AuditValueFormatter.FormatKey(value);
+
+            try
+            {
+                var providerValue = PropertyMetadataHelper.ConvertToProvider(converter, value);
+
+                return AuditValueFormatter.FormatKey(providerValue);
+            }
+            catch (Exception ex)
+            {
+                return "[unrecordable: converter threw " + ex.GetType().Name + "]";
             }
         }
 
@@ -181,17 +295,19 @@ namespace RzR.DataVigil.EFCore.Helpers
 
             if (keyProperties!.Count == 1)
             {
-                var value = entry.Property(PropertyMetadataHelper.GetName(keyProperties[0])).CurrentValue;
+                var keyProperty = keyProperties[0];
+                var value = entry.Property(PropertyMetadataHelper.GetName(keyProperty)).CurrentValue;
 
-                return value?.ToString();
+                return ToAuditKeyValue(keyProperty, value);
             }
 
             // Composite key
             var parts = new List<string>(keyProperties.Count);
             for (var i = 0; i < keyProperties.Count; i++)
             {
-                var value = entry.Property(PropertyMetadataHelper.GetName(keyProperties[i])).CurrentValue;
-                parts.Add(value?.ToString() ?? "null");
+                var keyProperty = keyProperties[i];
+                var value = entry.Property(PropertyMetadataHelper.GetName(keyProperty)).CurrentValue;
+                parts.Add(ToAuditKeyValue(keyProperty, value) ?? "null");
             }
 
             return parts.ListToString(",");
@@ -200,11 +316,6 @@ namespace RzR.DataVigil.EFCore.Helpers
         /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Gets the names of the properties that currently hold an EF Core temporary value.
-        ///     <para>
-        ///     Must be called during the collect phase: EF clears the temporary flag once the
-        ///     store-generated value is propagated back from the database, so the same probe run
-        ///     after the write returns nothing.
-        ///     </para>
         /// </summary>
         /// <param name="entry">The entry.</param>
         /// <returns>
