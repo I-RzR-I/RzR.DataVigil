@@ -1,3 +1,6 @@
+### **v2.1.0.3669** [[RzR](mailto:108324929+I-RzR-I@users.noreply.github.com)] 12-09-2026
+* [a148db6] (RzR) -> Add complex object audit serialization.
+
 ### **v2.0.1.6447** [[RzR](mailto:108324929+I-RzR-I@users.noreply.github.com)] 29-08-2026
 * [52030fe] (RzR) -> Auto commit uncommited files
 * [099191a] (RzR) -> Fix ef core migration with cross compatible version.
