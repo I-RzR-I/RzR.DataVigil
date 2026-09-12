@@ -358,6 +358,8 @@ Here's what gets captured per property:
 | Update | Previous value | Current value (changed props only) |
 | Delete | Previous value | `null` |
 
+`OldValue`/`NewValue` are recorded through a fixed precedence: `null` stays `null`, enums record their member name, EF `ValueConverter`-mapped properties record the converter's *provider* value (so an encrypting converter records ciphertext, never the CLR value), simple types use `ToString()`, `byte[]` records its length as `byte[N]`, and collections or complex/owned types without a meaningful `ToString()` are serialized to JSON, capped at 8,000 characters with a length+SHA-256 truncation marker. A value the pipeline could not safely capture - a converter that threw, a graph that failed to serialize - is recorded as an `[unrecordable: ...]` marker instead of falling back to a value that could be mistaken for real data. See [How values are recorded](docs/using.md#how-values-are-recorded) for the full precedence and how it interacts with GDPR storage rules.
+
 ### Read Auditing
 
 Different approach depending on the database. SQL Server and PostgreSQL use `AuditCommandInterceptor` - it parses the SQL that EF generates to figure out which tables/columns/IDs were queried. MongoDB uses `AuditMaterializationInterceptor` instead, since there's no SQL to parse.

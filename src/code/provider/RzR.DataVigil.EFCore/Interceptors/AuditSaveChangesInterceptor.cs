@@ -4,7 +4,7 @@
 //  Created On       : 2026-04-10 23:04
 //
 //  Last Modified By : RzR
-//  Last Modified On : 2026-08-19 00:00
+//  Last Modified On : 2026-09-11 21:30
 // ***********************************************************************
 //  <copyright file="AuditSaveChangesInterceptor.cs" company="RzR SOFT & TECH">
 //   Copyright © RzR. All rights reserved.
@@ -166,8 +166,7 @@ namespace RzR.DataVigil.EFCore.Interceptors
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(
-                        ex,
+                    _logger.LogWarning(ex,
                         "Unexpected error while persisting the audit trail for context {Context}. "
                         + "The business write already completed and is not affected.",
                         eventData.Context.GetType().Name);
@@ -191,8 +190,7 @@ namespace RzR.DataVigil.EFCore.Interceptors
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(
-                        ex,
+                    _logger.LogWarning(ex,
                         "Unexpected error while persisting the audit trail for context {Context}. "
                         + "The business write already completed and is not affected.",
                         eventData.Context.GetType().Name);
@@ -384,8 +382,9 @@ namespace RzR.DataVigil.EFCore.Interceptors
                         if (auditProperty.IsNull())
                             continue;
 
+                        var propertyEntry = entityEntry.Property(propertyName);
                         auditProperty!.NewValue =
-                            entityEntry.Property(propertyName).CurrentValue?.ToString();
+                            ChangeTrackerEntryBuilder.ToAuditValue(propertyEntry.Metadata, propertyEntry.CurrentValue);
                     }
                 }
                 catch (Exception ex)
