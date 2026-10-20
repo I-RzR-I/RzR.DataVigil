@@ -1357,7 +1357,7 @@ Either way the audit record is still written. The guard never fails the write.
 ## 16. Cancellation
 
 `AuditPipeline.ProcessAsync` takes a `CancellationToken`. When **your own** token is cancelled while the
-pipeline is working, it returns a failure carrying the message key `AuditResultCodes.OperationCanceled`
+pipeline is working, it returns a failure carrying the message code `AuditResultCodes.OperationCanceled`
 (`"DATAVIGIL.AUDIT.CANCELED"`) instead of letting the `OperationCanceledException` escape.
 
 Test for it with the extension on `IResult`:
@@ -1380,15 +1380,23 @@ if (result.IsAuditCanceled())
 _logger.LogError("Audit write failed: {Reason}", string.Join("; ", result.Messages.Select(m => m.Message)));
 ```
 
-Two things to be clear about.
+Three things to be clear about.
 
 **It is still a failure, and no record was written.** `IsAuditCanceled()` does not turn the result into a
 success. The audit record is genuinely missing. What the flag tells you is *why* - an expected shutdown
 rather than a defect - so you can keep it out of your error reporting without pretending the write happened.
 If the missing record matters to you, the cancellation is your signal to retry or to reconcile.
 
-**Match on the key, not on the message text.** The failure text comes from an exception the library does not
+**Match on the code, not on the message text.** The failure text comes from an exception the library does not
 own and is culture dependent. `AuditResultCodes.OperationCanceled` is the stable identifier.
+
+**The identifier lives in `Code`.** Since RzR.ResultMessage 4, a message carries its identifier in
+`IMessageModel.Code`; `Key` survives only as an obsolete alias and will be removed. If you inspect messages
+yourself, read `Code`. If you serialize an `IResult`, the identifier is now written as `"code"` in JSON
+(System.Text.Json) and as a `Code` element in XML, where it used to be `"key"` / `Key`. The two versions do
+not read each other's shape: a v4 reader ignores `"key"` and a v3 reader ignores `"code"`, so the code is
+lost across that boundary. `IsAuditCanceled()` reads `Code`, so it works on any result built in-process; on
+a result deserialized from JSON written before the upgrade the code is already gone and it returns `false`.
 
 The classification is narrow on purpose: the pipeline only maps to this code when
 `cancellationToken.IsCancellationRequested` is true. A cancellation raised by something else - a command
