@@ -40,8 +40,12 @@ namespace RzR.DataVigil.Abstractions.Extensions
         /// </summary>
         /// <param name="result">The result to act on, may be null.</param>
         /// <returns>
-        ///     True when the result carries the cancellation message key, false in every other case.
+        ///     True when the result carries the cancellation message code, false in every other case.
         /// </returns>
+        /// <remarks>
+        ///     Compares <c>IMessageModel.Code</c> using ordinal comparison. The obsolete <c>Key</c> is not
+        ///     consulted, so a custom message implementation must populate <c>Code</c>.
+        /// </remarks>
         /// =================================================================================================
         public static bool IsAuditCanceled(this IResult result)
         {
@@ -51,7 +55,7 @@ namespace RzR.DataVigil.Abstractions.Extensions
             foreach (var message in result.Messages)
             {
                 if (message != null &&
-                    string.Equals(message.Key, AuditResultCodes.OperationCanceled, StringComparison.Ordinal))
+                    string.Equals(message.Code, AuditResultCodes.OperationCanceled, StringComparison.Ordinal))
                     return true;
             }
 
