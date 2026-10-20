@@ -24,22 +24,18 @@ using RzR.DataVigil.EFCore;
 
 namespace RzR.DataVigil.Storage.EfPostgreSql
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     PostgreSQL-specific audit DbContext.
     ///     Inherits table and schema configuration from <see cref="AuditDbContextBase"/>.
     /// </summary>
     /// <seealso cref="T:RzR.DataVigil.EFCore.AuditDbContextBase"/>
-    /// =================================================================================================
     public class AuditPostgreSqlDbContext : AuditDbContextBase
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Initializes a new instance of the <see cref="AuditPostgreSqlDbContext"/> class.
         /// </summary>
         /// <param name="options">The PostgreSQL DbContext options.</param>
         /// <param name="storageOptions">Storage configuration containing the schema name.</param>
-        /// =================================================================================================
         public AuditPostgreSqlDbContext(
             DbContextOptions<AuditPostgreSqlDbContext> options,
             StorageOptions storageOptions)

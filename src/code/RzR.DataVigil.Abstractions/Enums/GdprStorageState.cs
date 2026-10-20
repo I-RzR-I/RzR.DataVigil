@@ -16,11 +16,9 @@
 
 namespace RzR.DataVigil.Abstractions.Enums
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     GDPR processing state of the stored audit entry data.
     /// </summary>
-    /// =================================================================================================
     public enum GdprStorageState
     {
         /// <summary>

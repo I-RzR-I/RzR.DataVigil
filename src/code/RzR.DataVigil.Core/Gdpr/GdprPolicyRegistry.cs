@@ -23,43 +23,34 @@ using System.Collections.Generic;
 
 namespace RzR.DataVigil.Core.Gdpr
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     Registry that holds all configured GDPR policies per entity type.
     /// </summary>
-    /// =================================================================================================
     public sealed class GdprPolicyRegistry
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) name of the policies by.
         /// </summary>
-        /// =================================================================================================
         private readonly IDictionary<string, EntityGdprPolicy> _policiesByName
             = new Dictionary<string, EntityGdprPolicy>(StringComparer.Ordinal);
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) type of the policies by.
         /// </summary>
-        /// =================================================================================================
         private readonly IDictionary<Type, EntityGdprPolicy> _policiesByType
             = new Dictionary<Type, EntityGdprPolicy>();
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Registers this object.
         /// </summary>
         /// <param name="entityType">Type of the entity.</param>
         /// <param name="policy">[out] The policy.</param>
-        /// =================================================================================================
         internal void Register(Type entityType, EntityGdprPolicy policy)
         {
             _policiesByType[entityType] = policy;
             _policiesByName[entityType.Name] = policy;
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Attempts to get policy an EntityGdprPolicy from the given Type.
         /// </summary>
@@ -68,13 +59,11 @@ namespace RzR.DataVigil.Core.Gdpr
         /// <returns>
         ///     True if it succeeds, false if it fails.
         /// </returns>
-        /// =================================================================================================
         public bool TryGetPolicy(Type entityType, out EntityGdprPolicy policy)
         {
             return _policiesByType.TryGetValue(entityType, out policy);
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Attempts to get policy by name an EntityGdprPolicy from the given string.
         /// </summary>
@@ -83,13 +72,11 @@ namespace RzR.DataVigil.Core.Gdpr
         /// <returns>
         ///     True if it succeeds, false if it fails.
         /// </returns>
-        /// =================================================================================================
         public bool TryGetPolicyByName(string entityName, out EntityGdprPolicy policy)
         {
             return _policiesByName.TryGetValue(entityName, out policy);
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Query if 'entityType' has policy.
         /// </summary>
@@ -97,7 +84,6 @@ namespace RzR.DataVigil.Core.Gdpr
         /// <returns>
         ///     True if policy, false if not.
         /// </returns>
-        /// =================================================================================================
         public bool HasPolicy(Type entityType)
         {
             return _policiesByType.ContainsKey(entityType);

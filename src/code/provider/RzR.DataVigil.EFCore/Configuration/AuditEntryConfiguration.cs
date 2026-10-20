@@ -24,27 +24,21 @@ using RzR.DataVigil.Abstractions.Models.Entries;
 
 namespace RzR.DataVigil.EFCore.Configuration
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     EF Core Fluent API configuration for the AuditEntry entity.
     /// </summary>
     /// <seealso cref="T:Microsoft.EntityFrameworkCore.IEntityTypeConfiguration{RzR.DataVigil.Abstractions.Models.Entries.AuditEntry}"/>
-    /// =================================================================================================
     public class AuditEntryConfiguration : IEntityTypeConfiguration<AuditEntry>
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) the schema.
         /// </summary>
-        /// =================================================================================================
         private readonly string _schema;
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Initializes a new instance of the <see cref="AuditEntryConfiguration"/> class.
         /// </summary>
         /// <param name="schema">The schema.</param>
-        /// =================================================================================================
         public AuditEntryConfiguration(string schema)
         {
             _schema = schema;

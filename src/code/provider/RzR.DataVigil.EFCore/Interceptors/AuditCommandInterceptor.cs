@@ -39,44 +39,34 @@ using RzR.Extensions.Domain.Text;
 
 namespace RzR.DataVigil.EFCore.Interceptors
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     EF Core command interceptor for auditing Read (SELECT) operations. 
     ///     Only active when IncludeReads() and IncludeReadProperties() is configured.
     /// </summary>
     /// <seealso cref="T:Microsoft.EntityFrameworkCore.Diagnostics.DbCommandInterceptor"/>
-    /// =================================================================================================
     public sealed class AuditCommandInterceptor : DbCommandInterceptor
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) the logger.
         /// </summary>
-        /// =================================================================================================
         private readonly ILogger<AuditCommandInterceptor> _logger;
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) options for controlling the operation.
         /// </summary>
-        /// =================================================================================================
         private readonly AuditTrailOptions _options;
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) the pipeline.
         /// </summary>
-        /// =================================================================================================
         private readonly AuditPipeline _pipeline;
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Initializes a new instance of the <see cref="AuditCommandInterceptor"/> class.
         /// </summary>
         /// <param name="options">Options for controlling the operation.</param>
         /// <param name="pipeline">The pipeline.</param>
         /// <param name="logger">The logger.</param>
-        /// =================================================================================================
         public AuditCommandInterceptor(
             AuditTrailOptions options,
             AuditPipeline pipeline,
@@ -116,7 +106,6 @@ namespace RzR.DataVigil.EFCore.Interceptors
             return base.ReaderExecuted(command, eventData, result);
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Audit read asynchronous.
         /// </summary>
@@ -126,7 +115,6 @@ namespace RzR.DataVigil.EFCore.Interceptors
         /// <returns>
         ///     A Task.
         /// </returns>
-        /// =================================================================================================
         private async Task AuditReadAsync(DbCommand command, DbContext context, CancellationToken cancellationToken)
         {
             try

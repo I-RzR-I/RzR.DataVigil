@@ -24,14 +24,11 @@ using RzR.DataVigil.Abstractions.Models.Query;
 
 namespace RzR.DataVigil.Abstractions.Extensions
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     Extension methods for <see cref="AuditTransactionQuery"/>.
     /// </summary>
-    /// =================================================================================================
     public static class AuditTransactionQueryExtensions
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Resolves the paging values a store will actually execute with from the paging values the
         ///     caller requested, bounded by <see cref="AuditQueryLimits"/>.
@@ -51,7 +48,6 @@ namespace RzR.DataVigil.Abstractions.Extensions
         ///     was capped. This one is worth a warning: an auditor who asked for more records than a store
         ///     will serve must not read the short page as "no further records exist".
         /// </param>
-        /// =================================================================================================
         public static void GetEffectivePaging(this AuditTransactionQuery filters, out int skip, out int take,
             out bool pagingWasNormalized, out bool takeWasCapped)
         {

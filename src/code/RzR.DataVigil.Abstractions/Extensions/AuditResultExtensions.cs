@@ -24,14 +24,11 @@ using RzR.ResultMessage.Abstractions;
 
 namespace RzR.DataVigil.Abstractions.Extensions
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     Extension methods that classify the results the audit pipeline returns.
     /// </summary>
-    /// =================================================================================================
     public static class AuditResultExtensions
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Returns <c>true</c> when the result reports that the audit work was abandoned because the
         ///     caller's own cancellation token was canceled. A caller uses this to keep a shutdown or an
@@ -46,7 +43,6 @@ namespace RzR.DataVigil.Abstractions.Extensions
         ///     Compares <c>IMessageModel.Code</c> using ordinal comparison. The obsolete <c>Key</c> is not
         ///     consulted, so a custom message implementation must populate <c>Code</c>.
         /// </remarks>
-        /// =================================================================================================
         public static bool IsAuditCanceled(this IResult result)
         {
             if (result == null || result.Messages == null)

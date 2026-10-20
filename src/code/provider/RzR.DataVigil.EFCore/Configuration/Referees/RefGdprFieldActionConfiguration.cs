@@ -26,27 +26,21 @@ using RzR.DataVigil.Abstractions.Models.Entries.Referees;
 
 namespace RzR.DataVigil.EFCore.Configuration.Referees
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     EF Core Fluent API configuration for the RefGdprFieldAction reference entity.
     /// </summary>
     /// <seealso cref="T:Microsoft.EntityFrameworkCore.IEntityTypeConfiguration{RzR.DataVigil.Abstractions.Models.Referees.RefGdprFieldAction}"/>
-    /// =================================================================================================
     public class RefGdprFieldActionConfiguration : IEntityTypeConfiguration<RefGdprFieldAction>
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) the schema.
         /// </summary>
-        /// =================================================================================================
         private readonly string _schema;
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Initializes a new instance of the <see cref="RefGdprFieldActionConfiguration"/> class.
         /// </summary>
         /// <param name="schema">The schema.</param>
-        /// =================================================================================================
         public RefGdprFieldActionConfiguration(string schema)
         {
             _schema = schema;

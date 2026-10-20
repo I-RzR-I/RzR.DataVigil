@@ -24,15 +24,12 @@ using RzR.Extensions.Domain.Text;
 
 namespace RzR.DataVigil.Core.Helpers
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     Shared validation for every value that can reach the audit correlation id column, whatever
     ///     source supplied it: the audit scope, an HTTP request header, or the request trace identifier.
     /// </summary>
-    /// =================================================================================================
     internal static class CorrelationIdValidator
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Accepts a candidate correlation id only when it is short and simple enough to be safe to
         ///     store. A rejected candidate is never truncated and never throws, so the caller falls
@@ -43,11 +40,9 @@ namespace RzR.DataVigil.Core.Helpers
         /// <returns>
         ///     True when the candidate is an acceptable correlation id.
         /// </returns>
-        /// =================================================================================================
         internal static bool TryAccept(string candidate, out string value)
             => TryAccept(candidate, out value, out _, out _, out _);
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Accepts a candidate correlation id and, when it is rejected, reports why. The caller needs
         ///     the reason to distinguish a value that was never supplied - the ordinary case in a host
@@ -64,7 +59,6 @@ namespace RzR.DataVigil.Core.Helpers
         /// <returns>
         ///     True when the candidate is an acceptable correlation id.
         /// </returns>
-        /// =================================================================================================
         internal static bool TryAccept(string candidate, out string value,
             out CorrelationIdRejection reason, out int invalidIndex, out int candidateLength)
         {
@@ -104,7 +98,6 @@ namespace RzR.DataVigil.Core.Helpers
             return true;
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Allowed correlation-id characters: <c>[A-Za-z0-9._:-]</c>. The charset is deliberately
         ///     ASCII-only, which is what makes the length limit mean the same thing for a UTF-16 column
@@ -114,7 +107,6 @@ namespace RzR.DataVigil.Core.Helpers
         /// <returns>
         ///     True if the character is allowed.
         /// </returns>
-        /// =================================================================================================
         private static bool IsAllowedCorrelationChar(char c)
             => (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9')
                || c == '.' || c == '_' || c == ':' || c == '-';

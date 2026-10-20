@@ -45,45 +45,35 @@ using RzR.ResultMessage.Extensions.Result;
 
 namespace RzR.DataVigil.Storage.EfMongoDb
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     MongoDB implementation of <see cref="IAuditStore" /> using EF Core.
     ///     Persists audit transactions to a MongoDB database and supports pagination,
     ///     GDPR retrieval policies, user anonymization, and time-based purging.
     /// </summary>
     /// <seealso cref="T:RzR.DataVigil.Abstractions.Services.IAuditStore" />
-    /// =================================================================================================
     public class MongoDbAuditStore : IAuditStore
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) the MongoDB audit database context.
         /// </summary>
-        /// =================================================================================================
         private readonly AuditMongoDbContext _dbContext;
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) the GDPR processor for applying retrieval-time policies.
         /// </summary>
-        /// =================================================================================================
         private readonly GdprProcessor _gdprProcessor;
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) the logger instance.
         /// </summary>
-        /// =================================================================================================
         private readonly ILogger<MongoDbAuditStore> _logger;
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Initializes a new instance of the <see cref="MongoDbAuditStore" /> class.
         /// </summary>
         /// <param name="dbContext">The MongoDB audit database context.</param>
         /// <param name="logger">The logger instance for diagnostic output.</param>
         /// <param name="gdprProcessor">The GDPR processor for retrieval-time field policies.</param>
-        /// =================================================================================================
         public MongoDbAuditStore(
             AuditMongoDbContext dbContext,
             ILogger<MongoDbAuditStore> logger,
@@ -94,7 +84,6 @@ namespace RzR.DataVigil.Storage.EfMongoDb
             _gdprProcessor = gdprProcessor;
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Persists an audit transaction to the MongoDB database.
         ///     Returns success if the transaction is null (no-op).
@@ -104,7 +93,6 @@ namespace RzR.DataVigil.Storage.EfMongoDb
         /// <returns>
         ///     An <see cref="IResult" /> indicating success or failure.
         /// </returns>
-        /// =================================================================================================
         public async Task<IResult> SaveAsync(AuditTransaction transaction,
             CancellationToken cancellationToken = default)
         {
@@ -177,7 +165,6 @@ namespace RzR.DataVigil.Storage.EfMongoDb
             }
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Anonymizes all audit transactions belonging to a specific user by replacing
         ///     personal identifiers (UserId, UserName, IpAddress) with "[ERASED]" markers
@@ -188,7 +175,6 @@ namespace RzR.DataVigil.Storage.EfMongoDb
         /// <returns>
         ///     An <see cref="IResult" /> indicating success or failure.
         /// </returns>
-        /// =================================================================================================
         public async Task<IResult> AnonymizeByUserAsync(string userId, CancellationToken cancellationToken = default)
         {
             try
@@ -218,7 +204,6 @@ namespace RzR.DataVigil.Storage.EfMongoDb
             }
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Permanently deletes all audit transactions (including entries and properties)
         ///     with a timestamp older than the specified cutoff date.
@@ -228,7 +213,6 @@ namespace RzR.DataVigil.Storage.EfMongoDb
         /// <returns>
         ///     An <see cref="IResult" /> indicating success or failure.
         /// </returns>
-        /// =================================================================================================
         public async Task<IResult> PurgeBeforeAsync(DateTimeOffset before,
             CancellationToken cancellationToken = default)
         {
@@ -250,7 +234,6 @@ namespace RzR.DataVigil.Storage.EfMongoDb
             }
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Composes the optional filter predicates onto the query, combined with AND. A filter left
         ///     at its default contributes no predicate at all, so an unfiltered query object still
@@ -261,7 +244,6 @@ namespace RzR.DataVigil.Storage.EfMongoDb
         /// <returns>
         ///     The query with every supplied filter applied.
         /// </returns>
-        /// =================================================================================================
         private static IQueryable<AuditTransaction> ApplyFilters(IQueryable<AuditTransaction> source,
             AuditTransactionQuery filters)
         {

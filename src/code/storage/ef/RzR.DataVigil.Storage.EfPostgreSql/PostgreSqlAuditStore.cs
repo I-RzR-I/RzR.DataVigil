@@ -45,45 +45,35 @@ using RzR.ResultMessage.Extensions.Result;
 
 namespace RzR.DataVigil.Storage.EfPostgreSql
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     PostgreSQL implementation of <see cref="IAuditStore"/> using EF Core.
     ///     Persists audit transactions to a PostgreSQL database and supports pagination,
     ///     GDPR retrieval policies, user anonymization, and time-based purging.
     /// </summary>
     /// <seealso cref="T:RzR.DataVigil.Abstractions.Services.IAuditStore"/>
-    /// =================================================================================================
     public class PostgreSqlAuditStore : IAuditStore
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) the PostgreSQL audit database context.
         /// </summary>
-        /// =================================================================================================
         private readonly AuditPostgreSqlDbContext _dbContext;
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) the logger instance.
         /// </summary>
-        /// =================================================================================================
         private readonly ILogger<PostgreSqlAuditStore> _logger;
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) the GDPR processor for applying retrieval-time policies.
         /// </summary>
-        /// =================================================================================================
         private readonly Core.Gdpr.GdprProcessor _gdprProcessor;
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Initializes a new instance of the <see cref="PostgreSqlAuditStore"/> class.
         /// </summary>
         /// <param name="dbContext">The PostgreSQL audit database context.</param>
         /// <param name="logger">The logger instance for diagnostic output.</param>
         /// <param name="gdprProcessor">The GDPR processor for retrieval-time field policies.</param>
-        /// =================================================================================================
         public PostgreSqlAuditStore(
             AuditPostgreSqlDbContext dbContext,
             ILogger<PostgreSqlAuditStore> logger,
@@ -94,7 +84,6 @@ namespace RzR.DataVigil.Storage.EfPostgreSql
             _gdprProcessor = gdprProcessor;
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Persists an audit transaction to the PostgreSQL database.
         ///     Returns success if the transaction is null (no-op).
@@ -104,7 +93,6 @@ namespace RzR.DataVigil.Storage.EfPostgreSql
         /// <returns>
         ///     An <see cref="IResult"/> indicating success or failure.
         /// </returns>
-        /// =================================================================================================
         public async Task<IResult> SaveAsync(AuditTransaction transaction, CancellationToken cancellationToken = default)
         {
             if (transaction.IsNull())
@@ -182,7 +170,6 @@ namespace RzR.DataVigil.Storage.EfPostgreSql
             }
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Anonymizes all audit transactions belonging to a specific user by replacing
         ///     personal identifiers (UserId, UserName, IpAddress) with "[ERASED]" markers
@@ -193,7 +180,6 @@ namespace RzR.DataVigil.Storage.EfPostgreSql
         /// <returns>
         ///     An <see cref="IResult"/> indicating success or failure.
         /// </returns>
-        /// =================================================================================================
         public async Task<IResult> AnonymizeByUserAsync(string userId, CancellationToken cancellationToken = default)
         {
             try
@@ -225,7 +211,6 @@ namespace RzR.DataVigil.Storage.EfPostgreSql
             }
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Permanently deletes all audit transactions (including entries and properties)
         ///     with a timestamp older than the specified cutoff date.
@@ -235,7 +220,6 @@ namespace RzR.DataVigil.Storage.EfPostgreSql
         /// <returns>
         ///     An <see cref="IResult"/> indicating success or failure.
         /// </returns>
-        /// =================================================================================================
         public async Task<IResult> PurgeBeforeAsync(DateTimeOffset before, CancellationToken cancellationToken = default)
         {
             try
@@ -260,7 +244,6 @@ namespace RzR.DataVigil.Storage.EfPostgreSql
             }
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Composes the optional filter predicates onto the query, combined with AND. A filter left
         ///     at its default contributes no predicate at all, so an unfiltered query object still
@@ -271,7 +254,6 @@ namespace RzR.DataVigil.Storage.EfPostgreSql
         /// <returns>
         ///     The query with every supplied filter applied.
         /// </returns>
-        /// =================================================================================================
         private static IQueryable<AuditTransaction> ApplyFilters(IQueryable<AuditTransaction> source,
             AuditTransactionQuery filters)
         {

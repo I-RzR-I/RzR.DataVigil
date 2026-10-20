@@ -24,13 +24,11 @@ using RzR.ResultMessage.Abstractions;
 
 namespace RzR.DataVigil.Core.Resolvers
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     Default source resolver - returns "Unknown". Override with a custom implementation for
     ///     specific host types.
     /// </summary>
     /// <seealso cref="T:RzR.DataVigil.Abstractions.Services.IAuditSourceResolver"/>
-    /// =================================================================================================
     public class DefaultSourceResolver : IAuditSourceResolver
     {
         /// <inheritdoc/>

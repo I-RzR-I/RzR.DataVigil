@@ -22,22 +22,18 @@ using RzR.ResultMessage.Abstractions;
 
 namespace RzR.DataVigil.Abstractions.Services
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     Resolves the source/origin of the audited action (e.g. "WebApi", "WorkerService",
     ///     "Console").
     /// </summary>
-    /// =================================================================================================
     public interface IAuditSourceResolver
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Resolves and returns the source identifier for the current application host.
         /// </summary>
         /// <returns>
         ///     An IResult&lt;string&gt;
         /// </returns>
-        /// =================================================================================================
         IResult<string> Resolve();
     }
 }

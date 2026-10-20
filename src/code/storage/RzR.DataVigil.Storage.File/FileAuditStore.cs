@@ -48,66 +48,51 @@ using RzR.ResultMessage.Extensions.Result;
 
 namespace RzR.DataVigil.Storage.File
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     File-based implementation of IAuditStore. Stores audit transactions as JSON files (one
     ///     file per day).
     /// </summary>
     /// <seealso cref="T:RzR.DataVigil.Abstractions.Services.IAuditStore"/>
-    /// =================================================================================================
     public class FileAuditStore : IAuditStore
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) the gdpr processor.
         /// </summary>
-        /// =================================================================================================
         private readonly GdprProcessor _gdprProcessor;
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) options for controlling the JSON.
         /// </summary>
-        /// =================================================================================================
         private static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions
         {
             WriteIndented = true
         };
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) options for controlling the operation.
         /// </summary>
-        /// =================================================================================================
         private readonly StorageOptions _options;
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) the write lock.
         /// </summary>
-        /// =================================================================================================
         private readonly object _writeLock = new object();
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) the logger, never null.
         /// </summary>
-        /// =================================================================================================
         private readonly ILogger<FileAuditStore> _logger;
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Initializes a new instance of the <see cref="FileAuditStore"/> class.
         /// </summary>
         /// <param name="options">Options for controlling the operation.</param>
         /// <param name="gdprProcessor">(Immutable) the gdpr processor.</param>
-        /// =================================================================================================
         public FileAuditStore(StorageOptions options, GdprProcessor gdprProcessor)
             : this(options, gdprProcessor, logger: null)
         {
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Initializes a new instance of the <see cref="FileAuditStore"/> class.
         /// </summary>
@@ -118,7 +103,6 @@ namespace RzR.DataVigil.Storage.File
         ///     more records than the store will serve gets a short page and no signal at all, which reads
         ///     as "there are no more records" - the one way an audit export must never mislead.
         /// </param>
-        /// =================================================================================================
         public FileAuditStore(StorageOptions options, GdprProcessor gdprProcessor,
             ILogger<FileAuditStore> logger)
         {
@@ -330,14 +314,12 @@ namespace RzR.DataVigil.Storage.File
             }
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Gets base path.
         /// </summary>
         /// <returns>
         ///     The base path.
         /// </returns>
-        /// =================================================================================================
         private string GetBasePath()
         {
             return _options.FilePath.IsPresent()
@@ -345,7 +327,6 @@ namespace RzR.DataVigil.Storage.File
                 : Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "audit-logs");
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Composes the optional filter predicates onto the query, combined with AND. A filter left
         ///     at its default contributes no predicate at all, so an unfiltered query object still
@@ -356,7 +337,6 @@ namespace RzR.DataVigil.Storage.File
         /// <returns>
         ///     The query with every supplied filter applied.
         /// </returns>
-        /// =================================================================================================
         private static IEnumerable<AuditTransaction> ApplyFilters(IEnumerable<AuditTransaction> source,
             AuditTransactionQuery filters)
         {

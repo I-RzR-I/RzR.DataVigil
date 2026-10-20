@@ -29,14 +29,11 @@ using RzR.ResultMessage.Abstractions;
 
 namespace RzR.DataVigil.Abstractions.Services
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     Abstraction for audit transaction persistence and retrieval.
     /// </summary>
-    /// =================================================================================================
     public interface IAuditStore
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Persists an audit transaction (with its entries) to the configured storage backend.
         /// </summary>
@@ -45,10 +42,8 @@ namespace RzR.DataVigil.Abstractions.Services
         /// <returns>
         ///     The save.
         /// </returns>
-        /// =================================================================================================
         Task<IResult> SaveAsync(AuditTransaction transaction, CancellationToken cancellationToken = default);
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Queries the audit store.
         /// </summary>
@@ -58,11 +53,9 @@ namespace RzR.DataVigil.Abstractions.Services
         /// <returns>
         ///     The query.
         /// </returns>
-        /// =================================================================================================
         Task<IResult<IEnumerable<AuditTransaction>>> QueryAsync(AuditTransactionQuery filters, GdprRetrievalContext gdprRetrievalContext = null,
             CancellationToken cancellationToken = default);
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     GDPR right-to-erasure: anonymize all transactions for a given user.
         /// </summary>
@@ -71,10 +64,8 @@ namespace RzR.DataVigil.Abstractions.Services
         /// <returns>
         ///     The anonymize by user.
         /// </returns>
-        /// =================================================================================================
         Task<IResult> AnonymizeByUserAsync(string userId, CancellationToken cancellationToken = default);
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Retention policy: purge transactions older than the given date.
         /// </summary>
@@ -83,7 +74,6 @@ namespace RzR.DataVigil.Abstractions.Services
         /// <returns>
         ///     The purge before.
         /// </returns>
-        /// =================================================================================================
         Task<IResult> PurgeBeforeAsync(DateTimeOffset before, CancellationToken cancellationToken = default);
     }
 }

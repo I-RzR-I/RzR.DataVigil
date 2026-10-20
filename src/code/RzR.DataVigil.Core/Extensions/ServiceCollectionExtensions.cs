@@ -26,14 +26,11 @@ using RzR.DataVigil.Core.Options;
 
 namespace RzR.DataVigil.Core.Extensions
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     Extension methods for registering the audit trail in DI.
     /// </summary>
-    /// =================================================================================================
     public static class ServiceCollectionExtensions
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Adds the audit trail system to the service collection.
         /// </summary>
@@ -42,7 +39,6 @@ namespace RzR.DataVigil.Core.Extensions
         /// <returns>
         ///     An AuditTrailBuilder.
         /// </returns>
-        /// =================================================================================================
         public static AuditTrailBuilder AddAuditTrail(
             this IServiceCollection services,
             Action<AuditTrailOptions> configure)
@@ -54,7 +50,6 @@ namespace RzR.DataVigil.Core.Extensions
             return builder;
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Registers the audit retention background service. Purges entries older than
         ///     StorageOptions.RetentionDays every 24 hours. No-op at runtime if RetentionDays is not
@@ -64,7 +59,6 @@ namespace RzR.DataVigil.Core.Extensions
         /// <returns>
         ///     An IServiceCollection.
         /// </returns>
-        /// =================================================================================================
         public static IServiceCollection AddAuditRetentionService(this IServiceCollection services)
         {
             services.AddHostedService<AuditRetentionService>();

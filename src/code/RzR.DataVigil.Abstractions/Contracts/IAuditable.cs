@@ -16,12 +16,10 @@
 
 namespace RzR.DataVigil.Abstractions.Contracts
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     Marker interface - entity participates in audit. Sufficient for full audit on all CUD
     ///     actions.
     /// </summary>
-    /// =================================================================================================
     public interface IAuditable
     {
     }

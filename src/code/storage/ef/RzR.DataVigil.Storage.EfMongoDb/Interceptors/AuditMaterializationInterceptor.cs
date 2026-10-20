@@ -33,7 +33,6 @@ using RzR.Extensions.Domain.Primitives;
 
 namespace RzR.DataVigil.Storage.EfMongoDb.Interceptors
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     EF Core materialization interceptor that automatically captures Read audit entries for
     ///     every <see cref="IAuditable"/> entity materialized during a query.
@@ -47,30 +46,23 @@ namespace RzR.DataVigil.Storage.EfMongoDb.Interceptors
     ///     </para>
     /// </summary>
     /// <seealso cref="T:Microsoft.EntityFrameworkCore.Diagnostics.IMaterializationInterceptor"/>
-    /// =================================================================================================
     public sealed class AuditMaterializationInterceptor : IMaterializationInterceptor
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) options for controlling the operation.
         /// </summary>
-        /// =================================================================================================
         private readonly AuditTrailOptions _options;
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) the collector.
         /// </summary>
-        /// =================================================================================================
         private readonly AuditReadCollector _collector;
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Initializes a new instance of the <see cref="AuditMaterializationInterceptor"/> class.
         /// </summary>
         /// <param name="options">The audit trail options.</param>
         /// <param name="collector">The scoped read collector.</param>
-        /// =================================================================================================
         public AuditMaterializationInterceptor(AuditTrailOptions options, AuditReadCollector collector)
         {
             _options = options;
@@ -135,7 +127,6 @@ namespace RzR.DataVigil.Storage.EfMongoDb.Interceptors
             return entity;
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Extracts the primary key value from an entity instance using EF Core model metadata.
         /// </summary>
@@ -144,7 +135,6 @@ namespace RzR.DataVigil.Storage.EfMongoDb.Interceptors
         /// <returns>
         ///     The primary key value.
         /// </returns>
-        /// =================================================================================================
         private static string GetPrimaryKeyValue(IEntityType entityType, object entity)
         {
             var keyProperties = entityType.FindPrimaryKey()?.Properties;
@@ -170,7 +160,6 @@ namespace RzR.DataVigil.Storage.EfMongoDb.Interceptors
             return string.Join(",", parts);
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Converts a property value to the form recorded as (part of) an entity key, applying the
         ///     property's value converter (when configured) before formatting.
@@ -180,20 +169,17 @@ namespace RzR.DataVigil.Storage.EfMongoDb.Interceptors
         /// <returns>
         ///     The recorded key value, or <c>null</c> when the value is <c>null</c>.
         /// </returns>
-        /// =================================================================================================
         private static string ToAuditKeyValue(IProperty property, object value)
         {
             return ConvertAndFormat(property, value, AuditValueFormatter.FormatKey);
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Builds AuditEntryProperty records for all properties of the entity type.
         /// </summary>
         /// <param name="entityType">Type of the entity.</param>
         /// <param name="auditEntry">The audit entry.</param>
         /// <param name="entity">The entity.</param>
-        /// =================================================================================================
         private void BuildAllReadProperties(IEntityType entityType, AuditEntry auditEntry, object entity)
         {
             foreach (var property in entityType.GetProperties())
@@ -223,7 +209,6 @@ namespace RzR.DataVigil.Storage.EfMongoDb.Interceptors
             }
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Applies the property's value converter (when one is configured) to a captured value, then
         ///     formats the resulting provider value with <paramref name="format"/>.
@@ -235,7 +220,6 @@ namespace RzR.DataVigil.Storage.EfMongoDb.Interceptors
         /// <returns>
         ///     The recorded value.
         /// </returns>
-        /// =================================================================================================
         private static string ConvertAndFormat(IProperty property, object value, Func<object, string> format)
         {
             var converter = property.GetValueConverter();

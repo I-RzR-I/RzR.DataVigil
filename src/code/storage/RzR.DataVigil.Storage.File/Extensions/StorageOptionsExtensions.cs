@@ -26,14 +26,11 @@ using RzR.DataVigil.Core.Options;
 
 namespace RzR.DataVigil.Storage.File.Extensions
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     Extension methods for configuring file-based storage.
     /// </summary>
-    /// =================================================================================================
     public static class StorageOptionsExtensions
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Use the file system as the audit store.
         /// </summary>
@@ -42,7 +39,6 @@ namespace RzR.DataVigil.Storage.File.Extensions
         /// <returns>
         ///     The StorageOptions.
         /// </returns>
-        /// =================================================================================================
         public static StorageOptions UseFile(
             this StorageOptions options,
             string directoryPath = null)
@@ -52,7 +48,6 @@ namespace RzR.DataVigil.Storage.File.Extensions
             return options;
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Registers the file audit store in DI.
         /// </summary>
@@ -60,7 +55,6 @@ namespace RzR.DataVigil.Storage.File.Extensions
         /// <returns>
         ///     An IServiceCollection.
         /// </returns>
-        /// =================================================================================================
         public static IServiceCollection AddAuditTrailFileStorage(this IServiceCollection services)
         {
             services.AddSingleton<IAuditStore>(sp =>

@@ -27,29 +27,22 @@ using RzR.DataVigil.Abstractions.Models.Gdpr;
 
 namespace RzR.DataVigil.Core.Gdpr
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     Fluent builder for configuring GDPR policies per entity type.
     /// </summary>
     /// <typeparam name="T">Generic type parameter.</typeparam>
-    /// =================================================================================================
     public sealed class EntityGdprPolicyBuilder<T> where T : class, IAuditable
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) the retrieval rules.
         /// </summary>
-        /// =================================================================================================
         private readonly IList<FieldGdprRule> _retrievalRules = new List<FieldGdprRule>();
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) the storage rules.
         /// </summary>
-        /// =================================================================================================
         private readonly IList<FieldGdprRule> _storageRules = new List<FieldGdprRule>();
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Exclude on storage.
         /// </summary>
@@ -57,13 +50,11 @@ namespace RzR.DataVigil.Core.Gdpr
         /// <returns>
         ///     An EntityGdprPolicyBuilder&lt;T&gt;
         /// </returns>
-        /// =================================================================================================
         public EntityGdprPolicyBuilder<T> ExcludeOnStorage(Expression<Func<T, object>> field)
         {
             return AddStorageRule(field, GdprFieldAction.Exclude);
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Mask on storage.
         /// </summary>
@@ -71,13 +62,11 @@ namespace RzR.DataVigil.Core.Gdpr
         /// <returns>
         ///     An EntityGdprPolicyBuilder&lt;T&gt;
         /// </returns>
-        /// =================================================================================================
         public EntityGdprPolicyBuilder<T> MaskOnStorage(Expression<Func<T, object>> field)
         {
             return AddStorageRule(field, GdprFieldAction.Mask);
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Anonymize on storage.
         /// </summary>
@@ -85,13 +74,11 @@ namespace RzR.DataVigil.Core.Gdpr
         /// <returns>
         ///     An EntityGdprPolicyBuilder&lt;T&gt;
         /// </returns>
-        /// =================================================================================================
         public EntityGdprPolicyBuilder<T> AnonymizeOnStorage(Expression<Func<T, object>> field)
         {
             return AddStorageRule(field, GdprFieldAction.Anonymize);
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Hash on storage.
         /// </summary>
@@ -99,13 +86,11 @@ namespace RzR.DataVigil.Core.Gdpr
         /// <returns>
         ///     An EntityGdprPolicyBuilder&lt;T&gt;
         /// </returns>
-        /// =================================================================================================
         public EntityGdprPolicyBuilder<T> HashOnStorage(Expression<Func<T, object>> field)
         {
             return AddStorageRule(field, GdprFieldAction.Hash);
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Transform on storage.
         /// </summary>
@@ -114,7 +99,6 @@ namespace RzR.DataVigil.Core.Gdpr
         /// <returns>
         ///     An EntityGdprPolicyBuilder&lt;T&gt;
         /// </returns>
-        /// =================================================================================================
         public EntityGdprPolicyBuilder<T> TransformOnStorage(
             Expression<Func<T, object>> field,
             Func<string, string> transformer)
@@ -122,7 +106,6 @@ namespace RzR.DataVigil.Core.Gdpr
             return AddStorageRule(field, GdprFieldAction.Custom, transformer);
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Mask on retrieval.
         /// </summary>
@@ -131,7 +114,6 @@ namespace RzR.DataVigil.Core.Gdpr
         /// <returns>
         ///     An EntityGdprPolicyBuilder&lt;T&gt;
         /// </returns>
-        /// =================================================================================================
         public EntityGdprPolicyBuilder<T> MaskOnRetrieval(
             Expression<Func<T, object>> field,
             Action<GdprAccessBuilder> access = null)
@@ -139,7 +121,6 @@ namespace RzR.DataVigil.Core.Gdpr
             return AddRetrievalRule(field, GdprFieldAction.Mask, access);
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Anonymize on retrieval.
         /// </summary>
@@ -148,7 +129,6 @@ namespace RzR.DataVigil.Core.Gdpr
         /// <returns>
         ///     An EntityGdprPolicyBuilder&lt;T&gt;
         /// </returns>
-        /// =================================================================================================
         public EntityGdprPolicyBuilder<T> AnonymizeOnRetrieval(
             Expression<Func<T, object>> field,
             Action<GdprAccessBuilder> access = null)
@@ -156,14 +136,12 @@ namespace RzR.DataVigil.Core.Gdpr
             return AddRetrievalRule(field, GdprFieldAction.Anonymize, access);
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Gets the build.
         /// </summary>
         /// <returns>
         ///     An EntityGdprPolicy.
         /// </returns>
-        /// =================================================================================================
         internal EntityGdprPolicy Build()
         {
             return new EntityGdprPolicy
@@ -174,7 +152,6 @@ namespace RzR.DataVigil.Core.Gdpr
             };
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Adds a storage rule.
         /// </summary>
@@ -184,7 +161,6 @@ namespace RzR.DataVigil.Core.Gdpr
         /// <returns>
         ///     An EntityGdprPolicyBuilder&lt;T&gt;
         /// </returns>
-        /// =================================================================================================
         private EntityGdprPolicyBuilder<T> AddStorageRule(
             Expression<Func<T, object>> field,
             GdprFieldAction action,
@@ -199,7 +175,6 @@ namespace RzR.DataVigil.Core.Gdpr
             return this;
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Adds a retrieval rule.
         /// </summary>
@@ -209,7 +184,6 @@ namespace RzR.DataVigil.Core.Gdpr
         /// <returns>
         ///     An EntityGdprPolicyBuilder&lt;T&gt;
         /// </returns>
-        /// =================================================================================================
         private EntityGdprPolicyBuilder<T> AddRetrievalRule(
             Expression<Func<T, object>> field,
             GdprFieldAction action,
@@ -228,7 +202,6 @@ namespace RzR.DataVigil.Core.Gdpr
             return this;
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Gets property name.
         /// </summary>
@@ -239,7 +212,6 @@ namespace RzR.DataVigil.Core.Gdpr
         /// <returns>
         ///     The property name.
         /// </returns>
-        /// =================================================================================================
         private static string GetPropertyName(Expression<Func<T, object>> expression)
         {
             MemberExpression memberExpression;

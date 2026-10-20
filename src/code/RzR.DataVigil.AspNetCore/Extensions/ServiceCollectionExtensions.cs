@@ -33,14 +33,11 @@ using RzR.Extensions.Domain.Primitives;
 
 namespace RzR.DataVigil.AspNetCore.Extensions
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     Extension methods for registering ASP.NET Core audit resolvers.
     /// </summary>
-    /// =================================================================================================
     public static class ServiceCollectionExtensions
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Registers ASP.NET Core-specific audit resolvers: user resolver from HttpContext,
         ///     correlation from HTTP headers.
@@ -49,11 +46,9 @@ namespace RzR.DataVigil.AspNetCore.Extensions
         /// <returns>
         ///     An IServiceCollection.
         /// </returns>
-        /// =================================================================================================
         public static IServiceCollection AddAuditTrailAspNetCore(this IServiceCollection services)
             => AddAuditTrailAspNetCore(services, null);
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Registers the ASP.NET Core-specific audit resolvers as
         ///     <see cref="M:RzR.DataVigil.AspNetCore.Extensions.ServiceCollectionExtensions.AddAuditTrailAspNetCore(Microsoft.Extensions.DependencyInjection.IServiceCollection)"/>
@@ -67,7 +62,6 @@ namespace RzR.DataVigil.AspNetCore.Extensions
         /// <returns>
         ///     An IServiceCollection.
         /// </returns>
-        /// =================================================================================================
         public static IServiceCollection AddAuditTrailAspNetCore(
             this IServiceCollection services,
             Func<HttpContext, string> routeTemplateAccessor)
@@ -93,7 +87,6 @@ namespace RzR.DataVigil.AspNetCore.Extensions
             return services;
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Installs the ASP.NET Core implementation of a contract, but only when the slot is
         ///     free or still holds the built-in default.
@@ -102,7 +95,6 @@ namespace RzR.DataVigil.AspNetCore.Extensions
         /// <typeparam name="TDefault">The built-in default implementation.</typeparam>
         /// <typeparam name="TAspNetCore">The ASP.NET Core implementation.</typeparam>
         /// <param name="services">The services to act on.</param>
-        /// =================================================================================================
         private static void TakeOverFromDefault<TService, TDefault, TAspNetCore>(IServiceCollection services)
             where TDefault : TService
             where TAspNetCore : TService

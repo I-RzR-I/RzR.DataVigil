@@ -24,24 +24,19 @@ using RzR.DataVigil.Core.Gdpr;
 
 namespace RzR.DataVigil.Core.Options
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     Configuration options for GDPR policies.
     /// </summary>
-    /// =================================================================================================
     public sealed class GdprOptions
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Gets the registry.
         /// </summary>
         /// <value>
         ///     The registry.
         /// </value>
-        /// =================================================================================================
         internal GdprPolicyRegistry Registry { get; } = new GdprPolicyRegistry();
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Configure GDPR policies for a specific entity type.
         /// </summary>
@@ -50,7 +45,6 @@ namespace RzR.DataVigil.Core.Options
         /// <returns>
         ///     The GdprOptions.
         /// </returns>
-        /// =================================================================================================
         public GdprOptions ForEntity<T>(Action<EntityGdprPolicyBuilder<T>> configure)
             where T : class, IAuditable
         {

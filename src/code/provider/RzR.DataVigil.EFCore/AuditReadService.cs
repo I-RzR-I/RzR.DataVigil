@@ -39,7 +39,6 @@ using RzR.Extensions.Domain.Primitives;
 
 namespace RzR.DataVigil.EFCore
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     Provides explicit Read audit logging for EF Core providers that do not support
     ///     <c>DbCommandInterceptor</c> (e.g. MongoDB, Cosmos, in-memory).
@@ -53,38 +52,29 @@ namespace RzR.DataVigil.EFCore
     ///     </code>
     ///     </para>
     /// </summary>
-    /// =================================================================================================
     public sealed class AuditReadService
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) the logger.
         /// </summary>
-        /// =================================================================================================
         private readonly ILogger<AuditReadService> _logger;
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) options for controlling the operation.
         /// </summary>
-        /// =================================================================================================
         private readonly AuditTrailOptions _options;
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) the pipeline.
         /// </summary>
-        /// =================================================================================================
         private readonly AuditPipeline _pipeline;
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Initializes a new instance of the <see cref="AuditReadService" /> class.
         /// </summary>
         /// <param name="options">The audit trail options.</param>
         /// <param name="pipeline">The audit pipeline.</param>
         /// <param name="logger">The logger.</param>
-        /// =================================================================================================
         public AuditReadService(
             AuditTrailOptions options,
             AuditPipeline pipeline,
@@ -95,7 +85,6 @@ namespace RzR.DataVigil.EFCore
             _logger = logger;
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Logs a Read audit entry for a single entity. The entity's primary key is extracted from
         ///     the EF Core model metadata.
@@ -109,7 +98,6 @@ namespace RzR.DataVigil.EFCore
         /// <returns>
         ///     A Task representing the async operation.
         /// </returns>
-        /// =================================================================================================
         public Task LogReadAsync<TEntity>(DbContext context, TEntity entity,
             CancellationToken cancellationToken = default)
             where TEntity : class, IAuditable
@@ -117,7 +105,6 @@ namespace RzR.DataVigil.EFCore
             return LogReadInternalAsync(context, typeof(TEntity), new object[] { entity }, cancellationToken);
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Logs Read audit entries for a collection of entities. One audit entry per entity is
         ///     created within a single transaction, each with its primary key extracted from the EF Core
@@ -132,7 +119,6 @@ namespace RzR.DataVigil.EFCore
         /// <returns>
         ///     A Task representing the async operation.
         /// </returns>
-        /// =================================================================================================
         public Task LogReadAsync<TEntity>(DbContext context, IEnumerable<TEntity> entities,
             CancellationToken cancellationToken = default)
             where TEntity : class, IAuditable
@@ -140,7 +126,6 @@ namespace RzR.DataVigil.EFCore
             return LogReadInternalAsync(context, typeof(TEntity), entities, cancellationToken);
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Internal implementation that builds and processes Read audit entries.
         /// </summary>
@@ -151,7 +136,6 @@ namespace RzR.DataVigil.EFCore
         /// <returns>
         ///     A Task.
         /// </returns>
-        /// =================================================================================================
         private async Task LogReadInternalAsync(DbContext context, Type clrType,
             IEnumerable entities, CancellationToken cancellationToken)
         {
@@ -235,7 +219,6 @@ namespace RzR.DataVigil.EFCore
             }
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Extracts the primary key value from an entity instance using EF Core model metadata. 
         /// </summary>
@@ -244,7 +227,6 @@ namespace RzR.DataVigil.EFCore
         /// <returns>
         ///     The primary key value.
         /// </returns>
-        /// =================================================================================================
         private static string GetPrimaryKeyValue(IEntityType entityType, object entity)
         {
             var keyProperties = entityType.FindPrimaryKey()?.Properties;
@@ -271,7 +253,6 @@ namespace RzR.DataVigil.EFCore
             return string.Join(",", parts);
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Builds AuditEntryProperty records for all properties of the entity type. 
         ///     When <see cref="EfCoreAuditOptions.IncludeReadPropertiesValueEnabled" />
@@ -280,7 +261,6 @@ namespace RzR.DataVigil.EFCore
         /// <param name="entityType">Type of the entity.</param>
         /// <param name="auditEntry">The audit entry.</param>
         /// <param name="entity">The entity instance that was read.</param>
-        /// =================================================================================================
         private void BuildAllReadProperties(IEntityType entityType, AuditEntry auditEntry, object entity)
         {
             foreach (var property in entityType.GetProperties())

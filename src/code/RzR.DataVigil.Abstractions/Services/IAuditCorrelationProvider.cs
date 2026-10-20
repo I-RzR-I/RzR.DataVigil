@@ -22,31 +22,25 @@ using RzR.ResultMessage.Abstractions;
 
 namespace RzR.DataVigil.Abstractions.Services
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     Provides correlation and trace identifiers for audit entries.
     /// </summary>
-    /// =================================================================================================
     public interface IAuditCorrelationProvider
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Returns the correlation identifier for the current operation scope.
         /// </summary>
         /// <returns>
         ///     The correlation identifier.
         /// </returns>
-        /// =================================================================================================
         IResult<string> GetCorrelationId();
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Returns the distributed trace identifier for the current request.
         /// </summary>
         /// <returns>
         ///     The trace identifier.
         /// </returns>
-        /// =================================================================================================
         IResult<string> GetTraceId();
     }
 }

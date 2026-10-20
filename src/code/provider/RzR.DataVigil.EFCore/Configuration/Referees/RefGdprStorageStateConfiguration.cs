@@ -26,27 +26,21 @@ using RzR.DataVigil.Abstractions.Models.Entries.Referees;
 
 namespace RzR.DataVigil.EFCore.Configuration.Referees
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     EF Core Fluent API configuration for the RefGdprStorageState reference entity.
     /// </summary>
     /// <seealso cref="T:Microsoft.EntityFrameworkCore.IEntityTypeConfiguration{RzR.DataVigil.Abstractions.Models.Referees.RefGdprStorageState}"/>
-    /// =================================================================================================
     public class RefGdprStorageStateConfiguration : IEntityTypeConfiguration<RefGdprStorageState>
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) the schema.
         /// </summary>
-        /// =================================================================================================
         private readonly string _schema;
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Initializes a new instance of the <see cref="RefGdprStorageStateConfiguration"/> class.
         /// </summary>
         /// <param name="schema">The schema.</param>
-        /// =================================================================================================
         public RefGdprStorageStateConfiguration(string schema)
         {
             _schema = schema;

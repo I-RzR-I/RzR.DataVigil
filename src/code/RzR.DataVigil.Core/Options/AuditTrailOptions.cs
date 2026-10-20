@@ -25,74 +25,59 @@ using RzR.DataVigil.Abstractions.Services;
 
 namespace RzR.DataVigil.Core.Options
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     Main options for configuring the audit trail system.
     /// </summary>
-    /// =================================================================================================
     public sealed class AuditTrailOptions
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Gets the ef core.
         /// </summary>
         /// <value>
         ///     The ef core.
         /// </value>
-        /// =================================================================================================
         public EfCoreAuditOptions EfCore { get; } = new EfCoreAuditOptions();
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Gets the storage.
         /// </summary>
         /// <value>
         ///     The storage.
         /// </value>
-        /// =================================================================================================
         public StorageOptions Storage { get; } = new StorageOptions();
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Gets the gdpr.
         /// </summary>
         /// <value>
         ///     The gdpr.
         /// </value>
-        /// =================================================================================================
         public GdprOptions Gdpr { get; } = new GdprOptions();
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Entity types excluded globally from audit - applies to all ORMs.
         /// </summary>
         /// <value>
         ///     The global exclusions.
         /// </value>
-        /// =================================================================================================
         public ICollection<Type> GlobalExclusions { get; } = new HashSet<Type>();
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Factory for creating the user resolver.
         /// </summary>
         /// <value>
         ///     The type of the user resolver.
         /// </value>
-        /// =================================================================================================
         internal Type UserResolverType { get; private set; }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Factory for creating the source resolver.
         /// </summary>
         /// <value>
         ///     The type of the source resolver.
         /// </value>
-        /// =================================================================================================
         internal Type SourceResolverType { get; private set; }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Service lifetime used to register a source resolver supplied through
         ///     <see cref="UseSourceResolver{TResolver}()"/>. Defaults to Scoped.
@@ -104,10 +89,8 @@ namespace RzR.DataVigil.Core.Options
         ///     <c>IAuditSourceResolver</c> into a singleton without tripping ValidateScopes.
         ///     </para>
         /// </summary>
-        /// =================================================================================================
         internal ServiceLifetime SourceResolverLifetime { get; private set; } = ServiceLifetime.Scoped;
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Exclude an entity type globally from audit.
         /// </summary>
@@ -115,7 +98,6 @@ namespace RzR.DataVigil.Core.Options
         /// <returns>
         ///     The AuditTrailOptions.
         /// </returns>
-        /// =================================================================================================
         public AuditTrailOptions Exclude<TEntity>() where TEntity : class
         {
             GlobalExclusions.Add(typeof(TEntity));
@@ -123,7 +105,6 @@ namespace RzR.DataVigil.Core.Options
             return this;
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Register a custom user resolver.
         /// </summary>
@@ -131,7 +112,6 @@ namespace RzR.DataVigil.Core.Options
         /// <returns>
         ///     The AuditTrailOptions.
         /// </returns>
-        /// =================================================================================================
         public AuditTrailOptions UseUserResolver<TResolver>()
             where TResolver : class, IAuditUserResolver
         {
@@ -140,7 +120,6 @@ namespace RzR.DataVigil.Core.Options
             return this;
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Register a custom source resolver.
         /// </summary>
@@ -148,12 +127,10 @@ namespace RzR.DataVigil.Core.Options
         /// <returns>
         ///     The AuditTrailOptions.
         /// </returns>
-        /// =================================================================================================
         public AuditTrailOptions UseSourceResolver<TResolver>()
             where TResolver : class, IAuditSourceResolver
             => UseSourceResolver<TResolver>(ServiceLifetime.Scoped);
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Register a custom source resolver with an explicit service lifetime.
         /// </summary>
@@ -165,7 +142,6 @@ namespace RzR.DataVigil.Core.Options
         /// <returns>
         ///     The AuditTrailOptions.
         /// </returns>
-        /// =================================================================================================
         public AuditTrailOptions UseSourceResolver<TResolver>(ServiceLifetime lifetime)
             where TResolver : class, IAuditSourceResolver
         {

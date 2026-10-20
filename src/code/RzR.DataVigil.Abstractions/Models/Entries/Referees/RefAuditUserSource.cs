@@ -16,15 +16,12 @@
 
 namespace RzR.DataVigil.Abstractions.Models.Entries.Referees
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     Referee (lookup) table row describing a single
     ///     <see cref="T:RzR.DataVigil.Abstractions.Enums.AuditUserSource"/> member.
     /// </summary>
-    /// =================================================================================================
     public class RefAuditUserSource
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Numeric value of the underlying
         ///     <see cref="T:RzR.DataVigil.Abstractions.Enums.AuditUserSource"/> member.
@@ -32,27 +29,22 @@ namespace RzR.DataVigil.Abstractions.Models.Entries.Referees
         /// <value>
         ///     The identifier.
         /// </value>
-        /// =================================================================================================
         public int Id { get; set; }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Name of the underlying enum member.
         /// </summary>
         /// <value>
         ///     The name.
         /// </value>
-        /// =================================================================================================
         public string Name { get; set; }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Human-readable description of what the enum member represents.
         /// </summary>
         /// <value>
         ///     The description.
         /// </value>
-        /// =================================================================================================
         public string Description { get; set; }
     }
 }

@@ -28,37 +28,29 @@ using RzR.Extensions.Domain.Primitives;
 
 namespace RzR.DataVigil.Core.Helpers
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     Formats a captured property value for the audit trail.
     /// </summary>
-    /// =================================================================================================
     public static class AuditValueFormatter
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) the maximum number of characters the JSON this formatter generates may occupy
         ///     before it is truncated.
         /// </summary>
-        /// =================================================================================================
         public const int MaxJsonValueLength = 8000;
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) options for controlling the JSON written for a complex audit value.
         /// </summary>
-        /// =================================================================================================
         private static readonly JsonSerializerOptions JsonOptions = new()
         {
             MaxDepth = 8,
             ReferenceHandler = ReferenceHandler.IgnoreCycles
         };
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) the CLR types recorded through <c>ToString</c> instead of as JSON.
         /// </summary>
-        /// =================================================================================================
         private static readonly HashSet<string> SimpleTypeNames = new(StringComparer.Ordinal)
         {
             "System.String",
@@ -73,7 +65,6 @@ namespace RzR.DataVigil.Core.Helpers
             "System.Version"
         };
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Formats one captured value for the audit trail.
         /// </summary>
@@ -85,7 +76,6 @@ namespace RzR.DataVigil.Core.Helpers
         /// <returns>
         ///     The recorded value, or <c>null</c> when <paramref name="value" /> is <c>null</c>.
         /// </returns>
-        /// =================================================================================================
         public static string Format(object value)
         {
             if (value.IsNull())
@@ -108,7 +98,6 @@ namespace RzR.DataVigil.Core.Helpers
             return value.ToString();
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Formats one captured entity key value for the audit trail.
         /// </summary>
@@ -120,7 +109,6 @@ namespace RzR.DataVigil.Core.Helpers
         /// <returns>
         ///     The recorded key value, or <c>null</c> when <paramref name="value" /> is <c>null</c>.
         /// </returns>
-        /// =================================================================================================
         public static string FormatKey(object value)
         {
             if (value.IsNull())
@@ -143,7 +131,6 @@ namespace RzR.DataVigil.Core.Helpers
             return value.ToString();
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Formats a byte array as a lowercase hexadecimal string, with no separators.
         /// </summary>
@@ -151,13 +138,11 @@ namespace RzR.DataVigil.Core.Helpers
         /// <returns>
         ///     A lowercase hex string twice the length of <paramref name="bytes" />.
         /// </returns>
-        /// =================================================================================================
         private static string FormatByteArrayAsHex(byte[] bytes)
         {
             return BitConverter.ToString(bytes).Replace("-", string.Empty).ToLowerInvariant();
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Query if the given type is recorded through <c>ToString</c> rather than as JSON.
         /// </summary>
@@ -165,13 +150,11 @@ namespace RzR.DataVigil.Core.Helpers
         /// <returns>
         ///     True when the type is simple, false when it is complex.
         /// </returns>
-        /// =================================================================================================
         private static bool IsSimpleType(Type clrType)
         {
             return clrType.IsPrimitive || SimpleTypeNames.Contains(clrType.FullName ?? string.Empty);
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Query if the given type should be recorded as JSON rather than through <c>ToString</c>.
         /// </summary>
@@ -179,7 +162,6 @@ namespace RzR.DataVigil.Core.Helpers
         /// <returns>
         ///     True when the type does not override <c>ToString</c>
         /// </returns>
-        /// =================================================================================================
         private static bool ShouldSerializeAsJson(Type clrType)
         {
             var declaringType = clrType.GetMethod("ToString", Type.EmptyTypes)?.DeclaringType;
@@ -187,7 +169,6 @@ namespace RzR.DataVigil.Core.Helpers
             return declaringType == typeof(object) || declaringType == typeof(ValueType);
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Serializes a complex value to JSON, appending a visible, content-addressed marker when
         ///     <paramref name="truncate" /> is set and the result is longer than
@@ -202,7 +183,6 @@ namespace RzR.DataVigil.Core.Helpers
         /// <returns>
         ///     The recorded value.
         /// </returns>
-        /// =================================================================================================
         private static string FormatJson(object value, bool truncate)
         {
             try
@@ -222,7 +202,6 @@ namespace RzR.DataVigil.Core.Helpers
             }
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Computes the first 16 lowercase hex characters of the SHA-256 hash of a string, so that two
         ///     truncated values that differ only past the cut are distinguishable in the audit record.
@@ -231,7 +210,6 @@ namespace RzR.DataVigil.Core.Helpers
         /// <returns>
         ///     A 16-character lowercase hex string.
         /// </returns>
-        /// =================================================================================================
         private static string ComputeSha256Prefix(string value)
         {
             using (var sha256 = SHA256.Create())

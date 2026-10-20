@@ -27,22 +27,17 @@ using RzR.DataVigil.Core.Options;
 
 namespace RzR.DataVigil.Storage.EfPostgreSql.Diagnostics
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     Reports whether the PostgreSQL server backing the audit database is a version this library is
     ///     tested against.
     /// </summary>
-    /// =================================================================================================
     public static class AuditPostgreSqlServerVersionDiagnostic
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) the lowest PostgreSQL major version this library is tested against.
         /// </summary>
-        /// =================================================================================================
         private const int MinimumTestedMajorVersion = 13;
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Throws when the connected PostgreSQL server is older than the minimum tested major version.
         ///     Intended to run BEFORE any migration is applied, so that a consumer who opted in to strict
@@ -52,7 +47,6 @@ namespace RzR.DataVigil.Storage.EfPostgreSql.Diagnostics
         /// <exception cref="NotSupportedException">
         ///     Thrown when the server's major version is below the minimum tested major version.
         /// </exception>
-        /// =================================================================================================
         public static void ThrowIfServerVersionUnsupported(AuditPostgreSqlDbContext context)
         {
             if (context == null)
@@ -71,7 +65,6 @@ namespace RzR.DataVigil.Storage.EfPostgreSql.Diagnostics
                 "to downgrade this to a startup warning.");
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Logs whether the connected PostgreSQL server is a tested version. Intended to run as the
         ///     final step of the migration routine, after <c>Migrate()</c> has succeeded.
@@ -80,7 +73,6 @@ namespace RzR.DataVigil.Storage.EfPostgreSql.Diagnostics
         /// <param name="loggerFactory">
         ///     The logger factory used to create the diagnostic logger. A null factory makes this a no-op.
         /// </param>
-        /// =================================================================================================
         public static void LogServerVersionCompatibility(
             AuditPostgreSqlDbContext context,
             ILoggerFactory loggerFactory)
@@ -119,7 +111,6 @@ namespace RzR.DataVigil.Storage.EfPostgreSql.Diagnostics
             }
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Reads the server version from the context's own connection, opening it only if it is not
         ///     already open and closing it again only in that case, so an ambient connection owned by the
@@ -129,7 +120,6 @@ namespace RzR.DataVigil.Storage.EfPostgreSql.Diagnostics
         /// <returns>
         ///     The server version, or null when it cannot be read.
         /// </returns>
-        /// =================================================================================================
         private static Version TryReadServerVersion(AuditPostgreSqlDbContext context)
         {
             var openedHere = false;
@@ -158,13 +148,11 @@ namespace RzR.DataVigil.Storage.EfPostgreSql.Diagnostics
             }
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Closes a connection this diagnostic opened, swallowing any failure so that cleanup can
         ///     never mask or replace the caller's outcome.
         /// </summary>
         /// <param name="context">The audit context whose connection is closed.</param>
-        /// =================================================================================================
         private static void TryCloseConnection(AuditPostgreSqlDbContext context)
         {
             try
@@ -177,14 +165,12 @@ namespace RzR.DataVigil.Storage.EfPostgreSql.Diagnostics
             }
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Reports a diagnostic failure at debug level, swallowing any failure raised by the logging
         ///     itself so that this advisory can never surface an error of its own.
         /// </summary>
         /// <param name="loggerFactory">The logger factory used to create the diagnostic logger.</param>
         /// <param name="exception">The exception to report.</param>
-        /// =================================================================================================
         private static void TryLogDebug(ILoggerFactory loggerFactory, Exception exception)
         {
             try

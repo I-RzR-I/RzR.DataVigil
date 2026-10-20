@@ -31,7 +31,6 @@ using RzR.ResultMessage.Abstractions;
 
 namespace RzR.DataVigil.AspNetCore.Resolvers
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     Resolves the current user with fallback chain: IAuditScopeContext (manually set - worker/test
     ///     override) first, then HttpContext (ASP.NET Core), extracting UserId, UserName, IpAddress,
@@ -39,30 +38,23 @@ namespace RzR.DataVigil.AspNetCore.Resolvers
     ///
     /// </summary>
     /// <seealso cref="T:RzR.DataVigil.Abstractions.Services.IAuditUserResolver"/>
-    /// =================================================================================================
     public class AspNetCoreUserResolver : IAuditUserResolver
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) the HTTP context accessor.
         /// </summary>
-        /// =================================================================================================
         private readonly IHttpContextAccessor _httpContextAccessor;
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) context for the scope.
         /// </summary>
-        /// =================================================================================================
         private readonly IAuditScopeContext _scopeContext;
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Initializes a new instance of the <see cref="AspNetCoreUserResolver"/> class.
         /// </summary>
         /// <param name="httpContextAccessor">The HTTP context accessor.</param>
         /// <param name="scopeContext">Context for the scope.</param>
-        /// =================================================================================================
         public AspNetCoreUserResolver(
             IHttpContextAccessor httpContextAccessor,
             IAuditScopeContext scopeContext)

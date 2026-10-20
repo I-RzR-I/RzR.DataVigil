@@ -23,14 +23,11 @@ using System.Linq;
 
 namespace RzR.DataVigil.Abstractions.Extensions
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     Internal extension methods for <see cref="IEnumerable{T}"/>.
     /// </summary>
-    /// =================================================================================================
     internal static class EnumerableExtensions
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Returns <c>true</c> if the enumerable is not null and contains at least one element.
         /// </summary>
@@ -39,7 +36,6 @@ namespace RzR.DataVigil.Abstractions.Extensions
         /// <returns>
         ///     True if not null or empty enumerable, false if not.
         /// </returns>
-        /// =================================================================================================
         public static bool IsNotNullOrEmptyEnumerable<T>(this IEnumerable<T> enumerable)
         {
             return enumerable != null && enumerable.Any();

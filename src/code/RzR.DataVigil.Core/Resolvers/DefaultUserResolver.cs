@@ -28,7 +28,6 @@ using RzR.ResultMessage.Abstractions;
 
 namespace RzR.DataVigil.Core.Resolvers
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     Default user resolver with fallback chain:
     ///     1. IAuditScopeContext (manually set in worker/console/test)
@@ -36,22 +35,17 @@ namespace RzR.DataVigil.Core.Resolvers
     ///     3. null (anonymous)
     /// </summary>
     /// <seealso cref="T:RzR.DataVigil.Abstractions.Services.IAuditUserResolver"/>
-    /// =================================================================================================
     public class DefaultUserResolver : IAuditUserResolver
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) context for the scope.
         /// </summary>
-        /// =================================================================================================
         private readonly IAuditScopeContext _scopeContext;
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Initializes a new instance of the <see cref="DefaultUserResolver"/> class.
         /// </summary>
         /// <param name="scopeContext">Context for the scope.</param>
-        /// =================================================================================================
         public DefaultUserResolver(IAuditScopeContext scopeContext)
         {
             _scopeContext = scopeContext;

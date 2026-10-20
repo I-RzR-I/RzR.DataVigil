@@ -32,12 +32,10 @@ using RzR.ResultMessage.Extensions.Result;
 
 namespace RzR.DataVigil.Core.Resolvers
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     Default correlation provider using System.Diagnostics.Activity (OpenTelemetry-compatible).
     /// </summary>
     /// <seealso cref="T:RzR.DataVigil.Abstractions.Services.IAuditCorrelationProvider"/>
-    /// =================================================================================================
     public class DefaultCorrelationProvider : IAuditCorrelationProvider
     {
         /// <summary>
@@ -50,27 +48,22 @@ namespace RzR.DataVigil.Core.Resolvers
         /// </summary>
         private readonly ILogger<DefaultCorrelationProvider> _logger;
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Initializes a new instance with no scope override.
         /// </summary>
-        /// =================================================================================================
         public DefaultCorrelationProvider() : this(null)
         {
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Initializes a new instance of the <see cref="DefaultCorrelationProvider"/> class.
         /// </summary>
         /// <param name="scopeContext">The scope context supplying a manual correlation id override.</param>
-        /// =================================================================================================
         public DefaultCorrelationProvider(IAuditScopeContext scopeContext)
             : this(scopeContext, null)
         {
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Initializes a new instance of the <see cref="DefaultCorrelationProvider"/> class.
         /// </summary>
@@ -81,7 +74,6 @@ namespace RzR.DataVigil.Core.Resolvers
         ///     <see cref="IAuditScopeContext"/> is registered as well, so a host that registers logging
         ///     but no scope context reports nothing.
         /// </param>
-        /// =================================================================================================
         public DefaultCorrelationProvider(IAuditScopeContext scopeContext,
             ILogger<DefaultCorrelationProvider> logger)
         {
@@ -129,7 +121,6 @@ namespace RzR.DataVigil.Core.Resolvers
             }
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Reports a correlation id that was supplied and then refused. A candidate that was never
         ///     supplied is the ordinary case in a worker host that never sets one, so it stays silent;
@@ -140,7 +131,6 @@ namespace RzR.DataVigil.Core.Resolvers
         /// <param name="reason">Why the candidate was rejected.</param>
         /// <param name="invalidIndex">The index of the first disallowed character, or -1.</param>
         /// <param name="candidateLength">The trimmed length of the candidate.</param>
-        /// =================================================================================================
         private void LogRejectedCorrelationId(
             string source, CorrelationIdRejection reason, int invalidIndex, int candidateLength)
         {

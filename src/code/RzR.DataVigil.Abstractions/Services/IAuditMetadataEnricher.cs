@@ -23,16 +23,13 @@ using RzR.ResultMessage.Abstractions;
 
 namespace RzR.DataVigil.Abstractions.Services
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     Contributes ambient key/value pairs to the Metadata dictionary of the
     ///     <see cref="T:RzR.DataVigil.Abstractions.Models.Entries.AuditTransaction"/> currently being
     ///     processed. Several enrichers may be registered; the pipeline runs all of them.
     /// </summary>
-    /// =================================================================================================
     public interface IAuditMetadataEnricher
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Returns the metadata pairs describing the current ambient operation.
         /// </summary>
@@ -40,7 +37,6 @@ namespace RzR.DataVigil.Abstractions.Services
         ///     An IResult whose response carries the pairs to write, possibly empty, never expected to
         ///     be null on success.
         /// </returns>
-        /// =================================================================================================
         IResult<IEnumerable<KeyValuePair<string, string>>> Enrich();
     }
 }

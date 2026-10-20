@@ -23,15 +23,12 @@ using RzR.ResultMessage.Abstractions;
 
 namespace RzR.DataVigil.Abstractions.Services
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     Resolves the current user performing the audited action. Works in any host: Web API,
     ///     Worker Service, Console, WinForms.
     /// </summary>
-    /// =================================================================================================
     public interface IAuditUserResolver
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Resolves and returns information about the currently authenticated user.
         ///     Implementations should also set
@@ -49,7 +46,6 @@ namespace RzR.DataVigil.Abstractions.Services
         ///     <see cref="F:RzR.DataVigil.Abstractions.Enums.AuditUserSource.Unresolved"/>
         ///     respectively, overriding any Source stamped on the response. Never return a bare null.
         /// </returns>
-        /// =================================================================================================
         IResult<AuditUserInfo> Resolve();
     }
 }

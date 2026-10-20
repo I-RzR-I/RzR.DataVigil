@@ -23,11 +23,9 @@ using RzR.DataVigil.Core.Helpers;
 
 namespace RzR.DataVigil.Core.Enums
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     Why <see cref="CorrelationIdValidator"/> refused a candidate correlation id.
     /// </summary>
-    /// =================================================================================================
     internal enum CorrelationIdRejection
     {
         /// <summary>The candidate is an acceptable correlation id.</summary>

@@ -16,13 +16,11 @@
 
 namespace RzR.DataVigil.Abstractions.Enums
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     Identifies how the actor recorded on an audit transaction was determined. Persisted
     ///     alongside the transaction so an auditor can distinguish "resolution genuinely found
     ///     nobody" from "attribution silently failed".
     /// </summary>
-    /// =================================================================================================
     public enum AuditUserSource
     {
         /// <summary>

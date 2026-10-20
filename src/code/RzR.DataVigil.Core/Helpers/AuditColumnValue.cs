@@ -16,14 +16,11 @@
 
 namespace RzR.DataVigil.Core.Helpers
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     The single definition of how a value is shortened to fit an audit storage column.
     /// </summary>
-    /// =================================================================================================
     public static class AuditColumnValue
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Shortens a value to at most <paramref name="max"/> characters without ever splitting a
         ///     surrogate pair, and returns it unchanged when it already fits.
@@ -38,7 +35,6 @@ namespace RzR.DataVigil.Core.Helpers
         /// <returns>
         ///     The value as it can appear in storage.
         /// </returns>
-        /// =================================================================================================
         public static string TruncateToColumnLength(string value, int max)
         {
             if (max <= 0 || string.IsNullOrEmpty(value) || value.Length <= max)

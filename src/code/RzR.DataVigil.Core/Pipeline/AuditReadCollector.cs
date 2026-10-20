@@ -29,7 +29,6 @@ using RzR.Extensions.Domain.Primitives;
 
 namespace RzR.DataVigil.Core.Pipeline
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     Scoped collector that accumulates Read audit entries during a request
     ///     and flushes them through the <see cref="AuditPipeline"/> in a single batch.
@@ -38,7 +37,6 @@ namespace RzR.DataVigil.Core.Pipeline
     ///     and flushed asynchronously at the end of the request by middleware.
     ///     </para>
     /// </summary>
-    /// =================================================================================================
     public sealed class AuditReadCollector
     {
         private readonly AuditPipeline _pipeline;
@@ -46,24 +44,20 @@ namespace RzR.DataVigil.Core.Pipeline
         private readonly List<AuditEntry> _entries = new List<AuditEntry>();
         private readonly object _lock = new object();
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Initializes a new instance of the <see cref="AuditReadCollector"/> class.
         /// </summary>
         /// <param name="pipeline">The audit pipeline.</param>
         /// <param name="logger">The logger.</param>
-        /// =================================================================================================
         public AuditReadCollector(AuditPipeline pipeline, ILogger<AuditReadCollector> logger)
         {
             _pipeline = pipeline;
             _logger = logger;
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Gets a value indicating whether the collector has pending entries.
         /// </summary>
-        /// =================================================================================================
         public bool HasEntries
         {
             get
@@ -72,13 +66,11 @@ namespace RzR.DataVigil.Core.Pipeline
             }
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Adds a Read audit entry to the collector.
         ///     This method is thread-safe and may be called from synchronous interceptor callbacks.
         /// </summary>
         /// <param name="entry">The audit entry to collect.</param>
-        /// =================================================================================================
         public void Collect(AuditEntry entry)
         {
             if (entry.IsNull()) return;
@@ -86,14 +78,12 @@ namespace RzR.DataVigil.Core.Pipeline
             lock (_lock) { _entries.Add(entry); }
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Flushes all collected entries through the audit pipeline as a single transaction.
         ///     After flushing, the internal buffer is cleared.
         /// </summary>
         /// <param name="cancellationToken">A token to cancel the operation.</param>
         /// <returns>A Task representing the async operation.</returns>
-        /// =================================================================================================
         public async Task FlushAsync(CancellationToken cancellationToken = default)
         {
             List<AuditEntry> snapshot;
