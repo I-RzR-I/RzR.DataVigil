@@ -30,16 +30,13 @@ using RzR.Extensions.Domain.Text;
 
 namespace RzR.DataVigil.EFCore.Helpers
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     Parses EF Core-generated SQL statements to extract table names, primary-key values,
     ///     and selected columns for Read audit tracking.
     ///     Supports FROM/JOIN clauses with double-quoted, bracket-quoted, and unquoted identifiers.
     /// </summary>
-    /// =================================================================================================
     internal static class AuditReadInterceptorHelper
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable)
         ///     Regex to extract table references from EF-generated SQL statements.
@@ -49,12 +46,10 @@ namespace RzR.DataVigil.EFCore.Helpers
         ///       JOIN "schema"."Table"   /  JOIN [schema].[Table]   /  JOIN schema.Table
         ///       FROM "Table"            /  FROM [Table]            /  FROM Table
         /// </summary>
-        /// =================================================================================================
         private static readonly Regex TableNamePattern = new Regex(
             @"(?:FROM|JOIN)\s+(?:""(\w+)""|(\w+)|\[(\w+)\])\.(?:""(\w+)""|(\w+)|\[(\w+)\])|(?:FROM|JOIN)\s+(?:""(\w+)""|(\w+)|\[(\w+)\])(?=\s|$|;)",
             RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable)
         ///     Regex to extract the primary key filter value from EF-generated WHERE clauses.
@@ -63,12 +58,10 @@ namespace RzR.DataVigil.EFCore.Helpers
         ///     Patterns matched:
         ///       WHERE "t"."Id" = @__id_0   /  WHERE [t].[Id] = @p0   /  WHERE t.Id = @p0
         /// </summary>
-        /// =================================================================================================
         private static readonly Regex WhereIdPattern = new Regex(
             @"WHERE\s+(?:""?\w+""?|[\w\[\]]+)\.(?:""Id""|Id|\[Id\])\s*=\s*(@[\w]+)",
             RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable)
         ///     Regex to extract selected column names from EF-generated SELECT statements.
@@ -76,12 +69,10 @@ namespace RzR.DataVigil.EFCore.Helpers
         ///     Patterns matched:
         ///       "t"."ColumnName"  /  [t].[ColumnName]  /  t.ColumnName
         /// </summary>
-        /// =================================================================================================
         private static readonly Regex ColumnPattern = new Regex(
             @"(?:""?\w+""?|\[\w+\])\.(?:""(\w+)""|(\w+)|\[(\w+)\])",
             RegexOptions.Compiled);
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Extract the entity ID value from the SQL WHERE clause by resolving the parameter.
         /// </summary>
@@ -90,7 +81,6 @@ namespace RzR.DataVigil.EFCore.Helpers
         /// <returns>
         ///     The extracted entity identifier.
         /// </returns>
-        /// =================================================================================================
         internal static string ExtractEntityId(string sql, DbParameterCollection parameters)
         {
             var match = WhereIdPattern.Match(sql);
@@ -106,7 +96,6 @@ namespace RzR.DataVigil.EFCore.Helpers
             return null;
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Extracts column names from the SELECT clause (everything between SELECT and FROM).
         /// </summary>
@@ -114,7 +103,6 @@ namespace RzR.DataVigil.EFCore.Helpers
         /// <returns>
         ///     A HashSet&lt;string&gt;
         /// </returns>
-        /// =================================================================================================
         internal static HashSet<string> ParseSelectedColumns(string sql)
         {
             var fromIndex = sql.IndexOf("FROM", StringComparison.OrdinalIgnoreCase);
@@ -137,7 +125,6 @@ namespace RzR.DataVigil.EFCore.Helpers
             return columns.Count > 0 ? columns : null;
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Builds AuditEntryProperty records for each selected column that maps to an entity
         ///     property. When <paramref name="includeValues"/> is <c>true</c>, resolves parameter
@@ -148,7 +135,6 @@ namespace RzR.DataVigil.EFCore.Helpers
         /// <param name="auditEntry">The audit entry.</param>
         /// <param name="parameters">The SQL command parameters (may be <c>null</c>).</param>
         /// <param name="includeValues">Whether to populate property values from command parameters.</param>
-        /// =================================================================================================
         internal static void BuildReadProperties(
             IEntityType entityType,
             HashSet<string> selectedColumns,
@@ -182,7 +168,6 @@ namespace RzR.DataVigil.EFCore.Helpers
             }
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Attempts to find a SQL parameter whose name contains the property or column name
         ///     and returns its value as a string.
@@ -193,7 +178,6 @@ namespace RzR.DataVigil.EFCore.Helpers
         /// <returns>
         ///     The parameter value as a string, or <c>null</c> if no match is found.
         /// </returns>
-        /// =================================================================================================
         private static string ResolveParameterValue(
             DbParameterCollection parameters,
             string propertyName,
@@ -213,7 +197,6 @@ namespace RzR.DataVigil.EFCore.Helpers
             return null;
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Extracts (schema, table) pairs from a SQL SELECT statement. Schema may be null if not
         ///     qualified.
@@ -222,7 +205,6 @@ namespace RzR.DataVigil.EFCore.Helpers
         /// <returns>
         ///     A IReadOnlyList&lt;(string Schema,string Table)&gt;
         /// </returns>
-        /// =================================================================================================
         internal static IReadOnlyList<(string Schema, string Table)> ParseTableNames(string sql)
         {
             var results = new List<(string, string)>();
@@ -260,7 +242,6 @@ namespace RzR.DataVigil.EFCore.Helpers
             return results;
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Resolves the EF Core IEntityType from a table name by checking the model metadata.
         /// </summary>
@@ -270,7 +251,6 @@ namespace RzR.DataVigil.EFCore.Helpers
         /// <returns>
         ///     An IEntityType.
         /// </returns>
-        /// =================================================================================================
         internal static IEntityType ResolveEntityType(
             DbContext context, string schema, string table)
         {

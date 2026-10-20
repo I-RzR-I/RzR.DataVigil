@@ -29,44 +29,34 @@ using RzR.Extensions.Domain.Primitives;
 
 namespace RzR.DataVigil.Core.Hosting
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     Background service that periodically purges audit entries older than the configured
     ///     retention period (StorageOptions.RetentionDays). Runs once every 24 hours. 
     ///     No-op if RetentionDays is null.
     /// </summary>
     /// <seealso cref="T:Microsoft.Extensions.Hosting.BackgroundService"/>
-    /// =================================================================================================
     public class AuditRetentionService : BackgroundService
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) the check interval.
         /// </summary>
-        /// =================================================================================================
         private static readonly TimeSpan CheckInterval = TimeSpan.FromHours(24);
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) the scope factory.
         /// </summary>
-        /// =================================================================================================
         private readonly IServiceScopeFactory _scopeFactory;
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) options for controlling the storage.
         /// </summary>
-        /// =================================================================================================
         private readonly StorageOptions _storageOptions;
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Initializes a new instance of the <see cref="AuditRetentionService"/> class.
         /// </summary>
         /// <param name="scopeFactory">The scope factory.</param>
         /// <param name="storageOptions">Options for controlling the storage.</param>
-        /// =================================================================================================
         public AuditRetentionService(
             IServiceScopeFactory scopeFactory,
             StorageOptions storageOptions)
@@ -107,7 +97,6 @@ namespace RzR.DataVigil.Core.Hosting
             }
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Purge expired entries asynchronous.
         /// </summary>
@@ -115,7 +104,6 @@ namespace RzR.DataVigil.Core.Hosting
         /// <returns>
         ///     A Task.
         /// </returns>
-        /// =================================================================================================
         private async Task PurgeExpiredEntriesAsync(CancellationToken cancellationToken)
         {
             using var scope = _scopeFactory.CreateScope();

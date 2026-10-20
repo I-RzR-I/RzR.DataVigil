@@ -25,14 +25,11 @@ using RzR.DataVigil.Storage.EfMongoDb.Interceptors;
 
 namespace RzR.DataVigil.Storage.EfMongoDb.Extensions
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     Extension methods for adding MongoDB-specific audit interceptors to DbContext options.
     /// </summary>
-    /// =================================================================================================
     public static class DbContextOptionsBuilderExtensions
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Adds the audit materialization interceptor that automatically captures Read operations
         ///     for non-relational providers (MongoDB). Call this alongside
@@ -43,7 +40,6 @@ namespace RzR.DataVigil.Storage.EfMongoDb.Extensions
         /// <returns>
         ///     A DbContextOptionsBuilder.
         /// </returns>
-        /// =================================================================================================
         public static DbContextOptionsBuilder AddAuditReadInterceptor(
             this DbContextOptionsBuilder optionsBuilder,
             IServiceProvider serviceProvider)

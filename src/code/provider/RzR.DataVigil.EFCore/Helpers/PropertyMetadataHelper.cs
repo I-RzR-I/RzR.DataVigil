@@ -25,119 +25,88 @@ using RzR.Extensions.Domain.Primitives;
 
 namespace RzR.DataVigil.EFCore.Helpers
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     Accesses EF Core property metadata via reflection
     /// </summary>
-    /// =================================================================================================
     internal static class PropertyMetadataHelper
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) the name cache.
         /// </summary>
-        /// =================================================================================================
         private static readonly ConcurrentDictionary<Type, PropertyInfo> NameCache =
             new ConcurrentDictionary<Type, PropertyInfo>();
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) the colour type cache.
         /// </summary>
-        /// =================================================================================================
         private static readonly ConcurrentDictionary<Type, PropertyInfo> ClrTypeCache =
             new ConcurrentDictionary<Type, PropertyInfo>();
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) the value converter accessor cache, keyed by the runtime property metadata type.
         /// </summary>
-        /// =================================================================================================
         private static readonly ConcurrentDictionary<Type, Func<object, object>> ValueConverterCache =
             new ConcurrentDictionary<Type, Func<object, object>>();
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) the value comparer accessor cache, keyed by the runtime property metadata type.
         /// </summary>
-        /// =================================================================================================
         private static readonly ConcurrentDictionary<Type, Func<object, object>> ValueComparerCache =
             new ConcurrentDictionary<Type, Func<object, object>>();
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) the <c>ConvertToProvider</c> delegate cache, keyed by the converter type.
         /// </summary>
-        /// =================================================================================================
         private static readonly ConcurrentDictionary<Type, PropertyInfo> ConvertToProviderCache =
             new ConcurrentDictionary<Type, PropertyInfo>();
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) the <c>ValueComparer.Equals(object, object)</c> delegate cache, keyed by the
         ///     runtime type of the comparer instance.
         /// </summary>
-        /// =================================================================================================
         private static readonly ConcurrentDictionary<Type, Func<object, object, object, bool>> ComparerEqualsCache =
             new ConcurrentDictionary<Type, Func<object, object, object, bool>>();
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) the EF Core 5 extension class holding the property metadata accessors.
         /// </summary>
-        /// =================================================================================================
         private const string PropertyExtensionsTypeName = "Microsoft.EntityFrameworkCore.PropertyExtensions";
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) the name of the <c>GetValueConverter</c> metadata accessor.
         /// </summary>
-        /// =================================================================================================
         private const string MethodNameGetValueConverter = "GetValueConverter";
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) the name of the <c>GetValueComparer</c> metadata accessor.
         /// </summary>
-        /// =================================================================================================
         private const string MethodNameGetValueComparer = "GetValueComparer";
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) the name of the <c>ValueConverter.ConvertToProvider</c> delegate property.
         /// </summary>
-        /// =================================================================================================
         private const string MethodNameConvertToProvider = "ConvertToProvider";
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) the name of the <c>ValueComparer.Equals(object, object)</c> method.
         /// </summary>
-        /// =================================================================================================
         private const string MethodNameEquals = "Equals";
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Cache for the <c>GetTableName</c> extension method resolved via the Relational assembly.
         /// </summary>
-        /// =================================================================================================
         private static MethodInfo _getTableNameMethod;
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Cache for the <c>GetSchema</c> extension method resolved via the Relational assembly.
         /// </summary>
-        /// =================================================================================================
         private static MethodInfo _getSchemaMethod;
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Cache for the <c>GetColumnName</c> extension method resolved via the Relational assembly.
         /// </summary>
-        /// =================================================================================================
         private static MethodInfo _getColumnNameMethod;
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Gets the <c>Name</c> of an EF Core property metadata object.
         /// </summary>
@@ -145,7 +114,6 @@ namespace RzR.DataVigil.EFCore.Helpers
         /// <returns>
         ///     The property name.
         /// </returns>
-        /// =================================================================================================
         internal static string GetName(object property)
         {
             var type = property.GetType();
@@ -154,7 +122,6 @@ namespace RzR.DataVigil.EFCore.Helpers
             return (string)pi?.GetValue(property);
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Gets the <c>ClrType</c> of an EF Core property metadata object.
         /// </summary>
@@ -162,7 +129,6 @@ namespace RzR.DataVigil.EFCore.Helpers
         /// <returns>
         ///     The CLR type of the property.
         /// </returns>
-        /// =================================================================================================
         internal static Type GetClrType(object property)
         {
             var type = property.GetType();
@@ -171,7 +137,6 @@ namespace RzR.DataVigil.EFCore.Helpers
             return (Type)pi?.GetValue(property);
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Returns a human-readable full name for the given CLR type. For <see cref="Nullable{T}" />
         ///     types the underlying type name is returned with a trailing <c>?</c> (e.g. <c>
@@ -181,7 +146,6 @@ namespace RzR.DataVigil.EFCore.Helpers
         /// <returns>
         ///     The clean type name, or <c>null</c> when <paramref name="type" /> is <c>null</c>.
         /// </returns>
-        /// =================================================================================================
         internal static string GetCleanTypeName(Type type)
         {
             if (type.IsNull())
@@ -192,7 +156,6 @@ namespace RzR.DataVigil.EFCore.Helpers
             return underlying.IsNotNull() ? underlying!.FullName + "?" : type.FullName;
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Gets the value converter explicitly configured for an EF Core property, or <c>null</c>
         ///     when the property is not mapped through one.
@@ -201,7 +164,6 @@ namespace RzR.DataVigil.EFCore.Helpers
         /// <returns>
         ///     The <c>ValueConverter</c> instance, or <c>null</c>.
         /// </returns>
-        /// =================================================================================================
         internal static object GetValueConverter(object property)
         {
             var accessor = ValueConverterCache.GetOrAdd(property.GetType(),
@@ -210,7 +172,6 @@ namespace RzR.DataVigil.EFCore.Helpers
             return accessor?.Invoke(property);
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Gets the value comparer EF Core resolved for a property - explicitly configured, or the
         ///     default comparer EF Core's type mapping assigns for the property's CLR type - or <c>null</c>
@@ -220,7 +181,6 @@ namespace RzR.DataVigil.EFCore.Helpers
         /// <returns>
         ///     The <c>ValueComparer</c> instance, or <c>null</c>.
         /// </returns>
-        /// =================================================================================================
         internal static object GetValueComparer(object property)
         {
             var accessor = ValueComparerCache.GetOrAdd(property.GetType(),
@@ -229,7 +189,6 @@ namespace RzR.DataVigil.EFCore.Helpers
             return accessor?.Invoke(property);
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Runs the <c>ConvertToProvider</c> delegate of a value converter over a value.
         /// </summary>
@@ -238,7 +197,6 @@ namespace RzR.DataVigil.EFCore.Helpers
         /// <returns>
         ///     The provider representation, or the given value when the delegate cannot be resolved.
         /// </returns>
-        /// =================================================================================================
         internal static object ConvertToProvider(object converter, object value)
         {
             var pi = ConvertToProviderCache.GetOrAdd(converter.GetType(),
@@ -248,7 +206,6 @@ namespace RzR.DataVigil.EFCore.Helpers
             return convert.IsNull() ? value : convert!(value);
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Runs the <c>Equals(object, object)</c> method of a value comparer over a pair of model
         ///     values.
@@ -263,7 +220,6 @@ namespace RzR.DataVigil.EFCore.Helpers
         ///     The <c>Equals(object, object)</c> method could not be resolved on the comparer's runtime
         ///     type.
         /// </exception>
-        /// =================================================================================================
         internal static bool ComparerEquals(object comparer, object a, object b)
         {
             var equals = ComparerEqualsCache.GetOrAdd(comparer.GetType(), ResolveComparerEqualsAccessor);
@@ -273,7 +229,6 @@ namespace RzR.DataVigil.EFCore.Helpers
             return equals(comparer, a, b);
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Resolves the accessor for a parameterless metadata method (<c>GetValueConverter</c>,
         ///     <c>GetValueComparer</c>, ...): first as an instance method on the property metadata's
@@ -287,7 +242,6 @@ namespace RzR.DataVigil.EFCore.Helpers
         /// <returns>
         ///     A delegate that invokes the resolved accessor, or <c>null</c> when neither path resolves.
         /// </returns>
-        /// =================================================================================================
         private static Func<object, object> ResolveMetadataAccessor(Type runtimeType, string methodName)
         {
             var instanceMethod = ResolveParameterlessMethod(runtimeType, methodName);
@@ -311,7 +265,6 @@ namespace RzR.DataVigil.EFCore.Helpers
             return null;
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Resolves the <c>ValueComparer.Equals(object, object)</c> delegate for a comparer's runtime
         ///     type. The method is declared once, publicly, on the abstract <c>ValueComparer</c> base
@@ -323,7 +276,6 @@ namespace RzR.DataVigil.EFCore.Helpers
         ///     A delegate that invokes <c>Equals(object, object)</c> on a given comparer instance, or
         ///     <c>null</c> when the method could not be resolved.
         /// </returns>
-        /// =================================================================================================
         private static Func<object, object, object, bool> ResolveComparerEqualsAccessor(Type runtimeType)
         {
             var mi = runtimeType.GetMethod(MethodNameEquals, new[] { typeof(object), typeof(object) });
@@ -333,7 +285,6 @@ namespace RzR.DataVigil.EFCore.Helpers
             return (target, a, b) => (bool)mi!.Invoke(target, new[] { a, b });
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Resolves a parameterless instance method on a runtime type, scanning the implemented
         ///     interfaces when the concrete type does not declare it.
@@ -343,7 +294,6 @@ namespace RzR.DataVigil.EFCore.Helpers
         /// <returns>
         ///     The resolved <see cref="MethodInfo" />, or <c>null</c> when not found.
         /// </returns>
-        /// =================================================================================================
         private static MethodInfo ResolveParameterlessMethod(Type runtimeType, string methodName)
         {
             var mi = runtimeType.GetMethod(methodName, Type.EmptyTypes);
@@ -360,7 +310,6 @@ namespace RzR.DataVigil.EFCore.Helpers
             return null;
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Resolves a property by name on a runtime type, scanning the implemented interfaces when the
         ///     concrete type does not declare it.
@@ -370,7 +319,6 @@ namespace RzR.DataVigil.EFCore.Helpers
         /// <returns>
         ///     The resolved <see cref="PropertyInfo" />, or <c>null</c> when not found.
         /// </returns>
-        /// =================================================================================================
         private static PropertyInfo ResolveProperty(Type runtimeType, string propertyName)
         {
             var pi = runtimeType.GetProperty(propertyName);
@@ -387,7 +335,6 @@ namespace RzR.DataVigil.EFCore.Helpers
             return null;
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Invokes <c>GetTableName()</c> on an <c>IEntityType</c> via reflection. Works across EF
         ///     Core 5 (<c>IEntityType</c> overload) and 6+ (<c>IReadOnlyEntityType</c> overload).
@@ -396,7 +343,6 @@ namespace RzR.DataVigil.EFCore.Helpers
         /// <returns>
         ///     The table name, or <c>null</c>.
         /// </returns>
-        /// =================================================================================================
         internal static string GetTableName(object entityType)
         {
             var method = ResolveRelationalExtensionMethod(
@@ -408,7 +354,6 @@ namespace RzR.DataVigil.EFCore.Helpers
             return (string)method?.Invoke(null, new[] { entityType });
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Invokes <c>GetSchema()</c> on an <c>IEntityType</c> via reflection.
         /// </summary>
@@ -416,7 +361,6 @@ namespace RzR.DataVigil.EFCore.Helpers
         /// <returns>
         ///     The schema name, or <c>null</c>.
         /// </returns>
-        /// =================================================================================================
         internal static string GetSchema(object entityType)
         {
             var method = ResolveRelationalExtensionMethod(
@@ -428,7 +372,6 @@ namespace RzR.DataVigil.EFCore.Helpers
             return (string)method?.Invoke(null, new[] { entityType });
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Invokes <c>GetColumnName()</c> on an <c>IProperty</c> via reflection.
         /// </summary>
@@ -436,7 +379,6 @@ namespace RzR.DataVigil.EFCore.Helpers
         /// <returns>
         ///     The column name, or <c>null</c>.
         /// </returns>
-        /// =================================================================================================
         internal static string GetColumnName(object property)
         {
             var method = ResolveRelationalExtensionMethod(
@@ -448,12 +390,10 @@ namespace RzR.DataVigil.EFCore.Helpers
             return (string)method?.Invoke(null, new[] { property });
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Finds a single-parameter static extension method in the EF Core Relational assembly
         ///     whose parameter type is assignable from the runtime type of <paramref name="instance"/>.
         /// </summary>
-        /// =================================================================================================
         private static MethodInfo ResolveRelationalExtensionMethod(ref MethodInfo cached, string extensionClassName,
             string methodName, object instance)
         {

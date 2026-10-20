@@ -23,14 +23,11 @@ using RzR.DataVigil.EFCore.Interceptors;
 
 namespace RzR.DataVigil.EFCore.Extensions
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     Extension methods for registering EF Core audit services.
     /// </summary>
-    /// =================================================================================================
     public static class ServiceCollectionExtensions
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Registers EF Core audit interceptors in DI. May be called before or after
         ///     AddAuditTrail() - it registers only concrete types, so it is order-independent.
@@ -39,7 +36,6 @@ namespace RzR.DataVigil.EFCore.Extensions
         /// <returns>
         ///     An IServiceCollection.
         /// </returns>
-        /// =================================================================================================
         public static IServiceCollection AddAuditTrailEfCore(this IServiceCollection services)
         {
             services.AddScoped<AuditSaveChangesInterceptor>();

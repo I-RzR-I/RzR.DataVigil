@@ -25,16 +25,13 @@ using RzR.DataVigil.Abstractions.Models.Entries;
 
 namespace RzR.DataVigil.EFCore.Models
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     Correlates a built <see cref="AuditEntry" /> back to the tracked
     ///     <see cref="EntityEntry" /> it came from, so that store-generated values can be
     ///     re-read once the INSERT has completed.
     /// </summary>
-    /// =================================================================================================
     internal sealed class PendingAuditEntry
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Initializes a new instance of the <see cref="PendingAuditEntry" /> class.
         /// </summary>
@@ -43,7 +40,6 @@ namespace RzR.DataVigil.EFCore.Models
         /// <param name="temporaryPropertyNames">
         ///     Names of the properties that held an EF temporary value at collect time.
         /// </param>
-        /// =================================================================================================
         public PendingAuditEntry(AuditEntry auditEntry, EntityEntry entityEntry,
             IEnumerable<string> temporaryPropertyNames)
         {

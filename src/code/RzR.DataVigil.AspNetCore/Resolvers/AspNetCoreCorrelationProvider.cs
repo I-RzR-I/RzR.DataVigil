@@ -34,20 +34,16 @@ using RzR.ResultMessage.Extensions.Result;
 
 namespace RzR.DataVigil.AspNetCore.Resolvers
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     Provides correlation and trace IDs from HTTP request headers, falling back to
     ///     Activity.Current (OpenTelemetry).
     /// </summary>
     /// <seealso cref="T:RzR.DataVigil.Abstractions.Services.IAuditCorrelationProvider"/>
-    /// =================================================================================================
     public class AspNetCoreCorrelationProvider : IAuditCorrelationProvider
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) the HTTP context accessor.
         /// </summary>
-        /// =================================================================================================
         private readonly IHttpContextAccessor _httpContextAccessor;
 
         /// <summary>
@@ -60,24 +56,20 @@ namespace RzR.DataVigil.AspNetCore.Resolvers
         /// </summary>
         private readonly ILogger<AspNetCoreCorrelationProvider> _logger;
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Initializes a new instance of the <see cref="AspNetCoreCorrelationProvider"/> class.
         /// </summary>
         /// <param name="httpContextAccessor">The HTTP context accessor.</param>
-        /// =================================================================================================
         public AspNetCoreCorrelationProvider(IHttpContextAccessor httpContextAccessor)
             : this(httpContextAccessor, null)
         {
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Initializes a new instance of the <see cref="AspNetCoreCorrelationProvider"/> class.
         /// </summary>
         /// <param name="httpContextAccessor">The HTTP context accessor.</param>
         /// <param name="scopeContext">The scope context supplying a manual correlation id override.</param>
-        /// =================================================================================================
         public AspNetCoreCorrelationProvider(
             IHttpContextAccessor httpContextAccessor,
             IAuditScopeContext scopeContext)
@@ -85,7 +77,6 @@ namespace RzR.DataVigil.AspNetCore.Resolvers
         {
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Initializes a new instance of the <see cref="AspNetCoreCorrelationProvider"/> class.
         /// </summary>
@@ -97,7 +88,6 @@ namespace RzR.DataVigil.AspNetCore.Resolvers
         ///     <see cref="IAuditScopeContext"/> is registered as well, so a host that registers logging
         ///     but no scope context reports nothing.
         /// </param>
-        /// =================================================================================================
         public AspNetCoreCorrelationProvider(
             IHttpContextAccessor httpContextAccessor,
             IAuditScopeContext scopeContext,
@@ -173,7 +163,6 @@ namespace RzR.DataVigil.AspNetCore.Resolvers
             }
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Takes the first value of a client-supplied correlation header and accepts it only if
         ///     <see cref="CorrelationIdValidator"/> considers it safe to store. Rejected values fall
@@ -185,7 +174,6 @@ namespace RzR.DataVigil.AspNetCore.Resolvers
         /// <returns>
         ///     True if the header carries an acceptable value.
         /// </returns>
-        /// =================================================================================================
         private bool TryGetHeaderValue(StringValues values, string source, out string value)
         {
             var accepted = CorrelationIdValidator.TryAccept(values.Count > 0 ? values[0] : null, out value,
@@ -197,7 +185,6 @@ namespace RzR.DataVigil.AspNetCore.Resolvers
             return accepted;
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Reports a correlation id that was supplied and then refused. A candidate that was never
         ///     supplied stays silent, so an ordinary request carrying no correlation header emits nothing.
@@ -211,7 +198,6 @@ namespace RzR.DataVigil.AspNetCore.Resolvers
         /// <param name="reason">Why the candidate was rejected.</param>
         /// <param name="invalidIndex">The index of the first disallowed character, or -1.</param>
         /// <param name="candidateLength">The trimmed length of the candidate.</param>
-        /// =================================================================================================
         private void LogRejectedCorrelationId(
             string source, LogLevel level, CorrelationIdRejection reason, int invalidIndex, int candidateLength)
         {

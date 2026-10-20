@@ -23,65 +23,52 @@ using System.Collections.Generic;
 
 namespace RzR.DataVigil.Abstractions.Models.Identity
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     Information about the user performing the audited action.
     /// </summary>
-    /// =================================================================================================
     public class AuditUserInfo
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Unique identifier of the user (e.g. database PK, sub claim).
         /// </summary>
         /// <value>
         ///     The identifier of the user.
         /// </value>
-        /// =================================================================================================
         public string UserId { get; set; }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Display name of the user.
         /// </summary>
         /// <value>
         ///     The name of the user.
         /// </value>
-        /// =================================================================================================
         public string UserName { get; set; }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     IP address of the client, when available.
         /// </summary>
         /// <value>
         ///     The IP address.
         /// </value>
-        /// =================================================================================================
         public string IpAddress { get; set; }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     User roles - used for GDPR retrieval policies.
         /// </summary>
         /// <value>
         ///     The roles.
         /// </value>
-        /// =================================================================================================
         public IEnumerable<string> Roles { get; set; } = new List<string>();
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     User claims - used for GDPR retrieval policies. Key = claim type, Value = claim value.
         /// </summary>
         /// <value>
         ///     The claims.
         /// </value>
-        /// =================================================================================================
         public IDictionary<string, string> Claims { get; set; }
             = new Dictionary<string, string>();
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     How this user was determined (scope override, HttpContext, thread principal, etc.).
         ///     Stamped by the resolver that produced this instance. The pipeline copies this value into
@@ -90,7 +77,6 @@ namespace RzR.DataVigil.Abstractions.Models.Identity
         /// <value>
         ///     The source of the resolved user.
         /// </value>
-        /// =================================================================================================
         public AuditUserSource Source { get; set; }
     }
 }

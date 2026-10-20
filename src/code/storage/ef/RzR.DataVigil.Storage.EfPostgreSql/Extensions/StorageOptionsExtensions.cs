@@ -29,24 +29,19 @@ using RzR.DataVigil.Storage.EfPostgreSql.Diagnostics;
 
 namespace RzR.DataVigil.Storage.EfPostgreSql.Extensions
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     Extension methods for registering and configuring the PostgreSQL audit storage provider.
     /// </summary>
-    /// =================================================================================================
     public static class StorageOptionsExtensions
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) the command timeout, in seconds, applied to the scope that runs migrations.
         ///     Six hours. Index builds against a production-sized audit table run for minutes to hours,
         ///     while the provider default is thirty seconds, and a cancelled build is worse than a slow
         ///     one: it leaves an index the migration's own existence guard will skip forever.
         /// </summary>
-        /// =================================================================================================
         private const int MigrationCommandTimeoutSeconds = 6 * 60 * 60;
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Configures PostgreSQL as the backing store for audit data.
         ///     Supply the same connection string as your application for same-database storage,
@@ -61,7 +56,6 @@ namespace RzR.DataVigil.Storage.EfPostgreSql.Extensions
         /// <returns>
         ///     The same <see cref="StorageOptions"/> instance, for fluent chaining.
         /// </returns>
-        /// =================================================================================================
         public static StorageOptions UsePostgreSql(this StorageOptions options,
             string connectionString)
         {
@@ -70,7 +64,6 @@ namespace RzR.DataVigil.Storage.EfPostgreSql.Extensions
             return options;
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Registers the <see cref="PostgreSqlAuditStore"/> and
         ///     <see cref="AuditPostgreSqlDbContext"/> in the dependency-injection container.
@@ -82,7 +75,6 @@ namespace RzR.DataVigil.Storage.EfPostgreSql.Extensions
         /// <returns>
         ///     The same <see cref="IServiceCollection"/> instance, for fluent chaining.
         /// </returns>
-        /// =================================================================================================
         public static IServiceCollection AddAuditTrailPostgreSqlServer(this IServiceCollection services)
         {
             services.AddDbContext<AuditPostgreSqlDbContext>((sp, opts) =>
@@ -107,7 +99,6 @@ namespace RzR.DataVigil.Storage.EfPostgreSql.Extensions
             return services;
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Applies pending EF Core migrations for the PostgreSQL audit database.
         ///     Call this method at application startup after the host has been built.
@@ -125,7 +116,6 @@ namespace RzR.DataVigil.Storage.EfPostgreSql.Extensions
         ///     Thrown only when <see cref="StorageOptions.ThrowOnUnsupportedPostgreSqlVersion"/> is set and
         ///     the server's major version is below the minimum tested version.
         /// </exception>
-        /// =================================================================================================
         public static void MigrateAuditPostgreSqlDb(this IServiceProvider serviceProvider)
         {
             using (var scope = serviceProvider.CreateScope())

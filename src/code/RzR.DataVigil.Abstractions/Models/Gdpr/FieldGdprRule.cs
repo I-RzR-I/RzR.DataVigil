@@ -24,54 +24,43 @@ using RzR.DataVigil.Abstractions.Enums;
 
 namespace RzR.DataVigil.Abstractions.Models.Gdpr
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     GDPR rule applied to a specific field of an audited entity.
     /// </summary>
-    /// =================================================================================================
     public class FieldGdprRule
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Property name on the entity.
         /// </summary>
         /// <value>
         ///     The name of the field.
         /// </value>
-        /// =================================================================================================
         public string FieldName { get; set; }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     GDPR action to apply.
         /// </summary>
         /// <value>
         ///     The action.
         /// </value>
-        /// =================================================================================================
         public GdprFieldAction Action { get; set; }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Custom transformer - used only when Action = Custom.
         /// </summary>
         /// <value>
         ///     A function delegate that yields a string.
         /// </value>
-        /// =================================================================================================
         public Func<string, string> CustomTransformer { get; set; }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Roles that allow viewing unmasked data. Null or empty = nobody sees unmasked via role.
         /// </summary>
         /// <value>
         ///     The allowed roles.
         /// </value>
-        /// =================================================================================================
         public IEnumerable<string> AllowedRoles { get; set; }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Claims that allow viewing unmasked data. Key = claim type, Value = claim value. Null or
         ///     empty = nobody sees unmasked via claim.
@@ -79,7 +68,6 @@ namespace RzR.DataVigil.Abstractions.Models.Gdpr
         /// <value>
         ///     The allowed claims.
         /// </value>
-        /// =================================================================================================
         public IDictionary<string, string> AllowedClaims { get; set; }
     }
 }

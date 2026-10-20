@@ -25,20 +25,16 @@ using RzR.ResultMessage.Abstractions;
 
 namespace RzR.DataVigil.Core.Resolvers
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     Scoped context that allows manually setting the audit user in console/worker/test
     ///     scenarios.
     /// </summary>
     /// <seealso cref="T:RzR.DataVigil.Abstractions.Services.IAuditScopeContext"/>
-    /// =================================================================================================
     public class AuditScopeContext : IAuditScopeContext
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     The current user.
         /// </summary>
-        /// =================================================================================================
         private AuditUserInfo _currentUser;
 
         private string _currentCorrelationId;

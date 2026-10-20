@@ -16,11 +16,9 @@
 
 namespace RzR.DataVigil.Abstractions.Enums
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     GDPR action applied to a specific field.
     /// </summary>
-    /// =================================================================================================
     public enum GdprFieldAction
     {
         /// <summary>

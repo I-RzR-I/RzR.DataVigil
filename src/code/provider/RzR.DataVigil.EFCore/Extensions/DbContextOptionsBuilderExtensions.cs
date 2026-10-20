@@ -25,14 +25,11 @@ using RzR.DataVigil.EFCore.Interceptors;
 
 namespace RzR.DataVigil.EFCore.Extensions
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     Extension methods for adding audit interceptors to DbContext.
     /// </summary>
-    /// =================================================================================================
     public static class DbContextOptionsBuilderExtensions
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Adds audit trail interceptors to the DbContext options.
         /// </summary>
@@ -41,7 +38,6 @@ namespace RzR.DataVigil.EFCore.Extensions
         /// <returns>
         ///     A DbContextOptionsBuilder.
         /// </returns>
-        /// =================================================================================================
         public static DbContextOptionsBuilder AddAuditInterceptors(
             this DbContextOptionsBuilder optionsBuilder,
             IServiceProvider serviceProvider)

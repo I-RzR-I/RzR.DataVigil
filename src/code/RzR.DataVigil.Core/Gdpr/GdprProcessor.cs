@@ -33,32 +33,25 @@ using RzR.Extensions.Domain.Text;
 
 namespace RzR.DataVigil.Core.Gdpr
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     Applies GDPR policies to audit entries (both at storage and retrieval time).
     /// </summary>
-    /// =================================================================================================
     public sealed class GdprProcessor
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) the registry.
         /// </summary>
-        /// =================================================================================================
         private readonly GdprPolicyRegistry _registry;
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Initializes a new instance of the <see cref="GdprProcessor"/> class.
         /// </summary>
         /// <param name="registry">The registry.</param>
-        /// =================================================================================================
         public GdprProcessor(GdprPolicyRegistry registry)
         {
             _registry = registry;
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Apply storage GDPR policies before persisting the audit entry.
         ///     Returns (<paramref name="entry"/>, applied, fullyAnonymized) where:
@@ -71,7 +64,6 @@ namespace RzR.DataVigil.Core.Gdpr
         /// <returns>
         ///     A Tuple.
         /// </returns>
-        /// =================================================================================================
         public (AuditEntry entry, bool applied, bool fullyAnonymized) ApplyStoragePolicies(AuditEntry entry)
         {
             if (!_registry.TryGetPolicyByName(entry.EntityName, out var policy)) 
@@ -152,7 +144,6 @@ namespace RzR.DataVigil.Core.Gdpr
             return (entry, hasProcessed, hasProcessed && allAnonymized);
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Apply retrieval GDPR policies before returning audit data to the caller.
         /// </summary>
@@ -161,7 +152,6 @@ namespace RzR.DataVigil.Core.Gdpr
         /// <returns>
         ///     An AuditEntry.
         /// </returns>
-        /// =================================================================================================
         public AuditEntry ApplyRetrievalPolicies(AuditEntry entry, GdprRetrievalContext context)
         {
             if (!_registry.TryGetPolicyByName(entry.EntityName, out var policy))
@@ -197,7 +187,6 @@ namespace RzR.DataVigil.Core.Gdpr
             return entry;
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Searches for the first rule.
         /// </summary>
@@ -206,7 +195,6 @@ namespace RzR.DataVigil.Core.Gdpr
         /// <returns>
         ///     The found rule.
         /// </returns>
-        /// =================================================================================================
         private static FieldGdprRule FindRule(IEnumerable<FieldGdprRule> rules, string fieldName)
         {
             foreach (var rule in rules)
@@ -218,7 +206,6 @@ namespace RzR.DataVigil.Core.Gdpr
             return null;
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Mask value.
         /// </summary>
@@ -226,7 +213,6 @@ namespace RzR.DataVigil.Core.Gdpr
         /// <returns>
         ///     A string.
         /// </returns>
-        /// =================================================================================================
         private static string MaskValue(string value)
         {
             if (value.IsNullOrEmpty())
@@ -239,7 +225,6 @@ namespace RzR.DataVigil.Core.Gdpr
             return value[0] + new string('*', Math.Max(value.Length - 2, 3)) + value[value.Length - 1];
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Hash value.
         /// </summary>
@@ -247,7 +232,6 @@ namespace RzR.DataVigil.Core.Gdpr
         /// <returns>
         ///     A string.
         /// </returns>
-        /// =================================================================================================
         private static string HashValue(string value)
         {
             if (value.IsNull())

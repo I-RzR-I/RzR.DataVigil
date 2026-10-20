@@ -41,52 +41,40 @@ using RzR.Extensions.Domain.Primitives;
 
 namespace RzR.DataVigil.EFCore.Interceptors
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     EF Core SaveChanges interceptor for auditing Create, Update, Delete operations.
     /// </summary>
     /// <seealso cref="T:Microsoft.EntityFrameworkCore.Diagnostics.SaveChangesInterceptor"/>
-    /// =================================================================================================
     public sealed class AuditSaveChangesInterceptor : SaveChangesInterceptor
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) the logger.
         /// </summary>
-        /// =================================================================================================
         private readonly ILogger<AuditSaveChangesInterceptor> _logger;
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) options for controlling the operation.
         /// </summary>
-        /// =================================================================================================
         private readonly AuditTrailOptions _options;
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) the pipeline.
         /// </summary>
-        /// =================================================================================================
         private readonly AuditPipeline _pipeline;
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) audit transactions collected in SavingChanges and awaiting persistence in
         ///     SavedChanges, keyed per DbContext instance.
         /// </summary>
-        /// =================================================================================================
         private readonly ConditionalWeakTable<DbContext, PendingAuditTransaction> _pendingTransactions
             = new ConditionalWeakTable<DbContext, PendingAuditTransaction>();
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Initializes a new instance of the <see cref="AuditSaveChangesInterceptor"/> class.
         /// </summary>
         /// <param name="options">Options for controlling the operation.</param>
         /// <param name="pipeline">The pipeline.</param>
         /// <param name="logger">The logger.</param>
-        /// =================================================================================================
         public AuditSaveChangesInterceptor(AuditTrailOptions options, AuditPipeline pipeline,
             ILogger<AuditSaveChangesInterceptor> logger)
         {
@@ -216,7 +204,6 @@ namespace RzR.DataVigil.EFCore.Interceptors
             return base.SaveChangesFailedAsync(eventData, cancellationToken);
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Stores the collected transaction against the context, replacing any earlier one.
         ///     A null transaction clears the slot - this is what prevents a stash orphaned by a
@@ -224,7 +211,6 @@ namespace RzR.DataVigil.EFCore.Interceptors
         /// </summary>
         /// <param name="context">The context.</param>
         /// <param name="pending">The collected transaction, or null when nothing was collected.</param>
-        /// =================================================================================================
         private void StashPending(DbContext context, PendingAuditTransaction pending)
         {
             if (context.IsNull())
@@ -240,7 +226,6 @@ namespace RzR.DataVigil.EFCore.Interceptors
             _pendingTransactions.Remove(context);
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Removes and returns the transaction collected for the given context, if any.
         /// </summary>
@@ -248,7 +233,6 @@ namespace RzR.DataVigil.EFCore.Interceptors
         /// <returns>
         ///     The pending transaction, or null.
         /// </returns>
-        /// =================================================================================================
         private PendingAuditTransaction TakePending(DbContext context)
         {
             if (context.IsNull())
@@ -262,7 +246,6 @@ namespace RzR.DataVigil.EFCore.Interceptors
             return pending;
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Patches store-generated values into the collected entries, runs the audit pipeline, and
         ///     flushes anything the store wrote through the audited context.
@@ -270,7 +253,6 @@ namespace RzR.DataVigil.EFCore.Interceptors
         /// <param name="context">The context.</param>
         /// <param name="pending">The pending transaction.</param>
         /// <param name="cancellationToken">A token that allows processing to be cancelled.</param>
-        /// =================================================================================================
         private async Task PersistAsync(DbContext context, PendingAuditTransaction pending,
             CancellationToken cancellationToken)
         {
@@ -299,7 +281,6 @@ namespace RzR.DataVigil.EFCore.Interceptors
                 cancellationToken).ConfigureAwait(false);
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Saves anything the audit store added to the audited context while the pipeline ran.
         /// </summary>
@@ -311,7 +292,6 @@ namespace RzR.DataVigil.EFCore.Interceptors
         ///     state would re-send the caller's writes, so the flush stands down instead.
         /// </param>
         /// <param name="cancellationToken">A token that allows processing to be cancelled.</param>
-        /// =================================================================================================
         private async Task FlushAmbientContextWritesAsync(DbContext context, HashSet<object> trackedBeforeStore, 
             bool callerWorkStillPending, CancellationToken cancellationToken)
         {
@@ -337,14 +317,12 @@ namespace RzR.DataVigil.EFCore.Interceptors
             await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Captures which entities the context tracks, by reference, so writes the store adds
         ///     afterward can be told apart from what was already there.
         /// </summary>
         /// <param name="context">The audited context.</param>
         /// <returns>The tracked entities, compared by reference.</returns>
-        /// =================================================================================================
         private static HashSet<object> SnapshotTrackedEntities(DbContext context)
         {
             var tracked = new HashSet<object>(AuditReferenceComparer.Instance);
@@ -355,14 +333,12 @@ namespace RzR.DataVigil.EFCore.Interceptors
             return tracked;
         }
         
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Re-reads the values that were temporary at collect time, now that the write has
         ///     completed and the database-generated values have been propagated back.
         /// </summary>
         /// <param name="pending">The pending transaction.</param>
         /// <param name="context">The context, used for diagnostics only.</param>
-        /// =================================================================================================
         private void PatchStoreGeneratedValues(PendingAuditTransaction pending, DbContext context)
         {
             foreach (var pendingEntry in pending.PendingEntries)
@@ -398,7 +374,6 @@ namespace RzR.DataVigil.EFCore.Interceptors
             }
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Collect transaction.
         /// </summary>
@@ -408,7 +383,6 @@ namespace RzR.DataVigil.EFCore.Interceptors
         ///     The collected transaction with the entries requiring a post-save value re-read, or
         ///     <c>null</c> when nothing was collected.
         /// </returns>
-        /// =================================================================================================
         private PendingAuditTransaction CollectTransaction(DbContext context,
             IAuditableContext auditableCtx)
         {
@@ -479,7 +453,6 @@ namespace RzR.DataVigil.EFCore.Interceptors
             return new PendingAuditTransaction(transaction, pendingEntries);
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Converts a state to an audit action.
         /// </summary>
@@ -487,7 +460,6 @@ namespace RzR.DataVigil.EFCore.Interceptors
         /// <returns>
         ///     State as an AuditAction.
         /// </returns>
-        /// =================================================================================================
         private static AuditAction ToAuditAction(EntityState state)
         {
             switch (state)

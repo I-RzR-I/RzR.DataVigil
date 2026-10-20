@@ -25,14 +25,11 @@ using RzR.Extensions.Domain.Primitives;
 
 namespace RzR.DataVigil.AspNetCore.Extensions
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     Extension methods for the ASP.NET Core application builder.
     /// </summary>
-    /// =================================================================================================
     public static class ApplicationBuilderExtensions
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Adds middleware that flushes collected Read audit entries at the end of each request.
         ///     This must be registered in the pipeline for Read audit interception to work
@@ -45,7 +42,6 @@ namespace RzR.DataVigil.AspNetCore.Extensions
         /// </summary>
         /// <param name="app">The application builder to act on.</param>
         /// <returns>The same application builder, for fluent chaining.</returns>
-        /// =================================================================================================
         public static IApplicationBuilder UseAuditReadFlush(this IApplicationBuilder app)
         {
             return app.Use(async (context, next) =>

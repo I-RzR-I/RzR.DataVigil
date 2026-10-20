@@ -28,14 +28,11 @@ using RzR.DataVigil.Storage.EfMongoDb.Interceptors;
 
 namespace RzR.DataVigil.Storage.EfMongoDb.Extensions
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     Extension methods for registering and configuring the MongoDB audit storage provider.
     /// </summary>
-    /// =================================================================================================
     public static class StorageOptionsExtensions
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Configures MongoDB as the backing store for audit data.
         ///     Supply the MongoDB connection string (e.g. <c>mongodb://localhost:27017</c>).
@@ -52,7 +49,6 @@ namespace RzR.DataVigil.Storage.EfMongoDb.Extensions
         /// <returns>
         ///     The same <see cref="StorageOptions" /> instance, for fluent chaining.
         /// </returns>
-        /// =================================================================================================
         public static StorageOptions UseMongoDb(
             this StorageOptions options,
             string connectionString,
@@ -64,7 +60,6 @@ namespace RzR.DataVigil.Storage.EfMongoDb.Extensions
             return options;
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Registers the <see cref="MongoDbAuditStore" /> and
         ///     <see cref="AuditMongoDbContext" /> in the dependency-injection container.
@@ -76,7 +71,6 @@ namespace RzR.DataVigil.Storage.EfMongoDb.Extensions
         /// <returns>
         ///     The same <see cref="IServiceCollection" /> instance, for fluent chaining.
         /// </returns>
-        /// =================================================================================================
         public static IServiceCollection AddAuditTrailMongoDb(this IServiceCollection services)
         {
             services.AddDbContext<AuditMongoDbContext>((sp, opts) =>

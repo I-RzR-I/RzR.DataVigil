@@ -23,62 +23,46 @@ using RzR.DataVigil.Abstractions.Enums;
 
 namespace RzR.DataVigil.Abstractions.Models.Query
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     Query parameters for filtering and paginating audit transaction results.
     /// </summary>
-    /// =================================================================================================
     public class AuditTransactionQuery
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Gets or sets the number of records to skip (offset). Default is 0.
         /// </summary>
-        /// =================================================================================================
         public int Skip { get; set; } = 0;
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Gets or sets the maximum number of records to return. Default is 10.
         /// </summary>
-        /// =================================================================================================
         public int Take { get; set; } = 10;
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Gets or sets the inclusive lower bound of the transaction timestamp range.
         ///     <see langword="null"/> leaves the range open at the lower end.
         /// </summary>
-        /// =================================================================================================
         public DateTimeOffset? FromUtc { get; set; }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Gets or sets the exclusive upper bound of the transaction timestamp range.
         ///     <see langword="null"/> leaves the range open at the upper end.
         /// </summary>
-        /// =================================================================================================
         public DateTimeOffset? ToUtc { get; set; }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Gets or sets the actor identifier to match. Null or whitespace applies no filter.
         /// </summary>
-        /// =================================================================================================
         public string UserId { get; set; }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Gets or sets the correlation identifier to match. Null or whitespace applies no filter.
         /// </summary>
-        /// =================================================================================================
         public string CorrelationId { get; set; }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Gets or sets the GDPR processing state to match. <see langword="null"/> applies no filter.
         /// </summary>
-        /// =================================================================================================
         public GdprStorageState? GdprState { get; set; }
     }
 }

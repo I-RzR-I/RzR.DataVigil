@@ -24,35 +24,28 @@ using RzR.DataVigil.Abstractions.Extensions;
 
 namespace RzR.DataVigil.Abstractions.Models.Gdpr
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     Context of the user requesting audit data retrieval. Used by the GDPR processor to
     ///     evaluate AllowedRoles/AllowedClaims.
     /// </summary>
-    /// =================================================================================================
     public class GdprRetrievalContext
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Roles assigned to the requesting user.
         /// </summary>
         /// <value>
         ///     The user roles.
         /// </value>
-        /// =================================================================================================
         public IEnumerable<string> UserRoles { get; set; } = new List<string>();
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Claims of the requesting user. Key = claim type, Value = claim value.
         /// </summary>
         /// <value>
         ///     The user claims.
         /// </value>
-        /// =================================================================================================
         public IDictionary<string, string> UserClaims { get; set; } = new Dictionary<string, string>();
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Evaluates whether the user has the right to view unmasked data for a field protected by
         ///     the given rule.
@@ -61,7 +54,6 @@ namespace RzR.DataVigil.Abstractions.Models.Gdpr
         /// <returns>
         ///     True if we can access, false if not.
         /// </returns>
-        /// =================================================================================================
         public bool CanAccess(FieldGdprRule rule)
         {
             if (rule.AllowedRoles.IsNotNullOrEmptyEnumerable())

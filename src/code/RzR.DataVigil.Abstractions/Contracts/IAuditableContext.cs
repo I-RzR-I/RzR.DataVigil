@@ -23,15 +23,12 @@ using System.Collections.Generic;
 
 namespace RzR.DataVigil.Abstractions.Contracts
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     Marks a DbContext/repository as an audit participant. Does not force inheritance, only a
     ///     contract.
     /// </summary>
-    /// =================================================================================================
     public interface IAuditableContext
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Entity types excluded globally from audit at the context level.
         /// </summary>
@@ -39,7 +36,6 @@ namespace RzR.DataVigil.Abstractions.Contracts
         ///     An enumerator that allows foreach to be used to process the excluded entity types in this
         ///     collection.
         /// </returns>
-        /// =================================================================================================
         IEnumerable<Type> GetExcludedEntityTypes();
     }
 }

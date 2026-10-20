@@ -31,7 +31,6 @@ using RzR.Extensions.Domain.Primitives;
 
 namespace RzR.DataVigil.AspNetCore.Hosting
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     Startup diagnostic that warns, but never throws, when
     ///     <c>AddAuditTrailAspNetCore()</c> was called but <see cref="IAuditUserResolver"/> still resolves to the built-in
@@ -44,30 +43,23 @@ namespace RzR.DataVigil.AspNetCore.Hosting
     ///     </para>
     /// </summary>
     /// <seealso cref="T:Microsoft.Extensions.Hosting.IHostedService"/>
-    /// =================================================================================================
     internal sealed class AuditIdentityResolutionDiagnostic : IHostedService
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) the service provider.
         /// </summary>
-        /// =================================================================================================
         private readonly IServiceProvider _serviceProvider;
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) the logger.
         /// </summary>
-        /// =================================================================================================
         private readonly ILogger<AuditIdentityResolutionDiagnostic> _logger;
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Initializes a new instance of the <see cref="AuditIdentityResolutionDiagnostic"/> class.
         /// </summary>
         /// <param name="serviceProvider">The service provider.</param>
         /// <param name="logger">The logger.</param>
-        /// =================================================================================================
         public AuditIdentityResolutionDiagnostic(IServiceProvider serviceProvider,
             ILogger<AuditIdentityResolutionDiagnostic> logger)
         {

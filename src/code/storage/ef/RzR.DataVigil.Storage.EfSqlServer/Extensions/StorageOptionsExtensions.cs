@@ -27,21 +27,16 @@ using System.Reflection;
 
 namespace RzR.DataVigil.Storage.EfSqlServer.Extensions
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     Extension methods for configuring SQL Server as the audit storage provider.
     /// </summary>
-    /// =================================================================================================
     public static class StorageOptionsExtensions
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) the command timeout, in seconds, applied to the scope that runs migrations.
         /// </summary>
-        /// =================================================================================================
         private const int MigrationCommandTimeoutSeconds = 6 * 60 * 60;
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Configures SQL Server as the audit store backend.
         ///     Pass the same connection string as your application for same-database storage,
@@ -52,7 +47,6 @@ namespace RzR.DataVigil.Storage.EfSqlServer.Extensions
         /// <returns>
         ///     The <see cref="StorageOptions"/> instance for fluent chaining.
         /// </returns>
-        /// =================================================================================================
         public static StorageOptions UseSqlServer(this StorageOptions options,
             string connectionString)
         {
@@ -61,7 +55,6 @@ namespace RzR.DataVigil.Storage.EfSqlServer.Extensions
             return options;
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Registers the SQL Server audit store (<see cref="SqlServerAuditStore"/>) and its
         ///     <see cref="AuditSqlServerDbContext"/> in the DI container.
@@ -71,7 +64,6 @@ namespace RzR.DataVigil.Storage.EfSqlServer.Extensions
         /// <returns>
         ///     The <see cref="IServiceCollection"/> for fluent chaining.
         /// </returns>
-        /// =================================================================================================
         public static IServiceCollection AddAuditTrailSqlServer(this IServiceCollection services)
         {
             services.AddDbContext<AuditSqlServerDbContext>((sp, opts) =>
@@ -96,7 +88,6 @@ namespace RzR.DataVigil.Storage.EfSqlServer.Extensions
             return services;
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Applies pending EF Core migrations for the SQL Server audit database.
         ///     Call this method at application startup after the host has been built.
@@ -110,7 +101,6 @@ namespace RzR.DataVigil.Storage.EfSqlServer.Extensions
         ///     The application's root <see cref="IServiceProvider"/> (e.g. <c>app.ApplicationServices</c>
         ///     or <c>host.Services</c>).
         /// </param>
-        /// =================================================================================================
         public static void MigrateAuditSqlServerDb(this IServiceProvider serviceProvider)
         {
             using (var scope = serviceProvider.CreateScope())

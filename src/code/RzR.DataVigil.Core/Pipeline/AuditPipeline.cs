@@ -40,65 +40,48 @@ using RzR.ResultMessage.Extensions.Result;
 
 namespace RzR.DataVigil.Core.Pipeline
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     Core pipeline: enriches the audit transaction with user/correlation/source info, records
     ///     how the actor was determined (see <see cref="T:RzR.DataVigil.Abstractions.Enums.AuditUserSource"/>)
     ///     in Metadata, applies GDPR storage policies to each entry, then persists via IAuditStore.
     /// </summary>
-    /// =================================================================================================
     public sealed class AuditPipeline
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) the audit store.
         /// </summary>
-        /// =================================================================================================
         private readonly IAuditStore _auditStore;
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) the correlation provider.
         /// </summary>
-        /// =================================================================================================
         private readonly IAuditCorrelationProvider _correlationProvider;
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) the gdpr processor.
         /// </summary>
-        /// =================================================================================================
         private readonly GdprProcessor _gdprProcessor;
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) source resolver.
         /// </summary>
-        /// =================================================================================================
         private readonly IAuditSourceResolver _sourceResolver;
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) the user resolver.
         /// </summary>
-        /// =================================================================================================
         private readonly IAuditUserResolver _userResolver;
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) the metadata enrichers, never null.
         /// </summary>
-        /// =================================================================================================
         private readonly IAuditMetadataEnricher[] _metadataEnrichers;
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) the logger, never null.
         /// </summary>
-        /// =================================================================================================
         private readonly ILogger<AuditPipeline> _logger;
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Initializes a new instance of the <see cref="AuditPipeline"/> class without metadata
         ///     enrichers.
@@ -108,7 +91,6 @@ namespace RzR.DataVigil.Core.Pipeline
         /// <param name="correlationProvider">The correlation provider.</param>
         /// <param name="gdprProcessor">The gdpr processor.</param>
         /// <param name="auditStore">The audit store.</param>
-        /// =================================================================================================
         public AuditPipeline(
             IAuditUserResolver userResolver,
             IAuditSourceResolver sourceResolver,
@@ -119,7 +101,6 @@ namespace RzR.DataVigil.Core.Pipeline
         {
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Initializes a new instance of the <see cref="AuditPipeline"/> class without a logger.
         /// </summary>
@@ -129,7 +110,6 @@ namespace RzR.DataVigil.Core.Pipeline
         /// <param name="gdprProcessor">The gdpr processor.</param>
         /// <param name="auditStore">The audit store.</param>
         /// <param name="metadataEnrichers">The metadata enrichers, may be null or empty.</param>
-        /// =================================================================================================
         public AuditPipeline(
             IAuditUserResolver userResolver,
             IAuditSourceResolver sourceResolver,
@@ -142,7 +122,6 @@ namespace RzR.DataVigil.Core.Pipeline
         {
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Initializes a new instance of the <see cref="AuditPipeline"/> class.
         /// </summary>
@@ -153,7 +132,6 @@ namespace RzR.DataVigil.Core.Pipeline
         /// <param name="auditStore">The audit store.</param>
         /// <param name="metadataEnrichers">The metadata enrichers, may be null or empty.</param>
         /// <param name="logger">The logger, may be null.</param>
-        /// =================================================================================================
         public AuditPipeline(
             IAuditUserResolver userResolver,
             IAuditSourceResolver sourceResolver,
@@ -172,7 +150,6 @@ namespace RzR.DataVigil.Core.Pipeline
             _logger = logger ?? NullLogger<AuditPipeline>.Instance;
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Process an audit transaction: enrich, apply GDPR, persist.
         /// </summary>
@@ -181,7 +158,6 @@ namespace RzR.DataVigil.Core.Pipeline
         /// <returns>
         ///     The process.
         /// </returns>
-        /// =================================================================================================
         public async Task<IResult> ProcessAsync(AuditTransaction transaction,
             CancellationToken cancellationToken = default)
         {
@@ -285,13 +261,11 @@ namespace RzR.DataVigil.Core.Pipeline
             }
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Runs every registered enricher and copies the pairs it returns into the metadata
         ///     dictionary.
         /// </summary>
         /// <param name="metadata">The metadata dictionary to write into.</param>
-        /// =================================================================================================
         private void ApplyMetadataEnrichers(IDictionary<string, string> metadata)
         {
             foreach (var enricher in _metadataEnrichers)
@@ -330,14 +304,12 @@ namespace RzR.DataVigil.Core.Pipeline
             }
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Reports that a single enricher threw and was skipped, without ever letting the report
         ///     itself break the audit write.
         /// </summary>
         /// <param name="enricher">The enricher that threw, may be null.</param>
         /// <param name="ex">The exception thrown by the enricher.</param>
-        /// =================================================================================================
         private void LogEnricherFailure(IAuditMetadataEnricher enricher, Exception ex)
         {
             try
@@ -355,7 +327,6 @@ namespace RzR.DataVigil.Core.Pipeline
             }
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Reports that a single enricher returned a result the pipeline cannot read pairs from, and
         ///     was skipped, without ever letting the report itself break the audit write.
@@ -366,7 +337,6 @@ namespace RzR.DataVigil.Core.Pipeline
         ///     logged: it is enricher-authored text and may carry the detail of an exception the enricher
         ///     caught.
         /// </param>
-        /// =================================================================================================
         private void LogEnricherUnusableResult(IAuditMetadataEnricher enricher, string outcome)
         {
             try
@@ -385,7 +355,6 @@ namespace RzR.DataVigil.Core.Pipeline
             }
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Reports, at most once per transaction, that one or more fields exceeded their storage
         ///     column length and were guarded, without ever letting the report itself break the audit
@@ -395,7 +364,6 @@ namespace RzR.DataVigil.Core.Pipeline
         /// <param name="userSource">How the transaction's actor was determined.</param>
         /// <param name="fields">The names of the fields that were guarded, in storage order.</param>
         /// <param name="sizes">The observed length against the column maximum, one entry per field.</param>
-        /// =================================================================================================
         private void LogColumnLengthGuard(AuditUserSource userSource, List<string> fields, List<string> sizes)
         {
             try
@@ -430,7 +398,6 @@ namespace RzR.DataVigil.Core.Pipeline
             }
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Returns <c>true</c> when the named field is an actor attribute rather than a machine join
         ///     key.
@@ -439,13 +406,11 @@ namespace RzR.DataVigil.Core.Pipeline
         /// <returns>
         ///     True for the actor attributes, false for every other guarded field.
         /// </returns>
-        /// =================================================================================================
         private static bool IsUserAttributeField(string fieldName)
             => fieldName == nameof(AuditTransaction.UserId)
                || fieldName == nameof(AuditTransaction.UserName)
                || fieldName == nameof(AuditTransaction.IpAddress);
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Brings a resolved value within its storage column length. The guard lives here rather than
         ///     in the resolvers because the resolvers are public extension points, so a third-party
@@ -466,7 +431,6 @@ namespace RzR.DataVigil.Core.Pipeline
         /// <returns>
         ///     The value as it will be stored.
         /// </returns>
-        /// =================================================================================================
         private static string GuardColumnLength(string value, int max, string fieldName, bool truncate,
             ICollection<string> fields, ICollection<string> sizes)
         {
@@ -482,13 +446,11 @@ namespace RzR.DataVigil.Core.Pipeline
             return AuditColumnValue.TruncateToColumnLength(value, max);
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Reports that the pipeline failed to process a transaction, without ever letting the report
         ///     itself replace the failure that is being returned to the caller.
         /// </summary>
         /// <param name="ex">The exception that ended the processing.</param>
-        /// =================================================================================================
         private void LogProcessFailure(Exception ex)
         {
             try
@@ -503,7 +465,6 @@ namespace RzR.DataVigil.Core.Pipeline
             }
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Returns the payload of a resolver result, or null when the result is missing or failed.
         ///     Reading Response directly would silently store the payload of a failed lookup, and would
@@ -513,7 +474,6 @@ namespace RzR.DataVigil.Core.Pipeline
         /// <returns>
         ///     The resolved value, or null.
         /// </returns>
-        /// =================================================================================================
         private static string ValueOrNull(IResult<string> result)
             => result.IsNull() || result.IsSuccess.IsFalse() ? null : result.Response;
     }

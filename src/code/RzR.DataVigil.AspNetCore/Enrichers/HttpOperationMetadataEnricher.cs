@@ -31,52 +31,41 @@ using RzR.ResultMessage.Extensions.Result;
 
 namespace RzR.DataVigil.AspNetCore.Enrichers
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     Records which HTTP operation a data change arrived through, as the request method and the
     ///     matched route template, under the <c>__datavigil.http.*</c> keys.
     /// </summary>
     /// <seealso cref="T:RzR.DataVigil.Abstractions.Services.IAuditMetadataEnricher"/>
-    /// =================================================================================================
     public class HttpOperationMetadataEnricher : IAuditMetadataEnricher
     {
         private const int MaxMethodLength = 24;
         private const int MaxRouteTemplateLength = 512;
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     The payload for every case in which nothing can be stamped, which is the normal answer in a
         ///     worker or console host rather than a degradation. Shared rather than rebuilt so the
         ///     non-HTTP path carries no per-call payload allocation.
         /// </summary>
-        /// =================================================================================================
         private static readonly KeyValuePair<string, string>[] NoMetadata = [];
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) the HTTP context accessor.
         /// </summary>
-        /// =================================================================================================
         private readonly IHttpContextAccessor _httpContextAccessor;
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) supplies the matched route template for a context. Provided by the consumer so
         ///     that this assembly does not have to reference the routing packages, whose surface differs
         ///     between ASP.NET Core versions. Null when the consumer did not supply one, in which case
         ///     only the method is stamped.
         /// </summary>
-        /// =================================================================================================
         private readonly Func<HttpContext, string> _routeTemplateAccessor;
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Optional scope override. Null when the enricher is constructed directly.
         /// </summary>
-        /// =================================================================================================
         private readonly IAuditScopeContext _scopeContext;
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Initializes a new instance of the <see cref="HttpOperationMetadataEnricher"/> class with no
         ///     scope context.
@@ -86,7 +75,6 @@ namespace RzR.DataVigil.AspNetCore.Enrichers
         ///     Returns the matched route template for a context, or null when none matched. May be null,
         ///     in which case the route key is never stamped.
         /// </param>
-        /// =================================================================================================
         public HttpOperationMetadataEnricher(
             IHttpContextAccessor httpContextAccessor,
             Func<HttpContext, string> routeTemplateAccessor)
@@ -94,7 +82,6 @@ namespace RzR.DataVigil.AspNetCore.Enrichers
         {
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Initializes a new instance of the <see cref="HttpOperationMetadataEnricher"/> class.
         /// </summary>
@@ -107,7 +94,6 @@ namespace RzR.DataVigil.AspNetCore.Enrichers
         ///     The scope context whose presence of a user marks the work as no longer belonging to the
         ///     ambient request.
         /// </param>
-        /// =================================================================================================
         public HttpOperationMetadataEnricher(IHttpContextAccessor httpContextAccessor,
             Func<HttpContext, string> routeTemplateAccessor, IAuditScopeContext scopeContext)
         {
@@ -156,7 +142,6 @@ namespace RzR.DataVigil.AspNetCore.Enrichers
             }
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Wraps a payload in a successful result.
         /// </summary>
@@ -164,12 +149,10 @@ namespace RzR.DataVigil.AspNetCore.Enrichers
         /// <returns>
         ///     A successful IResult carrying the pairs.
         /// </returns>
-        /// =================================================================================================
         private static IResult<IEnumerable<KeyValuePair<string, string>>> Success(
             IEnumerable<KeyValuePair<string, string>> pairs)
             => Result<IEnumerable<KeyValuePair<string, string>>>.Success(pairs);
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Accepts the request method only when it is short and simple enough to be safe to store.
         ///     The method is a client-supplied token and an extension verb may be arbitrarily long, so a
@@ -180,7 +163,6 @@ namespace RzR.DataVigil.AspNetCore.Enrichers
         /// <returns>
         ///     True if the method is acceptable.
         /// </returns>
-        /// =================================================================================================
         private static bool TryGetMethod(string candidate, out string value)
         {
             value = candidate.IsPresent()
@@ -192,7 +174,6 @@ namespace RzR.DataVigil.AspNetCore.Enrichers
             return value.IsNotNull();
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Tests that every character is an ASCII letter, <c>[A-Za-z]</c>.
         /// </summary>
@@ -200,7 +181,6 @@ namespace RzR.DataVigil.AspNetCore.Enrichers
         /// <returns>
         ///     True if every character is an ASCII letter.
         /// </returns>
-        /// =================================================================================================
         private static bool IsAllLetters(string candidate)
         {
             for (var i = 0; i < candidate.Length; i++)
@@ -215,7 +195,6 @@ namespace RzR.DataVigil.AspNetCore.Enrichers
             return true;
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Asks the consumer-supplied accessor for the matched route template.
         /// </summary>
@@ -224,7 +203,6 @@ namespace RzR.DataVigil.AspNetCore.Enrichers
         /// <returns>
         ///     True if a template was resolved.
         /// </returns>
-        /// =================================================================================================
         private bool TryGetRouteTemplate(HttpContext httpContext, out string value)
         {
             value = null;

@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using RzR.DataVigil.Abstractions.Enums;
@@ -30,14 +31,11 @@ using RzR.Extensions.Domain.Primitives;
 
 namespace RzR.DataVigil.EFCore.Helpers
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     Builds AuditEntry instances from EF Core ChangeTracker entries.
     /// </summary>
-    /// =================================================================================================
     internal class ChangeTrackerEntryBuilder
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Build an AuditEntry from a tracked entity entry. The TransactionId is set later by the
         ///     caller.
@@ -47,7 +45,6 @@ namespace RzR.DataVigil.EFCore.Helpers
         /// <returns>
         ///     An AuditEntry.
         /// </returns>
-        /// =================================================================================================
         public static AuditEntry Build(EntityEntry entry, IList<string> excludedFields = null)
         {
             var auditEntry = new AuditEntry
@@ -77,14 +74,12 @@ namespace RzR.DataVigil.EFCore.Helpers
             return auditEntry;
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Builds added properties.
         /// </summary>
         /// <param name="entry">The entry.</param>
         /// <param name="auditEntry">The audit entry.</param>
         /// <param name="excludedFields">The excluded fields.</param>
-        /// =================================================================================================
         private static void BuildAddedProperties(EntityEntry entry, AuditEntry auditEntry, IList<string> excludedFields)
         {
             foreach (var property in entry.CurrentValues.Properties.NotNull())
@@ -104,14 +99,12 @@ namespace RzR.DataVigil.EFCore.Helpers
             }
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Builds modified properties.
         /// </summary>
         /// <param name="entry">The entry.</param>
         /// <param name="auditEntry">The audit entry.</param>
         /// <param name="excludedFields">The excluded fields.</param>
-        /// =================================================================================================
         private static void BuildModifiedProperties(EntityEntry entry, AuditEntry auditEntry, IList<string> excludedFields)
         {
             foreach (var property in entry.OriginalValues.Properties.NotNull())
@@ -136,7 +129,6 @@ namespace RzR.DataVigil.EFCore.Helpers
             }
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Decides whether a property changed, comparing the MODEL values rather than their formatted
         ///     audit representation, matching EF Core's own change-detection semantics (EF marks a property
@@ -148,7 +140,6 @@ namespace RzR.DataVigil.EFCore.Helpers
         /// <returns>
         ///     True when the property changed, false when it did not.
         /// </returns>
-        /// =================================================================================================
         private static bool ValuesDiffer(object property, object original, object current)
         {
             var comparer = PropertyMetadataHelper.GetValueComparer(property);
@@ -176,14 +167,12 @@ namespace RzR.DataVigil.EFCore.Helpers
             return Equals(original, current).IsFalse();
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Builds deleted properties.
         /// </summary>
         /// <param name="entry">The entry.</param>
         /// <param name="auditEntry">The audit entry.</param>
         /// <param name="excludedFields">The excluded fields.</param>
-        /// =================================================================================================
         private static void BuildDeletedProperties(EntityEntry entry, AuditEntry auditEntry, IList<string> excludedFields)
         {
             foreach (var property in entry.OriginalValues.Properties.NotNull())
@@ -203,7 +192,6 @@ namespace RzR.DataVigil.EFCore.Helpers
             }
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Converts a property value to the form recorded in the audit trail. 
         /// </summary>
@@ -212,7 +200,6 @@ namespace RzR.DataVigil.EFCore.Helpers
         /// <returns>
         ///     The recorded value, or <c>null</c> when the value is <c>null</c>.
         /// </returns>
-        /// =================================================================================================
         internal static string ToAuditValue(object property, object value)
         {
             if (value.IsNull())
@@ -238,7 +225,6 @@ namespace RzR.DataVigil.EFCore.Helpers
             }
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Converts a property value to the form recorded as (part of) an entity key. Applies the same
         ///     converter step as <see cref="ToAuditValue" />, but formats the provider value through
@@ -251,7 +237,6 @@ namespace RzR.DataVigil.EFCore.Helpers
         /// <returns>
         ///     The recorded key value, or <c>null</c> when the value is <c>null</c>.
         /// </returns>
-        /// =================================================================================================
         internal static string ToAuditKeyValue(object property, object value)
         {
             if (value.IsNull())
@@ -277,7 +262,6 @@ namespace RzR.DataVigil.EFCore.Helpers
             }
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Gets primary key value. Exposed to the interceptor so the key can be re-read after
         ///     write action/operation completes, when a store-generated key is no longer temporary.
@@ -286,7 +270,6 @@ namespace RzR.DataVigil.EFCore.Helpers
         /// <returns>
         ///     The primary key value.
         /// </returns>
-        /// =================================================================================================
         internal static string GetPrimaryKeyValue(EntityEntry entry)
         {
             var keyProperties = entry.Metadata.FindPrimaryKey()?.Properties;
@@ -313,7 +296,6 @@ namespace RzR.DataVigil.EFCore.Helpers
             return parts.ListToString(",");
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Gets the names of the properties that currently hold an EF Core temporary value.
         /// </summary>
@@ -321,7 +303,6 @@ namespace RzR.DataVigil.EFCore.Helpers
         /// <returns>
         ///     The temporary property names, or <c>null</c> when the entry has none.
         /// </returns>
-        /// =================================================================================================
         internal static IList<string> GetTemporaryPropertyNames(EntityEntry entry)
         {
             List<string> names = null;
@@ -338,7 +319,6 @@ namespace RzR.DataVigil.EFCore.Helpers
             return names;
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Converts a state to an audit action.
         /// </summary>
@@ -346,7 +326,6 @@ namespace RzR.DataVigil.EFCore.Helpers
         /// <returns>
         ///     State as an AuditAction.
         /// </returns>
-        /// =================================================================================================
         private static AuditAction ToAuditAction(EntityState state)
         {
             switch (state)

@@ -22,35 +22,28 @@ using System.Collections.Generic;
 
 namespace RzR.DataVigil.Core.Gdpr
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     Builder for configuring retrieval access conditions (roles + claims).
     /// </summary>
-    /// =================================================================================================
     public sealed class GdprAccessBuilder
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Gets the roles.
         /// </summary>
         /// <value>
         ///     The roles.
         /// </value>
-        /// =================================================================================================
         internal IList<string> Roles { get; } = new List<string>();
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Gets the claims.
         /// </summary>
         /// <value>
         ///     The claims.
         /// </value>
-        /// =================================================================================================
         internal IDictionary<string, string> Claims { get; }
             = new Dictionary<string, string>();
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Allow roles.
         /// </summary>
@@ -58,7 +51,6 @@ namespace RzR.DataVigil.Core.Gdpr
         /// <returns>
         ///     A GdprAccessBuilder.
         /// </returns>
-        /// =================================================================================================
         public GdprAccessBuilder AllowRoles(params string[] roles)
         {
             foreach (var r in roles) Roles.Add(r);
@@ -66,7 +58,6 @@ namespace RzR.DataVigil.Core.Gdpr
             return this;
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Allow claim.
         /// </summary>
@@ -75,7 +66,6 @@ namespace RzR.DataVigil.Core.Gdpr
         /// <returns>
         ///     A GdprAccessBuilder.
         /// </returns>
-        /// =================================================================================================
         public GdprAccessBuilder AllowClaim(string claimType, string claimValue)
         {
             Claims[claimType] = claimValue;

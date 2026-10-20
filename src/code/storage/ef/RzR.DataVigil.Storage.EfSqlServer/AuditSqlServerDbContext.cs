@@ -24,22 +24,18 @@ using RzR.DataVigil.EFCore;
 
 namespace RzR.DataVigil.Storage.EfSqlServer
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     SQL Server-specific audit DbContext.
     ///     Inherits table and schema configuration from <see cref="AuditDbContextBase"/>.
     /// </summary>
     /// <seealso cref="T:RzR.DataVigil.EFCore.AuditDbContextBase"/>
-    /// =================================================================================================
     public class AuditSqlServerDbContext : AuditDbContextBase
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Initializes a new instance of the <see cref="AuditSqlServerDbContext"/> class.
         /// </summary>
         /// <param name="options">The SQL Server DbContext options.</param>
         /// <param name="storageOptions">Storage configuration containing the schema name.</param>
-        /// =================================================================================================
         public AuditSqlServerDbContext(
             DbContextOptions<AuditSqlServerDbContext> options,
             StorageOptions storageOptions)

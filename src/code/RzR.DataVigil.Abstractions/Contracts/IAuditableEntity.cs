@@ -23,15 +23,12 @@ using RzR.DataVigil.Abstractions.Enums;
 
 namespace RzR.DataVigil.Abstractions.Contracts
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     Granular audit control per entity. Optional - <see cref="IAuditable" /> is sufficient for
     ///     the simple case.
     /// </summary>
-    /// =================================================================================================
     public interface IAuditableEntity : IAuditable
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Determines whether this instance should be audited for the given action.
         /// </summary>
@@ -39,10 +36,8 @@ namespace RzR.DataVigil.Abstractions.Contracts
         /// <returns>
         ///     True if it succeeds, false if it fails.
         /// </returns>
-        /// =================================================================================================
         bool ShouldAudit(AuditAction action);
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Fields excluded from audit, supplementary to GDPR policies.
         /// </summary>
@@ -50,7 +45,6 @@ namespace RzR.DataVigil.Abstractions.Contracts
         ///     An enumerator that allows foreach to be used to process the excluded fields in this
         ///     collection.
         /// </returns>
-        /// =================================================================================================
         IEnumerable<string> GetExcludedFields();
     }
 }

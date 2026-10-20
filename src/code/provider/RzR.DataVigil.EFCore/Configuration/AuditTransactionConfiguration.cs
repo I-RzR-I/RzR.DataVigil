@@ -30,27 +30,21 @@ using RzR.DataVigil.Abstractions.Models.Entries;
 
 namespace RzR.DataVigil.EFCore.Configuration
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     EF Core Fluent API configuration for the AuditTransaction entity.
     /// </summary>
     /// <seealso cref="T:Microsoft.EntityFrameworkCore.IEntityTypeConfiguration{RzR.DataVigil.Abstractions.Models.Entries.AuditTransaction}"/>
-    /// =================================================================================================
     public class AuditTransactionConfiguration : IEntityTypeConfiguration<AuditTransaction>
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     (Immutable) the schema.
         /// </summary>
-        /// =================================================================================================
         private readonly string _schema;
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Initializes a new instance of the <see cref="AuditTransactionConfiguration"/> class.
         /// </summary>
         /// <param name="schema">The schema.</param>
-        /// =================================================================================================
         public AuditTransactionConfiguration(string schema)
         {
             _schema = schema;
@@ -101,7 +95,6 @@ namespace RzR.DataVigil.EFCore.Configuration
             builder.HasIndex(t => new { t.GdprState, t.Timestamp, t.Id });
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Dictionaries are equal.
         /// </summary>
@@ -110,7 +103,6 @@ namespace RzR.DataVigil.EFCore.Configuration
         /// <returns>
         ///     True if it succeeds, false if it fails.
         /// </returns>
-        /// =================================================================================================
         private static bool DictionariesAreEqual(
             IDictionary<string, string> left,
             IDictionary<string, string> right)
@@ -136,7 +128,6 @@ namespace RzR.DataVigil.EFCore.Configuration
             return true;
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Gets dictionary hash code.
         /// </summary>
@@ -144,7 +135,6 @@ namespace RzR.DataVigil.EFCore.Configuration
         /// <returns>
         ///     The dictionary hash code.
         /// </returns>
-        /// =================================================================================================
         private static int GetDictionaryHashCode(IDictionary<string, string> dictionary)
         {
             if (dictionary == null)

@@ -24,7 +24,6 @@ using RzR.DataVigil.Abstractions.Models.Entries;
 
 namespace RzR.DataVigil.Storage.EfMongoDb
 {
-    /// -------------------------------------------------------------------------------------------------
     /// <summary>
     ///     MongoDB-specific audit DbContext.
     ///     Does NOT inherit <c>AuditDbContextBase</c> because the base class applies
@@ -35,28 +34,23 @@ namespace RzR.DataVigil.Storage.EfMongoDb
     ///     model for audit data.
     /// </summary>
     /// <seealso cref="T:Microsoft.EntityFrameworkCore.DbContext" />
-    /// =================================================================================================
     public class AuditMongoDbContext : DbContext
     {
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Initializes a new instance of the <see cref="AuditMongoDbContext" /> class.
         /// </summary>
         /// <param name="options">The MongoDB DbContext options.</param>
-        /// =================================================================================================
         public AuditMongoDbContext(DbContextOptions<AuditMongoDbContext> options)
             : base(options)
         {
         }
 
-        /// -------------------------------------------------------------------------------------------------
         /// <summary>
         ///     Gets or sets the audit transactions collection.
         /// </summary>
         /// <value>
         ///     The audit transactions.
         /// </value>
-        /// =================================================================================================
         public DbSet<AuditTransaction> AuditTransactions { get; set; }
 
         /// <inheritdoc/>
