@@ -1,3 +1,10 @@
+### **v2.2.0.7829** [[RzR](mailto:108324929+I-RzR-I@users.noreply.github.com)] 20-10-2026
+* [41619da] (RzR) -> Auto commit uncommited files
+* [e0501a9] (RzR) -> Update the methods summary to use the same pattern.
+* [fd78df3] (RzR) -> Update the using documentation.
+* [1df2843] (RzR) -> Upgrade the ref packages version.
+* [c75f1ce] (RzR) -> Add missing using `System.Linq`.
+
 ### **v2.1.0.3669** [[RzR](mailto:108324929+I-RzR-I@users.noreply.github.com)] 12-09-2026
 * [a148db6] (RzR) -> Add complex object audit serialization.
 
